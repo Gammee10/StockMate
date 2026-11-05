@@ -10,6 +10,7 @@
 ```
 docs/
 ├── spec/               # Product requirements, domain invariants & API contracts
+│   ├── SLICES.md       # Ordered vertical slices, DoR/DoD & ticket specifications
 │   ├── SCOPE_SPEC.md   # User personas, core user stories, non-goals & NFRs
 │   ├── INVARIANTS.md   # Inviolable architectural invariants (money, auth, concurrency)
 │   └── API_SPEC.md     # Public & internal API request/response specifications
@@ -39,6 +40,7 @@ docs/
 
 | Topic | Primary Reference |
 | :--- | :--- |
+| **Vertical Slices & Tickets Plan** | [spec/SLICES.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/SLICES.md) |
 | **Domain Invariants & Money Rules** | [spec/INVARIANTS.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/INVARIANTS.md) |
 | **API Endpoint Contracts** | [spec/API_SPEC.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/API_SPEC.md) |
 | **Git & PR Quality Gates** | [GIT_FLOW.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/GIT_FLOW.md) |
