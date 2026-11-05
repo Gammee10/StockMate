@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { ShoppingCart, AlertTriangle, CheckCircle2, RotateCcw } from 'lucide-react';
+import {
+  ShoppingCart,
+  AlertTriangle,
+  CheckCircle2,
+  RotateCcw,
+  LogOut,
+} from 'lucide-react';
 
 interface Product {
   id: string;
@@ -48,6 +54,11 @@ export default function CounterPage() {
     setCart({});
   };
 
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  };
+
   const totalCents = Object.entries(cart).reduce((sum, [id, qty]) => {
     const product = products.find((p) => p.id === id);
     return sum + (product ? product.priceCents * qty : 0);
@@ -67,9 +78,18 @@ export default function CounterPage() {
             {products[0]?.storeName || "Dawit's Kiosk"}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-800/60">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          <span>Supabase Live</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-800/60">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>Supabase Live</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition hover:text-white active:scale-95"
+            title="Lock Terminal"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
         </div>
       </header>
 
