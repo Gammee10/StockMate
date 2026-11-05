@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\""
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
