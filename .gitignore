@@ -40,3 +40,5 @@ Thumbs.db
 
 # Scratch files (Antigravity scratch kept local)
 /scratch/
+.npm-cache/
+*.tsbuildinfo
