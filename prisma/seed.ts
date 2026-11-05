@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -12,11 +13,12 @@ async function main() {
   await prisma.store.deleteMany();
   await prisma.user.deleteMany();
 
-  // 1. Create Demo User
+  // 1. Create Demo User with PIN 1234
+  const pinHash = await bcrypt.hash('1234', 10);
   const user = await prisma.user.create({
     data: {
       phone: '+251911000000',
-      pinHash: '$2a$10$DEMO_HASH_FOR_WALKING_SKELETON_00000',
+      pinHash,
     },
   });
 
