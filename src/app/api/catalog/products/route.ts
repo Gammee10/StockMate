@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -28,7 +29,9 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('Failed to fetch products:', error);
+    logger.error('Failed to fetch products from database', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       {
         error: {
