@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  pinHash   String   @map("pin_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  stores    Store[]
+
+  @@map("users")
+}
+
+model Store {
+  id        String    @id @default(cuid())
+  name      String
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now()) @map("created_at")
+  products  Product[]
+  sales     Sale[]
+
+  @@map("stores")
+}
+
+model Product {
+  id                 String     @id @default(cuid())
+  storeId            String     @map("store_id")
+  store              Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name               String
+  priceCents         Int        @map("price_cents")
+  stock              Int        @default(0)
+  lowStockThreshold  Int        @default(5) @map("low_stock_threshold")
+  isArchived         Boolean    @default(false) @map("is_archived")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  saleItems          SaleItem[]
+
+  @@index([storeId])
+  @@map("products")
+}
+
+enum PaymentMethod {
+  CASH
+  DIGITAL
+}
+
+enum SaleStatus {
+  COMPLETED
+  VOIDED
+}
+
+model Sale {
+  id               String        @id @default(cuid())
+  storeId          String        @map("store_id")
+  store            Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  totalAmountCents Int           @map("total_amount_cents")
+  paymentMethod    PaymentMethod @map("payment_method")
+  idempotencyKey   String        @map("idempotency_key")
+  status           SaleStatus    @default(COMPLETED)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  items            SaleItem[]
+
+  @@unique([storeId, idempotencyKey])
+  @@index([storeId, createdAt])
+  @@map("sales")
+}
+
+model SaleItem {
+  id             String  @id @default(cuid())
+  saleId         String  @map("sale_id")
+  sale           Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId      String  @map("product_id")
+  product        Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity       Int
+  unitPriceCents Int     @map("unit_price_cents")
+
+  @@index([saleId])
+  @@map("sale_items")
+}
