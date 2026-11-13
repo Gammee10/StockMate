@@ -1,0 +1,173 @@
+/* =====================================================================
+   ui-polish tokens
+   ---------------------------------------------------------------------
+   HOW TO INSTALL
+   Copy everything in this file to the END of app/globals.css
+   (or src/app/globals.css). Do not delete what the shadcn CLI already
+   put there. Later rules win, so these values replace the earlier ones.
+
+   TO USE A SHADCN PRESET INSTEAD
+   Delete this whole block first. If you keep it, a preset applied later
+   will not change the colors.
+
+   WHAT YOU GET
+   - A calm neutral palette with one blue accent.
+   - Checked for contrast: text pairs pass WCAG AA (4.5:1). The focus ring
+     and chart colors pass 3:1.
+   - Status colors that shadcn does not ship: success, warning, info.
+     Use them like this: text-success, bg-success/10, border-success/30.
+   - Sidebar tokens that follow the main accent.
+
+   TO CHANGE THE ACCENT
+   Edit only --primary, --primary-foreground and --ring, in BOTH :root
+   and .dark. Ready-made accents are listed at the bottom of this file.
+   ===================================================================== */
+
+:root {
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.19 0.02 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.02 260);
+
+  /* Accent: used for the main action, links and focus. Nothing else. */
+  --primary: oklch(0.5 0.183 258);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.6 0.17 258);
+
+  --secondary: oklch(0.962 0.004 255);
+  --secondary-foreground: oklch(0.27 0.02 260);
+  --muted: oklch(0.962 0.004 255);
+  --muted-foreground: oklch(0.49 0.02 258);
+  --accent: oklch(0.95 0.008 255);
+  --accent-foreground: oklch(0.19 0.02 260);
+
+  --destructive: oklch(0.53 0.2 27);
+  --border: oklch(0.915 0.005 255);
+  --input: oklch(0.89 0.006 255);
+
+  /* Status colors (text on a light tint, see patterns.md StatusBadge) */
+  --success: oklch(0.5 0.136 150);
+  --warning: oklch(0.52 0.111 70);
+  --info: oklch(0.5 0.14 250);
+
+  --chart-1: oklch(0.55 0.19 258);
+  --chart-2: oklch(0.58 0.1 190);
+  --chart-3: oklch(0.64 0.13 72);
+  --chart-4: oklch(0.6 0.19 15);
+  --chart-5: oklch(0.5 0.03 258);
+
+  --sidebar: oklch(0.975 0.004 255);
+  --sidebar-foreground: oklch(0.19 0.02 260);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.94 0.008 255);
+  --sidebar-accent-foreground: oklch(0.19 0.02 260);
+  --sidebar-border: oklch(0.915 0.005 255);
+  --sidebar-ring: var(--ring);
+}
+
+.dark {
+  --background: oklch(0.165 0.012 260);
+  --foreground: oklch(0.97 0.003 255);
+  --card: oklch(0.205 0.014 260);
+  --card-foreground: oklch(0.97 0.003 255);
+  --popover: oklch(0.205 0.014 260);
+  --popover-foreground: oklch(0.97 0.003 255);
+
+  --primary: oklch(0.71 0.14 254);
+  --primary-foreground: oklch(0.17 0.02 260);
+  --ring: oklch(0.65 0.15 254);
+
+  --secondary: oklch(0.255 0.014 260);
+  --secondary-foreground: oklch(0.97 0.003 255);
+  --muted: oklch(0.255 0.014 260);
+  --muted-foreground: oklch(0.73 0.015 258);
+  --accent: oklch(0.285 0.016 260);
+  --accent-foreground: oklch(0.97 0.003 255);
+
+  --destructive: oklch(0.7 0.18 22);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+
+  --success: oklch(0.77 0.16 152);
+  --warning: oklch(0.82 0.14 80);
+  --info: oklch(0.74 0.12 245);
+
+  --chart-1: oklch(0.7 0.14 254);
+  --chart-2: oklch(0.75 0.11 190);
+  --chart-3: oklch(0.8 0.14 80);
+  --chart-4: oklch(0.72 0.17 15);
+  --chart-5: oklch(0.68 0.03 258);
+
+  --sidebar: oklch(0.185 0.013 260);
+  --sidebar-foreground: oklch(0.97 0.003 255);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.27 0.015 260);
+  --sidebar-accent-foreground: oklch(0.97 0.003 255);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--ring);
+}
+
+/* Makes the new status colors available as Tailwind classes.
+   (The other mappings usually exist already. Repeating them is harmless.) */
+@theme inline {
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Nicer line breaks: balanced headings, no one-word last lines. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* =====================================================================
+   READY-MADE ACCENTS
+   Replace the three variables in :root and in .dark. Nothing else.
+   All pairs below pass 4.5:1 text contrast and 3:1 for the ring.
+
+   TEAL
+   :root  --primary: oklch(0.5 0.083 195);  --primary-foreground: oklch(0.985 0 0);      --ring: oklch(0.6 0.09 195);
+   .dark  --primary: oklch(0.76 0.12 190);  --primary-foreground: oklch(0.17 0.02 200);  --ring: oklch(0.65 0.1 190);
+
+   GREEN
+   :root  --primary: oklch(0.5 0.13 152);   --primary-foreground: oklch(0.985 0 0);      --ring: oklch(0.6 0.14 152);
+   .dark  --primary: oklch(0.78 0.16 152);  --primary-foreground: oklch(0.17 0.02 150);  --ring: oklch(0.65 0.14 152);
+
+   ORANGE  (button fill only: do not use text-primary for links on light mode)
+   :root  --primary: oklch(0.72 0.17 55);   --primary-foreground: oklch(0.2 0.03 50);    --ring: oklch(0.65 0.159 55);
+   .dark  --primary: oklch(0.76 0.16 58);   --primary-foreground: oklch(0.2 0.03 50);    --ring: oklch(0.7 0.15 58);
+
+   ROSE
+   :root  --primary: oklch(0.53 0.21 12);   --primary-foreground: oklch(0.985 0 0);      --ring: oklch(0.62 0.19 12);
+   .dark  --primary: oklch(0.72 0.17 12);   --primary-foreground: oklch(0.17 0.02 10);   --ring: oklch(0.68 0.16 12);
+
+   INK  (near-black buttons, a very plain and serious look)
+   :root  --primary: oklch(0.25 0.02 260);  --primary-foreground: oklch(0.985 0 0);      --ring: oklch(0.55 0.02 260);
+   .dark  --primary: oklch(0.92 0.005 255); --primary-foreground: oklch(0.19 0.02 260);  --ring: oklch(0.6 0.02 258);
+   ===================================================================== */
