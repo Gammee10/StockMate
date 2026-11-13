@@ -1,9 +1,11 @@
+// src/app/api/health/route.ts
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { db } from '@/server/db';
+import { logError } from '@/server/log';
 
 export const dynamic = 'force-dynamic';
 
+// backend-check-ignore entry-no-guard: health check is public for load balancer and uptime monitoring
 export async function GET() {
   const start = performance.now();
   const timestamp = new Date().toISOString();
@@ -36,12 +38,7 @@ export async function GET() {
       { status: 200, headers }
     );
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Database connectivity check failed';
-    logger.error('Health check database probe failed', {
-      error: errorMessage,
-      uptime,
-    });
+    logError('Health check database probe failed', error, { uptime });
 
     return NextResponse.json(
       {

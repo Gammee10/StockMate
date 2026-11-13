@@ -1,45 +1,14 @@
+// src/app/api/catalog/products/route.ts
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
+import { publicRoute } from '@/server/api';
+import { getProductsCatalog } from '@/server/catalog/service';
 
-export async function GET() {
-  try {
-    const products = await db.product.findMany({
-      where: { isArchived: false },
-      include: {
-        store: {
-          select: { name: true },
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
+export const GET = publicRoute({}, async () => {
+  const products = await getProductsCatalog(50);
 
-    return NextResponse.json({
-      success: true,
-      count: products.length,
-      products: products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        priceCents: p.priceCents,
-        priceEtb: (p.priceCents / 100).toFixed(2),
-        stock: p.stock,
-        lowStockThreshold: p.lowStockThreshold,
-        isLowStock: p.stock <= p.lowStockThreshold,
-        storeName: p.store.name,
-      })),
-    });
-  } catch (error) {
-    logger.error('Failed to fetch products from database', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json(
-      {
-        error: {
-          code: 'DATABASE_ERROR',
-          message: 'Failed to retrieve products from database',
-        },
-      },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    count: products.length,
+    products,
+  });
+});

@@ -27,6 +27,7 @@ model Store {
   products  Product[]
   sales     Sale[]
 
+  @@index([userId])
   @@map("stores")
 }
 
@@ -82,5 +83,6 @@ model SaleItem {
   unitPriceCents Int     @map("unit_price_cents")
 
   @@index([saleId])
+  @@index([productId])
   @@map("sale_items")
 }
