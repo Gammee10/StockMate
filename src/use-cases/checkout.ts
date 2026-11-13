@@ -3,19 +3,14 @@ import 'server-only';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
 import { isUniqueViolation } from '@/server/errors';
-import {
-  findSaleByIdempotencyKey,
-  createSaleRecord,
-} from '@/modules/sales/service';
+import { findSaleByIdempotencyKey, createSaleRecord } from '@/modules/sales/service';
 import {
   getProductsForCheckout,
   decrementProductStockAtomic,
 } from '@/server/catalog/service';
 import type { CheckoutInput, CheckoutResult } from '@/modules/sales/types';
 
-export async function executeCheckout(
-  input: CheckoutInput
-): Promise<CheckoutResult> {
+export async function executeCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const { storeId, idempotencyKey, items, paymentMethod = 'CASH' } = input;
 
   // 1. Invariant #4: Check if sale was already completed with this idempotency key
@@ -60,12 +55,7 @@ export async function executeCheckout(
     const sale = await db.$transaction(async (tx) => {
       // 4a. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
       for (const item of items) {
-        await decrementProductStockAtomic(
-          storeId,
-          item.productId,
-          item.quantity,
-          tx
-        );
+        await decrementProductStockAtomic(storeId, item.productId, item.quantity, tx);
       }
 
       // 4b. Create sale & sale items
@@ -88,10 +78,7 @@ export async function executeCheckout(
   } catch (err) {
     // If concurrent requests raced with identical idempotencyKey, return the winner's sale
     if (isUniqueViolation(err)) {
-      const winnerSale = await findSaleByIdempotencyKey(
-        storeId,
-        idempotencyKey
-      );
+      const winnerSale = await findSaleByIdempotencyKey(storeId, idempotencyKey);
       if (winnerSale) {
         return {
           cached: true,

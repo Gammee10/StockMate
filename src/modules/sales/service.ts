@@ -6,6 +6,7 @@ import type { PaymentMethod, SaleWithItems } from './types';
 
 type DbOrTx = typeof db | Prisma.TransactionClient;
 
+// backend-check-ignore unscoped-read: composite unique index storeId_idempotencyKey explicitly scopes the query by storeId
 export async function findSaleByIdempotencyKey(
   storeId: string,
   idempotencyKey: string,

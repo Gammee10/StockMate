@@ -1,9 +1,6 @@
 // src/app/api/sales/route.ts
 import { userRoute, ok, created } from '@/server/api';
-import {
-  checkoutBodySchema,
-  idempotencyKeySchema,
-} from '@/modules/sales/validators';
+import { checkoutBodySchema, idempotencyKeySchema } from '@/modules/sales/validators';
 import { executeCheckout } from '@/use-cases/checkout';
 import { AppError } from '@/lib/errors';
 
@@ -12,8 +9,7 @@ export const POST = userRoute(
   async ({ body, user, request }) => {
     // Invariant #4: Idempotency-Key header is strictly required
     const idempotencyKey =
-      request.headers.get('idempotency-key') ??
-      request.headers.get('Idempotency-Key');
+      request.headers.get('idempotency-key') ?? request.headers.get('Idempotency-Key');
 
     if (!idempotencyKey) {
       throw new AppError(

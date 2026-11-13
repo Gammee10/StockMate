@@ -51,13 +51,24 @@ describe('Sales Validators', () => {
     });
 
     it('rejects non-positive, zero, or floating point quantities', () => {
-      expect(checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: 0 }] }).success).toBe(false);
-      expect(checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: -2 }] }).success).toBe(false);
-      expect(checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: 1.5 }] }).success).toBe(false);
+      expect(
+        checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: 0 }] })
+          .success
+      ).toBe(false);
+      expect(
+        checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: -2 }] })
+          .success
+      ).toBe(false);
+      expect(
+        checkoutBodySchema.safeParse({ items: [{ productId: 'p1', quantity: 1.5 }] })
+          .success
+      ).toBe(false);
     });
 
     it('rejects missing or empty productId', () => {
-      expect(checkoutBodySchema.safeParse({ items: [{ productId: '', quantity: 1 }] }).success).toBe(false);
+      expect(
+        checkoutBodySchema.safeParse({ items: [{ productId: '', quantity: 1 }] }).success
+      ).toBe(false);
     });
   });
 });

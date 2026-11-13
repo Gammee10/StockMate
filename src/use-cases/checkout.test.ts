@@ -49,7 +49,9 @@ describe('Checkout Use Case: executeCheckout', () => {
       ],
     };
 
-    vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(existingSale as never);
+    vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(
+      existingSale as never
+    );
 
     const result = await executeCheckout({
       storeId,
@@ -67,8 +69,22 @@ describe('Checkout Use Case: executeCheckout', () => {
   it('enforces Invariant #2 (Server-Calculated Pricing) and Invariant #1 (Integer Cents)', async () => {
     vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(null);
     vi.mocked(catalogService.getProductsForCheckout).mockResolvedValueOnce([
-      { id: 'prod_1', name: 'Cooking Oil 1L', priceCents: 25000, stock: 10, isArchived: false, storeId },
-      { id: 'prod_2', name: 'Soap Bar', priceCents: 4500, stock: 5, isArchived: false, storeId },
+      {
+        id: 'prod_1',
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        stock: 10,
+        isArchived: false,
+        storeId,
+      },
+      {
+        id: 'prod_2',
+        name: 'Soap Bar',
+        priceCents: 4500,
+        stock: 5,
+        isArchived: false,
+        storeId,
+      },
     ] as never);
 
     const mockCreatedSale = {
@@ -80,8 +96,20 @@ describe('Checkout Use Case: executeCheckout', () => {
       status: 'COMPLETED',
       createdAt: new Date(),
       items: [
-        { id: 'i1', saleId: 'sale_new_1', productId: 'prod_1', quantity: 2, unitPriceCents: 25000 },
-        { id: 'i2', saleId: 'sale_new_1', productId: 'prod_2', quantity: 1, unitPriceCents: 4500 },
+        {
+          id: 'i1',
+          saleId: 'sale_new_1',
+          productId: 'prod_1',
+          quantity: 2,
+          unitPriceCents: 25000,
+        },
+        {
+          id: 'i2',
+          saleId: 'sale_new_1',
+          productId: 'prod_2',
+          quantity: 1,
+          unitPriceCents: 4500,
+        },
       ],
     };
 
@@ -90,7 +118,9 @@ describe('Checkout Use Case: executeCheckout', () => {
       return cb(mockTx as never);
     });
 
-    vi.mocked(salesService.createSaleRecord).mockResolvedValueOnce(mockCreatedSale as never);
+    vi.mocked(salesService.createSaleRecord).mockResolvedValueOnce(
+      mockCreatedSale as never
+    );
 
     const result = await executeCheckout({
       storeId,
@@ -118,7 +148,14 @@ describe('Checkout Use Case: executeCheckout', () => {
   it('enforces Invariant #5 (Atomic Stock Guard): aborts and throws 409 Conflict when stock is insufficient', async () => {
     vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(null);
     vi.mocked(catalogService.getProductsForCheckout).mockResolvedValueOnce([
-      { id: 'prod_1', name: 'Cooking Oil 1L', priceCents: 25000, stock: 1, isArchived: false, storeId },
+      {
+        id: 'prod_1',
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        stock: 1,
+        isArchived: false,
+        storeId,
+      },
     ] as never);
 
     vi.mocked(db.$transaction).mockImplementationOnce(async (cb) => {
