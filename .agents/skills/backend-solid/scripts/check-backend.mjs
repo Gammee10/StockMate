@@ -549,7 +549,7 @@ function collectOwnerTables(files) {
 /* --------------------------------------------------------------- the scan */
 
 function scanFile(file, issues, ignoresUsed) {
-  const raw = readFileSync(file, "utf8")
+  const raw = readFileSync(file, "utf8").replace(/\r\n/g, "\n")
   const rel = toPosix(relative(cwd, resolve(file)))
   const rawLines = raw.split("\n")
   const ignoreFileLine = rawLines.slice(0, 5).find((l) => l.includes("backend-check-ignore-file"))

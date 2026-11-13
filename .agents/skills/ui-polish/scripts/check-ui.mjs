@@ -425,7 +425,7 @@ function fileChecks(text, rawLines, shown, issues) {
 }
 
 function scanFile(file, issues) {
-  const text = readFileSync(file, "utf8");
+  const text = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
   const rawLines = text.split("\n");
   if (rawLines.slice(0, 5).some((l) => l.includes("ui-check-ignore-file"))) return;
   const isCss = extname(file) === ".css";
