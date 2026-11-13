@@ -1,0 +1,10 @@
+// prisma/schema.prisma
+// Put your models below. The full example (users, invoices, payments) is in examples/invoices-prisma/schema.prisma.
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma" // with a src/ folder use "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

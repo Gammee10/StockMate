@@ -3,7 +3,10 @@ import { POST } from './route';
 
 describe('Auth API: POST /api/auth/logout', () => {
   it('clears the stockmate_session cookie with max-age=0 and returns success', async () => {
-    const response = await POST();
+    const request = new Request('http://localhost:3000/api/auth/logout', {
+      method: 'POST',
+    });
+    const response = await POST(request);
     expect(response.status).toBe(200);
 
     const data = await response.json();

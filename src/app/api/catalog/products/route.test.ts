@@ -76,7 +76,7 @@ describe('Catalog Products API Route', () => {
     expect(res.status).toBe(500);
 
     const json = await res.json();
-    expect(json.error.code).toBe('DATABASE_ERROR');
-    expect(json.error.message).toBe('Failed to retrieve products from database');
+    expect(json.error.code).toBe('INTERNAL');
+    expect(json.error.message).toBe('Something went wrong. Please try again.');
   });
 });

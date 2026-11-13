@@ -6,8 +6,7 @@ export const SESSION_COOKIE_NAME = 'stockmate_session';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 
 function getSecretKey(): Uint8Array {
-  // Prefer process.env.JWT_SECRET directly for test overrides, fallback to validated env
-  const secret = process.env.JWT_SECRET || validateEnv().JWT_SECRET;
+  const secret = validateEnv().JWT_SECRET;
   return new TextEncoder().encode(secret);
 }
 
@@ -69,3 +68,5 @@ export function getSessionCookieOptions() {
     maxAge: SESSION_MAX_AGE,
   };
 }
+
+export const verifySession = verifySessionToken;

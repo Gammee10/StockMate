@@ -8,6 +8,11 @@ import {
   RotateCcw,
   LogOut,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -69,83 +74,95 @@ export default function CounterPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-between p-4 pb-28">
       {/* Header */}
-      <header className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+      <header className="mb-4 flex items-center justify-between border-b border-border pb-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white">
-            StockMate Counter
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            StockMate counter
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {products[0]?.storeName || "Dawit's Kiosk"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-950/80 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-800/60">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Supabase Live</span>
-          </div>
-          <button
+          <Badge variant="success">
+            <CheckCircle2 className="mr-1 size-3" />
+            <span>Online</span>
+          </Badge>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={handleLogout}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition hover:text-white active:scale-95"
-            title="Lock Terminal"
+            aria-label="Sign out"
+            className="size-8"
           >
-            <LogOut className="h-3.5 w-3.5" />
-          </button>
+            <LogOut className="size-4" />
+          </Button>
         </div>
       </header>
 
       {/* Product Grid */}
       <section className="flex-1">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Fast-Tap Counter Grid
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">
+            Fast-tap counter items
           </h2>
-          <span className="text-xs text-slate-500">Live Database Rows</span>
+          <span className="text-xs text-muted-foreground">Tap to add</span>
         </div>
 
         {loading ? (
-          <div className="flex h-48 items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-28 rounded-xl" />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="rounded-xl border border-border p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No products available in catalog.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {products.map((product) => {
               const inCartQty = cart[product.id] || 0;
               return (
-                <button
+                <Card
                   key={product.id}
                   onClick={() => addToCart(product.id)}
-                  className={`relative flex min-h-[110px] flex-col justify-between rounded-2xl border p-3.5 text-left transition-all active:scale-[0.97] ${
+                  className={cn(
+                    'relative flex min-h-28 cursor-pointer flex-col justify-between p-3 transition-colors',
                     inCartQty > 0
-                      ? 'border-emerald-500 bg-emerald-950/40 shadow-lg shadow-emerald-950/30 ring-2 ring-emerald-500/50'
-                      : 'border-slate-800 bg-slate-900/90 hover:border-slate-700'
-                  }`}
-                >
-                  {/* Low Stock Warning Badge */}
-                  {product.isLowStock && (
-                    <span className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-amber-950/90 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 ring-1 ring-amber-700/50">
-                      <AlertTriangle className="h-3 w-3" />
-                      Low: {product.stock}
-                    </span>
+                      ? 'bg-primary/5 border-primary ring-1 ring-primary'
+                      : 'hover:bg-muted/50'
                   )}
-
-                  <div>
-                    <h3 className="line-clamp-2 text-sm font-bold text-slate-100">
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <div className="space-y-1">
+                    {product.isLowStock && (
+                      <Badge variant="warning" className="px-1.5 py-0 text-xs">
+                        <AlertTriangle className="mr-1 size-3" />
+                        Low: {product.stock}
+                      </Badge>
+                    )}
+                    <h3 className="line-clamp-2 text-sm font-medium text-foreground">
                       {product.name}
                     </h3>
                   </div>
 
                   <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-base font-extrabold text-emerald-400">
+                    <span className="text-base font-semibold tabular-nums text-foreground">
                       {product.priceEtb}{' '}
-                      <span className="text-[10px] font-normal text-slate-400">ETB</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ETB
+                      </span>
                     </span>
                     {inCartQty > 0 && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-xs font-black text-slate-950">
+                      <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                         {inCartQty}
                       </span>
                     )}
                   </div>
-                </button>
+                </Card>
               );
             })}
           </div>
@@ -153,48 +170,41 @@ export default function CounterPage() {
       </section>
 
       {/* Floating Counter Checkout Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-900/95 p-4 backdrop-blur-md">
+      <footer className="bg-background/80 fixed bottom-0 left-0 right-0 border-t border-border p-4 backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="relative">
-              <ShoppingCart className="h-6 w-6 text-slate-400" />
+              <ShoppingCart className="size-5 text-muted-foreground" />
               {totalItemsCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-slate-950">
+                <span className="absolute -right-2 -top-2 flex size-4 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                   {totalItemsCount}
                 </span>
               )}
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                Cart Total
-              </div>
-              <div className="text-xl font-black text-white">
+              <div className="text-xs text-muted-foreground">Cart total</div>
+              <div className="text-lg font-semibold tabular-nums text-foreground">
                 {(totalCents / 100).toFixed(2)}{' '}
-                <span className="text-xs font-normal text-slate-400">ETB</span>
+                <span className="text-xs font-normal text-muted-foreground">ETB</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             {totalItemsCount > 0 && (
-              <button
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={clearCart}
-                className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-300 transition-colors active:scale-95"
-                title="Reset Cart"
+                aria-label="Reset cart"
+                className="size-10"
               >
-                <RotateCcw className="h-5 w-5" />
-              </button>
+                <RotateCcw className="size-4" />
+              </Button>
             )}
-            <button
-              disabled={totalItemsCount === 0}
-              className={`flex h-12 items-center justify-center rounded-xl px-6 text-base font-bold transition-all active:scale-95 ${
-                totalItemsCount > 0
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 hover:bg-emerald-400'
-                  : 'cursor-not-allowed bg-slate-800 text-slate-600'
-              }`}
-            >
-              1-Tap Checkout
-            </button>
+            <Button disabled={totalItemsCount === 0} className="h-10 px-6 font-semibold">
+              Checkout ({totalItemsCount})
+            </Button>
           </div>
         </div>
       </footer>
