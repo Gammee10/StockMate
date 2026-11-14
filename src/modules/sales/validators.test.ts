@@ -44,6 +44,27 @@ describe('Sales Validators', () => {
       }
     });
 
+    it('accepts DIGITAL as valid paymentMethod (AC 3.3)', () => {
+      const payload = {
+        items: [{ productId: 'prod_1', quantity: 1 }],
+        paymentMethod: 'DIGITAL',
+      };
+      const result = checkoutBodySchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.paymentMethod).toBe('DIGITAL');
+      }
+    });
+
+    it('rejects unsupported paymentMethod (e.g. CARD)', () => {
+      const payload = {
+        items: [{ productId: 'prod_1', quantity: 1 }],
+        paymentMethod: 'CARD',
+      };
+      const result = checkoutBodySchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
     it('rejects empty items array', () => {
       const payload = { items: [] };
       const result = checkoutBodySchema.safeParse(payload);
