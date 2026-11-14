@@ -7,31 +7,35 @@
 
 ## 1. User Personas
 
-| Persona | Role | Primary Goal | Constraints |
-| :--- | :--- | :--- | :--- |
-| **Dawit (Owner/Cashier)** | Kiosk operator | Record counter sales with 1–2 taps | Busy counter, standing all day, frequent small cash/mobile transactions |
-| **Tigist (Auditor/Spouse)** | Store co-owner | View daily sales summary and low stock | Checks inventory at night on Android mobile browser |
+| Persona                     | Role           | Primary Goal                           | Constraints                                                             |
+| :-------------------------- | :------------- | :------------------------------------- | :---------------------------------------------------------------------- |
+| **Dawit (Owner/Cashier)**   | Kiosk operator | Record counter sales with 1–2 taps     | Busy counter, standing all day, frequent small cash/mobile transactions |
+| **Tigist (Auditor/Spouse)** | Store co-owner | View daily sales summary and low stock | Checks inventory at night on Android mobile browser                     |
 
 ---
 
 ## 2. Core User Stories (Ordered Priority)
 
 ### US-1: Fast-Tap Counter Checkout
+
 - **As a** kiosk cashier,
 - **I want to** tap a product card to add it to the cart and press a single checkout button,
 - **So that** I can complete customer transactions in under 2 seconds during busy morning rushes.
 
 ### US-2: Dual Cash & Digital Payment Tracking
+
 - **As a** kiosk owner,
 - **I want to** flag whether a sale was paid with physical Cash or Mobile Money (Telebirr / CBE Birr),
 - **So that** my end-of-day cash drawer matches physical currency and I know what is in my digital wallet.
 
 ### US-3: Visual Low Stock Alerts
+
 - **As a** kiosk owner,
 - **I want to** see an immediate yellow/amber badge when an item drops to or below its threshold,
 - **So that** I know what to restock from the wholesale market tomorrow.
 
 ### US-4: End-of-Day Sales Summary
+
 - **As a** store owner,
 - **I want to** see today's total revenue broken down by Cash vs. Digital,
 - **So that** I can reconcile cash with my till before closing the shop.

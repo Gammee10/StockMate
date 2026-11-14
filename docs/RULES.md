@@ -6,6 +6,7 @@
 ---
 
 ## 1. Domain Invariants (Never Violate)
+
 1. **Money is Always an Integer (Cents):**
    - Prices, line items, and totals are stored in smallest currency units ($50.00\text{ ETB} = 5000$).
    - Never use `Float` or `Double` for currency.
@@ -24,6 +25,7 @@
 ---
 
 ## 2. Module Boundaries & Code Structure
+
 1. **Unidirectional Dependencies Only:**
    - `UI / API Route` $\rightarrow$ `Application Use-Case` $\rightarrow$ `Domain Module`.
    - `catalog` and `auth` never import `sales`.
@@ -36,6 +38,7 @@
 ---
 
 ## 3. UI Ergonomics & Touch Rules
+
 1. **Minimum Touch Target:**
    - All interactive counter buttons and product tiles must be at least $64 \times 64\text{ dp}$.
 2. **Touch Action Manipulation:**

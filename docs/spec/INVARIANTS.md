@@ -19,9 +19,7 @@
 - **Rule:** The checkout payload accepted by `POST /api/sales` must only contain:
   ```json
   {
-    "items": [
-      { "productId": "prod_123", "quantity": 2 }
-    ],
+    "items": [{ "productId": "prod_123", "quantity": 2 }],
     "paymentMethod": "CASH"
   }
   ```
@@ -62,8 +60,8 @@
 - **Server Enforcement:**
   - Decrements must use conditional atomic SQL guards:
     ```sql
-    UPDATE products 
-    SET stock = stock - ? 
+    UPDATE products
+    SET stock = stock - ?
     WHERE id = ? AND stock >= ?;
     ```
   - If the affected rows count is $0$, the transaction rolls back immediately with an `INSUFFICIENT_STOCK` error.

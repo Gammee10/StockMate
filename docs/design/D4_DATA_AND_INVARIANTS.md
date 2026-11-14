@@ -7,6 +7,7 @@
 ### 1. State Machines (States First)
 
 #### A. Sale Lifecycle
+
 ```mermaid
 stateDiagram-v2
     [*] --> COMPLETED : EXECUTE_CHECKOUT\n(Merchant 1-tap Cash/Digital)
@@ -15,16 +16,17 @@ stateDiagram-v2
     VOIDED --> [*] : Restocks items & logs reversal
 ```
 
-| Current State | Event | Next State | Triggered By | Invariant & Side Effect | Safe to Repeat? |
-| :--- | :--- | :--- | :--- | :--- | :---: |
-| *(None)* | `EXECUTE_CHECKOUT` | `COMPLETED` | Merchant tap | Stock decremented atomically; sale record persisted. | Yes (Guarded by `idempotency_key`). |
-| `COMPLETED` | `UNDO_SALE` | `VOIDED` | Merchant tap | Only allowed within 5 seconds; re-increments stock. | Yes (Idempotent void). |
-| `VOIDED` | Any | — | — | **Terminal state.** No further transitions allowed. | No |
+| Current State | Event              | Next State  | Triggered By | Invariant & Side Effect                              |           Safe to Repeat?           |
+| :------------ | :----------------- | :---------- | :----------- | :--------------------------------------------------- | :---------------------------------: |
+| _(None)_      | `EXECUTE_CHECKOUT` | `COMPLETED` | Merchant tap | Stock decremented atomically; sale record persisted. | Yes (Guarded by `idempotency_key`). |
+| `COMPLETED`   | `UNDO_SALE`        | `VOIDED`    | Merchant tap | Only allowed within 5 seconds; re-increments stock.  |       Yes (Idempotent void).        |
+| `VOIDED`      | Any                | —           | —            | **Terminal state.** No further transitions allowed.  |                 No                  |
 
 #### B. Product Stock Health
+
 - **`HEALTHY`**: `stock > low_stock_threshold` (Standard tile UI).
-- **`LOW_STOCK`**: `0 < stock <= low_stock_threshold` (Amber badge: *"Low: X left"*).
-- **`OUT_OF_STOCK`**: `stock == 0` (Red badge: *"Out of Stock"*; checkout disabled).
+- **`LOW_STOCK`**: `0 < stock <= low_stock_threshold` (Amber badge: _"Low: X left"_).
+- **`OUT_OF_STOCK`**: `stock == 0` (Red badge: _"Out of Stock"_; checkout disabled).
 
 ---
 
@@ -32,14 +34,14 @@ stateDiagram-v2
 
 Enforced at the **strongest layer possible** (Database constraint $\rightarrow$ Transaction $\rightarrow$ Code $\rightarrow$ UI):
 
-| # | Business Invariant | Where Enforced | Enforcement Mechanism | Verification Test |
-| :-: | :--- | :--- | :--- | :--- |
-| **I1** | `Product.stock >= 0` (No negative stock) | **Database Layer** | SQL `CHECK (stock >= 0)` + Atomic `WHERE stock >= qty` | Concurrent checkout spike (Spike 2). |
-| **I2** | Sale total equals sum of line items | **Transaction Layer** | Code asserts `total == sum(unit_price * qty)` before insert | Unit test with mismatching amounts. |
-| **I3** | Zero duplicate checkout on double-tap | **Database Layer** | Unique index on `(store_id, idempotency_key)` | Automated replay test with same UUID. |
-| **I4** | Past sale prices never change | **Database Schema** | `sale_items.unit_price` stores a frozen snapshot of unit price | Product price edit does not alter historical sales. |
-| **I5** | Tenant isolation (Store A $\ne$ Store B) | **ORM / Query Layer**| Enforce `WHERE store_id = session.store_id` on every query | Cross-tenant API test with forged IDs. |
-| **I6** | Integer currency precision | **Database Schema** | Stored as `Int` (cents/centesimi, 1 ETB = 100) | Zero floating-point drift test. |
+|   #    | Business Invariant                       | Where Enforced        | Enforcement Mechanism                                          | Verification Test                                   |
+| :----: | :--------------------------------------- | :-------------------- | :------------------------------------------------------------- | :-------------------------------------------------- |
+| **I1** | `Product.stock >= 0` (No negative stock) | **Database Layer**    | SQL `CHECK (stock >= 0)` + Atomic `WHERE stock >= qty`         | Concurrent checkout spike (Spike 2).                |
+| **I2** | Sale total equals sum of line items      | **Transaction Layer** | Code asserts `total == sum(unit_price * qty)` before insert    | Unit test with mismatching amounts.                 |
+| **I3** | Zero duplicate checkout on double-tap    | **Database Layer**    | Unique index on `(store_id, idempotency_key)`                  | Automated replay test with same UUID.               |
+| **I4** | Past sale prices never change            | **Database Schema**   | `sale_items.unit_price` stores a frozen snapshot of unit price | Product price edit does not alter historical sales. |
+| **I5** | Tenant isolation (Store A $\ne$ Store B) | **ORM / Query Layer** | Enforce `WHERE store_id = session.store_id` on every query     | Cross-tenant API test with forged IDs.              |
+| **I6** | Integer currency precision               | **Database Schema**   | Stored as `Int` (cents/centesimi, 1 ETB = 100)                 | Zero floating-point drift test.                     |
 
 ---
 
@@ -101,11 +103,11 @@ erDiagram
 
 ### 4. Source of Truth vs. Derived Data
 
-| Fact | Single Source of Truth | Derived Copy / Calculation | Reconciliation Rule |
-| :--- | :--- | :--- | :--- |
-| **Current Stock** | `Product.stock` | Counter badge display | Derived on client; updated via optimistic decrements. |
-| **Historic Sale Price** | `SaleItem.unit_price_cents` | None (Permanent fact) | Once written, immutable. |
-| **Daily Sales Total** | Sum of `Sale.total_amount_cents` | Day closing report | Dynamically aggregated via indexed date query; never stored in a separate counter table that could drift. |
+| Fact                    | Single Source of Truth           | Derived Copy / Calculation | Reconciliation Rule                                                                                       |
+| :---------------------- | :------------------------------- | :------------------------- | :-------------------------------------------------------------------------------------------------------- |
+| **Current Stock**       | `Product.stock`                  | Counter badge display      | Derived on client; updated via optimistic decrements.                                                     |
+| **Historic Sale Price** | `SaleItem.unit_price_cents`      | None (Permanent fact)      | Once written, immutable.                                                                                  |
+| **Daily Sales Total**   | Sum of `Sale.total_amount_cents` | Day closing report         | Dynamically aggregated via indexed date query; never stored in a separate counter table that could drift. |
 
 ---
 
@@ -115,8 +117,8 @@ erDiagram
    ```sql
    BEGIN IMMEDIATE;
    -- 1. Deduct stock atomically with guard
-   UPDATE products 
-   SET stock = stock - 1, updated_at = NOW() 
+   UPDATE products
+   SET stock = stock - 1, updated_at = NOW()
    WHERE id = $productId AND store_id = $storeId AND stock >= 1;
    -- (If rows_affected == 0, ROLLBACK and throw InsufficientStock)
 

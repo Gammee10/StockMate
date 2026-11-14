@@ -30,23 +30,23 @@ StockMate is partitioned into three core domain modules plus an orchestrating ap
 
 ### 2. Table Ownership & Public Interfaces
 
-| Module | Tables Owned | Private Internal Rules | Public Interface (Exported) |
-| :--- | :--- | :--- | :--- |
-| **`auth`** | `users`<br/>`stores` | - PIN salted & hashed via bcrypt (cost factor 10).<br/>- Session JWT signed with secret and stored in HttpOnly cookie.<br/>- Tenant store mapped 1:1 to user. | `signUp(phone, pin, storeName)`<br/>`login(phone, pin)`<br/>`verifySession(token)` |
-| **`catalog`** | `products` | - `stock` must be $\ge 0$.<br/>- `is_low_stock` is true when `stock <= low_stock_threshold`.<br/>- Price stored in smallest currency unit (cents / 100 ETB = integer). | `getStoreProducts(storeId)`<br/>`createProduct(storeId, data)`<br/>`decrementStock(productId, qty, tx)`<br/>`getLowStockAlerts(storeId)` |
-| **`sales`** | `sales`<br/>`sale_items` | - Every sale must contain at least 1 item.<br/>- Total amount must equal the exact sum of line items.<br/>- Idempotency key enforced unique per store. | `createSaleRecord(saleData, tx)`<br/>`getDaySummary(storeId, date)`<br/>`getSaleById(storeId, saleId)` |
+| Module        | Tables Owned             | Private Internal Rules                                                                                                                                                 | Public Interface (Exported)                                                                                                              |
+| :------------ | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| **`auth`**    | `users`<br/>`stores`     | - PIN salted & hashed via bcrypt (cost factor 10).<br/>- Session JWT signed with secret and stored in HttpOnly cookie.<br/>- Tenant store mapped 1:1 to user.          | `signUp(phone, pin, storeName)`<br/>`login(phone, pin)`<br/>`verifySession(token)`                                                       |
+| **`catalog`** | `products`               | - `stock` must be $\ge 0$.<br/>- `is_low_stock` is true when `stock <= low_stock_threshold`.<br/>- Price stored in smallest currency unit (cents / 100 ETB = integer). | `getStoreProducts(storeId)`<br/>`createProduct(storeId, data)`<br/>`decrementStock(productId, qty, tx)`<br/>`getLowStockAlerts(storeId)` |
+| **`sales`**   | `sales`<br/>`sale_items` | - Every sale must contain at least 1 item.<br/>- Total amount must equal the exact sum of line items.<br/>- Idempotency key enforced unique per store.                 | `createSaleRecord(saleData, tx)`<br/>`getDaySummary(storeId, date)`<br/>`getSaleById(storeId, saleId)`                                   |
 
 ---
 
 ### 3. Allowed Dependency Matrix (Zero Cycles)
 
-| Caller Module $\downarrow$ / Imported Module $\rightarrow$ | `auth` | `catalog` | `sales` | `use-cases` | Rules & Constraints |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **`auth`** | — | ❌ | ❌ | ❌ | Zero dependencies on other modules. |
-| **`catalog`** | ❌ | — | ❌ | ❌ | Zero dependencies on `sales`. Does not know sales exist. |
-| **`sales`** | ❌ | ❌ | — | ❌ | Zero dependencies on `catalog`. Stores frozen price snapshot. |
-| **`use-cases`** | ✅ | ✅ | ✅ | — | **Orchestrator:** Coordinates multi-module transactions. |
-| **API Routes** | ✅ (via middleware) | ❌ (calls use-case) | ❌ (calls use-case) | ✅ | API routes validate inputs (Zod) and invoke use-cases. |
+| Caller Module $\downarrow$ / Imported Module $\rightarrow$ |       `auth`        |      `catalog`      |       `sales`       | `use-cases` | Rules & Constraints                                           |
+| :--------------------------------------------------------- | :-----------------: | :-----------------: | :-----------------: | :---------: | :------------------------------------------------------------ |
+| **`auth`**                                                 |          —          |         ❌          |         ❌          |     ❌      | Zero dependencies on other modules.                           |
+| **`catalog`**                                              |         ❌          |          —          |         ❌          |     ❌      | Zero dependencies on `sales`. Does not know sales exist.      |
+| **`sales`**                                                |         ❌          |         ❌          |          —          |     ❌      | Zero dependencies on `catalog`. Stores frozen price snapshot. |
+| **`use-cases`**                                            |         ✅          |         ✅          |         ✅          |      —      | **Orchestrator:** Coordinates multi-module transactions.      |
+| **API Routes**                                             | ✅ (via middleware) | ❌ (calls use-case) | ❌ (calls use-case) |     ✅      | API routes validate inputs (Zod) and invoke use-cases.        |
 
 > [!IMPORTANT]
 > **No Direct Cross-Module Table Access:**
@@ -70,7 +70,7 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
     }
     // 4. Record sale and line items in sales module
     const sale = await salesService.createSaleRecord(input, tx);
-    
+
     // 5. Query any newly triggered low-stock alerts
     const lowStockAlerts = await catalogService.getLowStockAlerts(input.storeId, tx);
 
@@ -82,6 +82,7 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
 ---
 
 ### 5. Architectural Smells Prevented
+
 1. **No Shared God "Utils" Folder:** Domain utilities (money formatting, date filters) belong inside their respective modules.
 2. **No Circular Imports:** Dependency graph is strictly unidirectional ($API \rightarrow UseCase \rightarrow Domain$).
 3. **No Dual Writers:** Only `catalog` writes `products`. Only `sales` writes `sales` and `sale_items`.

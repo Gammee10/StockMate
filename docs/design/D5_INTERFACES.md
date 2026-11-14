@@ -8,17 +8,17 @@
 
 All API endpoints accept and return `application/json`. Authenticated routes require session JWT in the secure HttpOnly cookie.
 
-| Method | Endpoint | Description | Idempotency Key Required? |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/auth/signup` | Create owner account & store | No |
-| `POST` | `/api/auth/login` | Authenticate with phone + 4-digit PIN | No |
-| `POST` | `/api/auth/logout` | Clear session cookie | No |
-| `GET` | `/api/catalog/products` | Get store products & low-stock statuses | No |
-| `POST` | `/api/catalog/products` | Create a new product | No |
-| `PATCH`| `/api/catalog/products/:id` | Update product price, stock, or threshold | No |
-| `POST` | `/api/sales` | **Checkout sale & decrement stock** | **YES (`Idempotency-Key`)** |
-| `POST` | `/api/sales/:id/void` | Undo sale (within 5-second window) | **YES (`Idempotency-Key`)** |
-| `GET` | `/api/reports/daily` | Closing day totals & low-stock reorder list | No |
+| Method  | Endpoint                    | Description                                 |  Idempotency Key Required?  |
+| :------ | :-------------------------- | :------------------------------------------ | :-------------------------: |
+| `POST`  | `/api/auth/signup`          | Create owner account & store                |             No              |
+| `POST`  | `/api/auth/login`           | Authenticate with phone + 4-digit PIN       |             No              |
+| `POST`  | `/api/auth/logout`          | Clear session cookie                        |             No              |
+| `GET`   | `/api/catalog/products`     | Get store products & low-stock statuses     |             No              |
+| `POST`  | `/api/catalog/products`     | Create a new product                        |             No              |
+| `PATCH` | `/api/catalog/products/:id` | Update product price, stock, or threshold   |             No              |
+| `POST`  | `/api/sales`                | **Checkout sale & decrement stock**         | **YES (`Idempotency-Key`)** |
+| `POST`  | `/api/sales/:id/void`       | Undo sale (within 5-second window)          | **YES (`Idempotency-Key`)** |
+| `GET`   | `/api/reports/daily`        | Closing day totals & low-stock reorder list |             No              |
 
 ---
 
@@ -41,6 +41,7 @@ All error responses return a uniform schema with machine-readable error codes:
 ```
 
 #### Standard Error Codes:
+
 - `VALIDATION_ERROR` (HTTP 422): Malformed payload or invalid data types.
 - `UNAUTHORIZED` (HTTP 401): Missing or expired JWT token.
 - `FORBIDDEN` (HTTP 403): User attempting to access another store's data.
@@ -62,7 +63,7 @@ sequenceDiagram
 
     Client->>Client: Generate UUIDv4 idempotencyKey
     Client->>Server: POST /api/sales [Header: Idempotency-Key: abc-123]
-    
+
     alt First Request
         Server->>DB: Check if key exists for store
         Server->>DB: Atomic stock decrement + Insert Sale
@@ -87,4 +88,4 @@ sequenceDiagram
 
 - **Request Timeout:** Client aborts requests taking $> 5,000\text{ ms}$ (`AbortController`).
 - **Safe Retry with Jitter:** If network fails on `POST /api/sales`, client retries up to 3 times with exponential backoff ($500\text{ ms} \rightarrow 1,000\text{ ms} \rightarrow 2,000\text{ ms} \pm 200\text{ ms}$ jitter). Because the `Idempotency-Key` is fixed, retries can never double-charge.
-- **UI Non-blocking Cue:** Optimistic UI confirms the sale instantly on screen. If all 3 background retries fail, a persistent red banner informs the merchant: *"Sync failed. [Tap to Retry]"*.
+- **UI Non-blocking Cue:** Optimistic UI confirms the sale instantly on screen. If all 3 background retries fail, a persistent red banner informs the merchant: _"Sync failed. [Tap to Retry]"_.

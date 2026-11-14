@@ -7,6 +7,7 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 ---
 
 ## ⚡ Key Highlights
+
 - **Rush-Hour Speed:** Large 64dp+ touch targets; 1-tap cart additions and 1-tap checkout.
 - **Strict Invariants:** Atomic conditional stock decrements; guaranteed zero negative inventory.
 - **Mixed Payment Support:** Instant cash tracking and 1-tap digital payments (Telebirr / CBE).
@@ -16,6 +17,7 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 ---
 
 ## 🛠️ Tech Stack
+
 - **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19)
 - **Language:** TypeScript (Strict Mode)
 - **Database:** PostgreSQL on [Supabase](https://supabase.com/)
@@ -28,11 +30,13 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js >= 20.x (tested on v24.x)
 - npm >= 10.x
 - PostgreSQL database (Supabase free tier or local Docker instance)
 
 ### Installation
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/your-username/StockMate.git
@@ -51,6 +55,7 @@ npx prisma db push
 # 5. Start development server
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) to view the counter interface.
 
 ---
@@ -64,11 +69,20 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run linter and architecture boundary checks
+# Run backend architecture & invariant checker
+npm run backend:check
+
+# Run UI ergonomics & token polish checker
+npm run ui:check
+
+# Run linter
 npm run lint
 
 # Run TypeScript strict type verification
 npm run typecheck
+
+# Verify formatting
+npm run format:check
 ```
 
 ---
@@ -96,4 +110,5 @@ All design decisions, specifications, and operational playbooks are maintained i
 ---
 
 ## 📄 License
+
 MIT License. Free to use, adapt, and build upon.

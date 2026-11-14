@@ -6,14 +6,14 @@
 
 ### 1. Quality Scenarios (With Numbers & Tests)
 
-| # | Quality Attribute | Scenario | Measurable Target | Test Method |
-| :-: | :--- | :--- | :--- | :--- |
-| **QS1** | **Checkout Speed** | Under busy store hours, merchant taps "Cash" or "Digital". | $\le 300\text{ ms}$ (p95) end-to-end API roundtrip on mobile 3G/4G. | Automated k6 latency test on `/api/sales`. |
-| **QS2** | **Tap Responsiveness** | Merchant taps an item tile on the counter screen. | $\le 50\text{ ms}$ client-side cart update before network request. | Browser performance marks test (`performance.measure`). |
-| **QS3** | **Data Correctness** | 10 rapid concurrent taps checkout on an item with `stock = 1`. | Exactly 1 checkout succeeds; 9 rejected; final stock is exactly 0. Zero negative stock. | Automated concurrent integration test (verified in Spike 2). |
-| **QS4** | **Tenant Isolation** | Store A attempts to fetch or mutate Store B's catalog or sales via forged ID. | 100% rejection (HTTP 403/404); zero cross-tenant leakage. | Automated security regression test suite. |
-| **QS5** | **Closing Summary Speed**| Merchant opens the day summary at closing over 50,000 historical rows. | $\le 50\text{ ms}$ query response. | SQL `EXPLAIN ANALYZE` on indexed date-range query. |
-| **QS6** | **Operating Cost** | Running 10 stores during evaluation and portfolio review. | Strict **\$0.00 / month**. | Monthly billing audit of Vercel + Supabase tiers. |
+|    #    | Quality Attribute         | Scenario                                                                      | Measurable Target                                                                       | Test Method                                                  |
+| :-----: | :------------------------ | :---------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| **QS1** | **Checkout Speed**        | Under busy store hours, merchant taps "Cash" or "Digital".                    | $\le 300\text{ ms}$ (p95) end-to-end API roundtrip on mobile 3G/4G.                     | Automated k6 latency test on `/api/sales`.                   |
+| **QS2** | **Tap Responsiveness**    | Merchant taps an item tile on the counter screen.                             | $\le 50\text{ ms}$ client-side cart update before network request.                      | Browser performance marks test (`performance.measure`).      |
+| **QS3** | **Data Correctness**      | 10 rapid concurrent taps checkout on an item with `stock = 1`.                | Exactly 1 checkout succeeds; 9 rejected; final stock is exactly 0. Zero negative stock. | Automated concurrent integration test (verified in Spike 2). |
+| **QS4** | **Tenant Isolation**      | Store A attempts to fetch or mutate Store B's catalog or sales via forged ID. | 100% rejection (HTTP 403/404); zero cross-tenant leakage.                               | Automated security regression test suite.                    |
+| **QS5** | **Closing Summary Speed** | Merchant opens the day summary at closing over 50,000 historical rows.        | $\le 50\text{ ms}$ query response.                                                      | SQL `EXPLAIN ANALYZE` on indexed date-range query.           |
+| **QS6** | **Operating Cost**        | Running 10 stores during evaluation and portfolio review.                     | Strict **\$0.00 / month**.                                                              | Monthly billing audit of Vercel + Supabase tiers.            |
 
 ---
 
@@ -27,6 +27,7 @@
 ---
 
 ### 3. Constraints
+
 - **Team Size:** 1 developer (solo author, AI pair-programming).
 - **Client Platforms:** Modern mobile and desktop web browsers (Chrome, Safari, Edge; minimum viewport $360\text{ px}$).
 - **Budget:** \$0.00 capital / operational expenditure for v1.
@@ -47,8 +48,8 @@
 
 ### 5. Top 3 Architecture Risks & Mitigations
 
-| # | Architecture Risk | Impact | Architectural Mitigation |
-| :-: | :--- | :--- | :--- |
-| **R1** | **Mobile Network Jitter on Counter:** Mobile connection drops during customer rush. | High | **Optimistic UI + Idempotent Retry:** UI updates instantly; client retries failed sale commits using unique UUID idempotency keys. |
-| **R2** | **Race Condition on Last Stock Unit:** Fast double-tapping causes negative stock. | High | **Atomic Conditional SQL:** `UPDATE products SET stock = stock - qty WHERE id = ? AND stock >= qty` (enforced at DB engine layer). |
-| **R3** | **Catalog Bloat on Small Screen:** Adding 100+ items slows down tile navigation. | Medium | **Top-Moving Items Priority:** Counter view strictly surfaces top 20–30 fast-moving items; search drawer handles slow-moving inventory. |
+|   #    | Architecture Risk                                                                   | Impact | Architectural Mitigation                                                                                                                |
+| :----: | :---------------------------------------------------------------------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| **R1** | **Mobile Network Jitter on Counter:** Mobile connection drops during customer rush. | High   | **Optimistic UI + Idempotent Retry:** UI updates instantly; client retries failed sale commits using unique UUID idempotency keys.      |
+| **R2** | **Race Condition on Last Stock Unit:** Fast double-tapping causes negative stock.   | High   | **Atomic Conditional SQL:** `UPDATE products SET stock = stock - qty WHERE id = ? AND stock >= qty` (enforced at DB engine layer).      |
+| **R3** | **Catalog Bloat on Small Screen:** Adding 100+ items slows down tile navigation.    | Medium | **Top-Moving Items Priority:** Counter view strictly surfaces top 20–30 fast-moving items; search drawer handles slow-moving inventory. |

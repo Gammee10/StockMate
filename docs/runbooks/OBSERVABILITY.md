@@ -12,7 +12,9 @@ StockMate exposes a zero-cache, automated health probe at `GET /api/health`.
 ### Response Contract
 
 #### Healthy State (`HTTP 200 OK`)
+
 Returned when the server is alive and the database responds to active queries.
+
 ```json
 {
   "status": "healthy",
@@ -29,7 +31,9 @@ Returned when the server is alive and the database responds to active queries.
 ```
 
 #### Degraded / Unhealthy State (`HTTP 503 Service Unavailable`)
+
 Returned when database ping fails or connection pool is exhausted.
+
 ```json
 {
   "status": "unhealthy",
@@ -52,13 +56,14 @@ Returned when database ping fails or connection pool is exhausted.
 Uptime checks ping the public `/api/health` endpoint on an automated schedule from multiple geographic regions.
 
 ### Monitor Configuration (Better Uptime / UptimeRobot / Upptime)
-| Parameter | Setting | Reason |
-| :--- | :--- | :--- |
-| **Target URL** | `https://<deployment-url>/api/health` | Probes both edge compute and database |
-| **Check Interval** | Every 60 seconds | Fast detection of retail downtime |
-| **Timeout** | 5,000 ms | Prevents false alerts on transient network jitter |
-| **Expected HTTP Status** | `200` | Flags any 500/503 errors immediately |
-| **Alert Channels** | Telegram bot / Email / SMS | Reaches on-call kiosk support staff |
+
+| Parameter                | Setting                               | Reason                                            |
+| :----------------------- | :------------------------------------ | :------------------------------------------------ |
+| **Target URL**           | `https://<deployment-url>/api/health` | Probes both edge compute and database             |
+| **Check Interval**       | Every 60 seconds                      | Fast detection of retail downtime                 |
+| **Timeout**              | 5,000 ms                              | Prevents false alerts on transient network jitter |
+| **Expected HTTP Status** | `200`                                 | Flags any 500/503 errors immediately              |
+| **Alert Channels**       | Telegram bot / Email / SMS            | Reaches on-call kiosk support staff               |
 
 ---
 
@@ -67,6 +72,7 @@ Uptime checks ping the public `/api/health` endpoint on an automated schedule fr
 All server-side logs use the unified `logger` module (`src/lib/logger.ts`).
 
 ### Production Log Format (NDJSON)
+
 In production (`NODE_ENV === 'production'`), logs are emitted as single-line JSON objects ready for aggregation (Vercel Log Drains, Datadog, Axiom):
 
 ```json
@@ -84,7 +90,9 @@ In production (`NODE_ENV === 'production'`), logs are emitted as single-line JSO
 ```
 
 ### Sensitive Data Redaction Invariant
+
 The logger automatically intercepts and replaces sensitive credentials with `[REDACTED]` across all levels:
+
 - Passwords & PIN hashes (`password`, `pin`, `pinHash`)
 - Bearer tokens & Session cookies (`token`, `authorization`, `cookie`, `jwt`)
 - API keys & Webhook secrets (`secret`, `apiKey`)

@@ -6,19 +6,21 @@
 
 ## 1. Milestones & Release Strategy
 
-| Milestone | Target | Description | Status |
-| :--- | :--- | :--- | :---: |
-| **M1: Walking Skeleton** | Week 1 (Day 1–2) | Live Supabase DB, Next.js API, basic counter UI, CI, Vercel host. | 🟢 **Completed** |
-| **M2: Core Cashier Loop** | Week 1 (Day 3–5) | PIN Authentication (Slice 1) + Atomic Fast-Tap Checkout (Slice 2). | 🟡 **Next Up** |
-| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8) | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4). | ⚪ Planned |
-| **M4: Production Ready** | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. | ⚪ Planned |
+| Milestone                     | Target            | Description                                                             |      Status      |
+| :---------------------------- | :---------------- | :---------------------------------------------------------------------- | :--------------: |
+| **M1: Walking Skeleton**      | Week 1 (Day 1–2)  | Live Supabase DB, Next.js API, basic counter UI, CI, Vercel host.       | 🟢 **Completed** |
+| **M2: Core Cashier Loop**     | Week 1 (Day 3–5)  | PIN Authentication (Slice 1) + Atomic Fast-Tap Checkout (Slice 2).      | 🟢 **Completed** |
+| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8)  | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4).     |  🟡 **Next Up**  |
+| **M4: Production Ready**      | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. |    ⚪ Planned    |
 
 ---
 
 ## 2. Definition of Ready (DoR) & Definition of Done (DoD)
 
 ### Definition of Ready (DoR)
-*Before starting any slice, the ticket must meet:*
+
+_Before starting any slice, the ticket must meet:_
+
 1. User story defined in standard format (`As a... I want to... So that...`).
 2. Acceptance criteria written as testable scenarios (Given / When / Then).
 3. Explicit "Out of Scope" boundary fence defined.
@@ -26,7 +28,9 @@
 5. Test plan (unit, integration, UI) documented before code is written.
 
 ### Definition of Done (DoD)
-*Before merging any slice Pull Request into `main`:*
+
+_Before merging any slice Pull Request into `main`:_
+
 1. All acceptance criteria met and verified locally.
 2. Invariants strictly preserved (Money is integer cents, server prices only, server session store IDs, idempotency UUID, atomic conditional stock guards).
 3. Automated test suite passes (`npm test`) with zero skipped tests.
@@ -83,9 +87,9 @@
 ### Ticket: Slice 1 — Phone + 4-Digit PIN Authentication & Store Session
 
 - **Story:**  
-  *As a* kiosk cashier or owner,  
-  *I want to* enter my phone number and 4-digit PIN on a high-contrast touch numpad,  
-  *So that* I can authenticate in $<3$ seconds and unlock my store's terminal securely.
+  _As a_ kiosk cashier or owner,  
+  _I want to_ enter my phone number and 4-digit PIN on a high-contrast touch numpad,  
+  _So that_ I can authenticate in $<3$ seconds and unlock my store's terminal securely.
 
 - **Why First:**  
   Directly satisfies **Hard Architecture Invariant #3 ("Never Trust Client Store IDs")**. All checkout and catalog operations require a verified server-side session containing `storeId`. Building auth first eliminates temporary hardcoded mocks and ensures multi-tenant data safety from Day 1.
@@ -117,19 +121,19 @@
 ### Ticket: Slice 2 — Fast-Tap Counter Checkout & Atomic Stock Decrement
 
 - **Story:**  
-  *As a* kiosk cashier during morning rush hour,  
-  *I want to* tap products into the cart and hit "1-Tap Checkout",  
-  *So that* the sale is recorded in under 2 seconds and stock is atomically decremented without inventory shrinkage.
+  _As a_ kiosk cashier during morning rush hour,  
+  _I want to_ tap products into the cart and hit "1-Tap Checkout",  
+  _So that_ the sale is recorded in under 2 seconds and stock is atomically decremented without inventory shrinkage.
 
 - **Why Second (Riskiest Domain Logic):**  
   Tackles the core financial and concurrency risks of the retail counter: atomic conditional guards (`stock >= quantity`), race conditions under parallel taps, idempotency UUID keys, and integer cent arithmetic.
 
 - **Acceptance Criteria:**
-  - [ ] **AC 2.1 (Atomic Sale Creation):** Given items in the cart, when the cashier taps checkout, client sends `POST /api/sales` with header `Idempotency-Key: <UUID-v4>` and body `{ items: [{ productId, quantity }] }`.
-  - [ ] **AC 2.2 (Server-Calculated Pricing):** The server ignores any client prices and strictly fetches `priceCents` from the database catalog to compute line items and total amount.
-  - [ ] **AC 2.3 (Atomic Conditional Stock Guard):** Stock decrement executes via SQL guard `UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?`. If stock is insufficient, transaction rolls back and returns `HTTP 409 Conflict` with code `INSUFFICIENT_STOCK`.
-  - [ ] **AC 2.4 (Idempotent Replay):** If the client retries with the same `Idempotency-Key` (e.g. cellular timeout), the server returns the cached completed sale without re-decrementing stock.
-  - [ ] **AC 2.5 (Touch Feedback & Cart Reset):** On successful sale, counter gives immediate visual confirmation (green flash badge), clears the cart, and prepares for the next customer in $<500\text{ ms}$.
+  - [x] **AC 2.1 (Atomic Sale Creation):** Given items in the cart, when the cashier taps checkout, client sends `POST /api/sales` with header `Idempotency-Key: <UUID-v4>` and body `{ items: [{ productId, quantity }] }`.
+  - [x] **AC 2.2 (Server-Calculated Pricing):** The server ignores any client prices and strictly fetches `priceCents` from the database catalog to compute line items and total amount.
+  - [x] **AC 2.3 (Atomic Conditional Stock Guard):** Stock decrement executes via SQL guard `UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?`. If stock is insufficient, transaction rolls back and returns `HTTP 409 Conflict` with code `INSUFFICIENT_STOCK`.
+  - [x] **AC 2.4 (Idempotent Replay):** If the client retries with the same `Idempotency-Key` (e.g. cellular timeout), the server returns the cached completed sale without re-decrementing stock.
+  - [x] **AC 2.5 (Touch Feedback & Cart Reset):** On successful sale, counter gives immediate visual confirmation (green flash badge), clears the cart, and prepares for the next customer in $<500\text{ ms}$.
 
 - **Out of Scope:**
   - Digital payment split selection (defaults to `CASH` in this slice; expanded in Slice 3).
@@ -147,16 +151,16 @@
   - Integration: Idempotency replay returns identical payload with identical stock level.
   - UI: Fast-tap counter increment, clear cart button, checkout state transition.
 
-- **Estimate:** 2 to 3 days (Actual: Pending).
+- **Estimate:** 2 to 3 days (Actual: 1 day).
 
 ---
 
 ### Ticket: Slice 3 — Dual Cash & Digital Payment Tracking (Telebirr / CBE Birr)
 
 - **Story:**  
-  *As a* kiosk owner,  
-  *I want to* toggle whether a sale was paid with physical Cash or Mobile Money (Telebirr / CBE Birr),  
-  *So that* I can reconcile my physical cash drawer and know how much digital money should be in my bank/mobile wallet.
+  _As a_ kiosk owner,  
+  _I want to_ toggle whether a sale was paid with physical Cash or Mobile Money (Telebirr / CBE Birr),  
+  _So that_ I can reconcile my physical cash drawer and know how much digital money should be in my bank/mobile wallet.
 
 - **Why Third:**  
   This is the primary market differentiator for neighborhood Ethiopian retail kiosks where 40–60% of daily transactions have shifted to mobile money.
@@ -186,9 +190,9 @@
 ### Ticket: Slice 4 — Daily Sales Ledger & End-of-Day Till Reconciliation
 
 - **Story:**  
-  *As a* kiosk owner at the end of the day,  
-  *I want to* see today's total revenue broken down into Cash vs. Digital,  
-  *So that* I can balance my physical cash till against the system before locking the shop.
+  _As a_ kiosk owner at the end of the day,  
+  _I want to_ see today's total revenue broken down into Cash vs. Digital,  
+  _So that_ I can balance my physical cash till against the system before locking the shop.
 
 - **Why Fourth:**  
   Closes the accounting loop for the owner after sales and payments are actively flowing.
@@ -222,9 +226,9 @@
 ### Ticket: Slice 5 — Product Catalog CRUD & Visual Low-Stock Alerts
 
 - **Story:**  
-  *As a* kiosk owner,  
-  *I want to* add new products, update prices, adjust stock levels, and see clear low-stock warnings,  
-  *So that* I never run out of staple consumer goods.
+  _As a_ kiosk owner,  
+  _I want to_ add new products, update prices, adjust stock levels, and see clear low-stock warnings,  
+  _So that_ I never run out of staple consumer goods.
 
 - **Why Fifth:**  
   Completes the store owner's catalog management lifecycle once the core cashier loop and financial ledger are solid.
@@ -253,7 +257,7 @@
 
 ## 4. Weekly Iteration Plan with 20% Buffer
 
-| Iteration | Work Items | Buffer Focus (20%) | Milestone Gate |
-| :--- | :--- | :--- | :--- |
-| **Week 1** | **Slice 1:** PIN Auth & Session<br>**Slice 2:** Atomic Checkout & Concurrency | Unforeseen concurrency race edge cases, mobile touch delays | **M2: Core Cashier Loop** |
+| Iteration  | Work Items                                                                                                                        | Buffer Focus (20%)                                             | Milestone Gate                        |
+| :--------- | :-------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------- | :------------------------------------ |
+| **Week 1** | **Slice 1:** PIN Auth & Session<br>**Slice 2:** Atomic Checkout & Concurrency                                                     | Unforeseen concurrency race edge cases, mobile touch delays    | **M2: Core Cashier Loop**             |
 | **Week 2** | **Slice 3:** Dual Cash/Digital Tracking<br>**Slice 4:** Daily Ledger & Till Balance<br>**Slice 5:** Catalog CRUD & Restock Alerts | Flaky cellular retry handling, East Africa Timezone edge cases | **M3 & M4: Closed Beta & Production** |

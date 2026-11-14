@@ -38,12 +38,12 @@ docs/
 
 ## ⚡ Quick Navigation
 
-| Topic | Primary Reference |
-| :--- | :--- |
-| **Vertical Slices & Tickets Plan** | [spec/SLICES.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/SLICES.md) |
-| **Domain Invariants & Money Rules** | [spec/INVARIANTS.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/INVARIANTS.md) |
-| **API Endpoint Contracts** | [spec/API_SPEC.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/API_SPEC.md) |
-| **Git & PR Quality Gates** | [GIT_FLOW.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/GIT_FLOW.md) |
-| **Architecture Decisions** | [adr/README.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/adr/README.md) |
-| **Health Probes & Logging** | [runbooks/OBSERVABILITY.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/runbooks/OBSERVABILITY.md) |
-| **Production Deployment & Rollbacks** | [runbooks/DEPLOYMENT.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/runbooks/DEPLOYMENT.md) |
+| Topic                                 | Primary Reference                                                                                                                      |
+| :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vertical Slices & Tickets Plan**    | [spec/SLICES.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/SLICES.md)                       |
+| **Domain Invariants & Money Rules**   | [spec/INVARIANTS.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/INVARIANTS.md)               |
+| **API Endpoint Contracts**            | [spec/API_SPEC.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/spec/API_SPEC.md)                   |
+| **Git & PR Quality Gates**            | [GIT_FLOW.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/GIT_FLOW.md)                             |
+| **Architecture Decisions**            | [adr/README.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/adr/README.md)                         |
+| **Health Probes & Logging**           | [runbooks/OBSERVABILITY.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/runbooks/OBSERVABILITY.md) |
+| **Production Deployment & Rollbacks** | [runbooks/DEPLOYMENT.md](file:///c:/Users/gamme/OneDrive/Documents/Everything/Development/StockMate/docs/runbooks/DEPLOYMENT.md)       |
