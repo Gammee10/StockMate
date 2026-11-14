@@ -62,6 +62,7 @@ export async function getProductsForCheckout(
       storeId,
       isArchived: false,
     },
+    take: 50,
     select: {
       id: true,
       name: true,
@@ -94,14 +95,10 @@ export async function decrementProductStockAtomic(
   `;
 
   if (count === 0) {
-    throw new AppError(
-      'CONFLICT',
-      `Insufficient stock for product id ${productId}`,
-      {
-        fields: {
-          stock: [`Requested ${quantity}, but available stock is insufficient`],
-        },
-      }
-    );
+    throw new AppError('CONFLICT', `Insufficient stock for product id ${productId}`, {
+      fields: {
+        stock: [`Requested ${quantity}, but available stock is insufficient`],
+      },
+    });
   }
 }
