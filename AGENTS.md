@@ -7,14 +7,14 @@
 
 ## 1. Essential Commands
 
-| Command | Action |
-| :--- | :--- |
-| `npm run dev` | Start local development server at `http://localhost:3000` |
-| `npm run typecheck` | Strict TypeScript verification (`tsc --noEmit`) |
-| `npm test` | Run Vitest test suite (`vitest run`) |
-| `npm run lint` | Run ESLint checks |
-| `npm run format` | Auto-format codebase with Prettier (`prettier --write .`) |
-| `npx prisma db push` | Push Prisma schema to database |
+| Command              | Action                                                    |
+| :------------------- | :-------------------------------------------------------- |
+| `npm run dev`        | Start local development server at `http://localhost:3000` |
+| `npm run typecheck`  | Strict TypeScript verification (`tsc --noEmit`)           |
+| `npm test`           | Run Vitest test suite (`vitest run`)                      |
+| `npm run lint`       | Run ESLint checks                                         |
+| `npm run format`     | Auto-format codebase with Prettier (`prettier --write .`) |
+| `npx prisma db push` | Push Prisma schema to database                            |
 
 ---
 
@@ -53,15 +53,19 @@
 ## 4. Working Rules
 
 - **Ask before adding dependencies:** Do not install new npm packages without explicit user approval.
-- **Verify before completion:** Always run `npm test` and `npm run typecheck` before claiming a task is done.
+- **Verify before completion:** Always run `npm test`, `npm run typecheck`, `npm run backend:check`, and `npm run ui:check` before claiming a task is done.
 - **Maintain Docs Autonomously:** Record architectural decisions in `docs/adr/` and update `docs/WORKFLOW.md` proactively.
+- **Bounded DB Queries:** Always add `take: n` (maximum 100) on all Prisma `findMany` queries to prevent unbounded table scans.
+- **Prisma Interactive Transactions & Pooling:** Interactive transactions (`db.$transaction(async (tx) => ...)`) require dedicated connections. Never use `connection_limit=1` on transaction-mode poolers; use session mode (port 5432) to avoid Prisma `P2028` transaction timeouts.
 
 ## UI work
+
 Before you write or change any UI (pages, components, styling), read and follow `.agents/skills/ui-polish/SKILL.md`.
 After UI changes, run `npm run ui:check` and fix every FAIL before you finish.
 Use color tokens and `components/ui`. Never use raw Tailwind palette colors, gradients or emoji icons.
 
 ## Backend work
+
 Before you write or change any backend code (API routes, server actions, database, auth, webhooks, env vars), read and follow `.agents/skills/backend-solid/SKILL.md`.
 After backend changes, run `npm run typecheck`, `npm test` and `npm run backend:check`, and fix every FAIL before you finish.
 Every route handler and server action uses a helper from `server/api.ts` or `server/action.ts`. Every query on user data filters by the owner. Never write your own auth. Never put a secret in code.

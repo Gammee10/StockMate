@@ -24,6 +24,7 @@ gitGraph
 ```
 
 ### Branch Naming Conventions
+
 - `feat/slice-<number>-<short-description>`: For vertical feature slices (e.g., `feat/slice-1-skeleton`, `feat/slice-2-catalog`).
 - `fix/<issue-description>`: For bug fixes (e.g., `fix/checkout-debounce`).
 - `docs/<doc-topic>`: For design packs, ADRs, and documentation.
@@ -42,7 +43,7 @@ Format: `<type>(<optional-scope>): <subject>`
 - `refactor:` Code refactoring with zero functional change.
 - `build:` Build system, CI pipeline, or dependency changes.
 
-*Example:* `feat(sales): implement atomic conditional stock decrement on checkout`
+_Example:_ `feat(sales): implement atomic conditional stock decrement on checkout`
 
 ---
 

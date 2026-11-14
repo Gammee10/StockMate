@@ -19,5 +19,5 @@
 ---
 
 ### Global Rules File
-- [RULES.md](../RULES.md) — Permanent architectural rules for agents and developers.
 
+- [RULES.md](../RULES.md) — Permanent architectural rules for agents and developers.
