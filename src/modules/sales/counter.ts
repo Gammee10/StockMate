@@ -40,9 +40,7 @@ export function buildCheckoutPayload(
 /**
  * Formats user-facing receipt confirmation banner text (AC 3.4).
  */
-export function formatSaleReceiptFeedback(
-  input: SaleReceiptInput
-): SaleReceiptFeedback {
+export function formatSaleReceiptFeedback(input: SaleReceiptInput): SaleReceiptFeedback {
   const paymentLabel =
     input.paymentMethod === 'DIGITAL' ? 'Digital: Telebirr / CBE' : 'Cash';
   const itemLabel = input.count === 1 ? 'item' : 'items';

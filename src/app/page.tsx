@@ -9,12 +9,20 @@ import {
   LogOut,
   Minus,
   Loader2,
+  Banknote,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import {
+  buildCheckoutPayload,
+  formatSaleReceiptFeedback,
+  type PaymentMethod,
+  type SaleReceiptFeedback,
+} from '@/modules/sales/counter';
 
 interface Product {
   id: string;
@@ -27,18 +35,14 @@ interface Product {
   storeName?: string;
 }
 
-interface SaleSuccessFeedback {
-  totalEtb: string;
-  count: number;
-}
-
 export default function CounterPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [storeName, setStoreName] = useState<string>("Dawit's Kiosk");
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [saleSuccess, setSaleSuccess] = useState<SaleSuccessFeedback | null>(null);
+  const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -94,6 +98,7 @@ export default function CounterPage() {
 
   const clearCart = () => {
     setCart({});
+    setPaymentMethod('CASH');
     setErrorMessage(null);
   };
 
@@ -102,14 +107,11 @@ export default function CounterPage() {
     window.location.href = '/login';
   };
 
-  // 1-Tap Checkout Handler (AC 2.1 - AC 2.5)
+  // 1-Tap Checkout Handler (AC 2.1 - AC 2.5, AC 3.1 - AC 3.4)
   const handleCheckout = async () => {
-    const items = Object.entries(cart).map(([productId, quantity]) => ({
-      productId,
-      quantity,
-    }));
+    const payload = buildCheckoutPayload(cart, paymentMethod);
 
-    if (items.length === 0 || isCheckingOut) return;
+    if (payload.items.length === 0 || isCheckingOut) return;
 
     setIsCheckingOut(true);
     setErrorMessage(null);
@@ -124,10 +126,7 @@ export default function CounterPage() {
           'Content-Type': 'application/json',
           'Idempotency-Key': idempotencyKey,
         },
-        body: JSON.stringify({
-          items,
-          paymentMethod: 'CASH',
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.status === 401) {
@@ -150,14 +149,17 @@ export default function CounterPage() {
       const data = await response.json();
       const sale = data.data;
 
-      // AC 2.5: Immediate visual confirmation, clear cart, ready in < 500ms
+      // AC 2.5 & AC 3.4: Immediate visual confirmation with payment method
       const totalEtb = (sale.totalAmountCents / 100).toFixed(2);
-      const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      const totalCount = payload.items.reduce((sum, item) => sum + item.quantity, 0);
 
-      setSaleSuccess({
+      const feedback = formatSaleReceiptFeedback({
         totalEtb,
         count: totalCount,
+        paymentMethod: sale.paymentMethod || paymentMethod,
       });
+
+      setSaleSuccess(feedback);
 
       // Update in-memory stock for responsive inventory display
       setProducts((prev) =>
@@ -173,8 +175,9 @@ export default function CounterPage() {
         })
       );
 
-      // Reset cart immediately (< 500ms)
+      // Reset cart and default back to CASH immediately (< 500ms) (AC 3.2)
       setCart({});
+      setPaymentMethod('CASH');
       setIsCheckingOut(false);
     } catch (err) {
       console.error('Checkout network error:', err);
@@ -191,7 +194,7 @@ export default function CounterPage() {
   const totalItemsCount = Object.values(cart).reduce((sum, q) => sum + q, 0);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-between p-4 pb-36">
+    <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-between p-4 pb-56">
       {/* Header */}
       <header className="mb-4 flex items-center justify-between border-b border-border pb-3">
         <div>
@@ -217,7 +220,7 @@ export default function CounterPage() {
         </div>
       </header>
 
-      {/* Instant Feedback Banners (AC 2.5) */}
+      {/* Instant Feedback Banners (AC 2.5 & AC 3.4) */}
       <div className="mb-3 space-y-2">
         {saleSuccess && (
           <div
@@ -227,10 +230,7 @@ export default function CounterPage() {
           >
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 shrink-0" />
-              <span>
-                Sale recorded: {saleSuccess.totalEtb} ETB ({saleSuccess.count}{' '}
-                {saleSuccess.count === 1 ? 'item' : 'items'})
-              </span>
+              <span>{saleSuccess.summaryText}</span>
             </div>
             <Button
               variant="ghost"
@@ -364,56 +364,119 @@ export default function CounterPage() {
 
       {/* Floating Counter Checkout Bar (Touch targets >= 64 dp) */}
       <footer className="bg-background/95 fixed bottom-0 left-0 right-0 border-t border-border p-4 backdrop-blur">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <ShoppingCart className="size-6 text-muted-foreground" />
-              {totalItemsCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                  {totalItemsCount}
+        <div className="mx-auto max-w-lg space-y-3">
+          {/* AC 3.1 & AC 3.2: 1-Tap Payment Method Selector (Touch targets >= 64 dp) */}
+          <div
+            className="grid grid-cols-2 gap-2"
+            role="group"
+            aria-label="Payment method selector"
+          >
+            <Button
+              type="button"
+              variant={paymentMethod === 'CASH' ? 'default' : 'outline'}
+              size="kiosk"
+              onClick={() => setPaymentMethod('CASH')}
+              disabled={isCheckingOut}
+              style={{ touchAction: 'manipulation' }}
+              className="flex h-16 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold"
+              aria-pressed={paymentMethod === 'CASH'}
+            >
+              <Banknote className="size-5 shrink-0" />
+              <div className="flex flex-col text-left">
+                <span className="leading-none">Cash</span>
+                <span
+                  className={cn(
+                    'text-xs font-normal leading-tight',
+                    paymentMethod === 'CASH'
+                      ? 'text-primary-foreground/80'
+                      : 'text-muted-foreground'
+                  )}
+                >
+                  Physical drawer
                 </span>
-              )}
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Cart total</div>
-              <div className="text-xl font-semibold tabular-nums text-foreground">
-                {(totalCents / 100).toFixed(2)}{' '}
-                <span className="text-xs font-normal text-muted-foreground">ETB</span>
               </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {totalItemsCount > 0 && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={clearCart}
-                aria-label="Reset cart"
-                className="size-16 shrink-0 rounded-xl"
-                style={{ touchAction: 'manipulation' }}
-                disabled={isCheckingOut}
-              >
-                <RotateCcw className="size-5" />
-              </Button>
-            )}
+            </Button>
 
             <Button
+              type="button"
+              variant={paymentMethod === 'DIGITAL' ? 'default' : 'outline'}
               size="kiosk"
-              disabled={totalItemsCount === 0 || isCheckingOut}
-              onClick={handleCheckout}
-              className="min-w-36 font-semibold"
+              onClick={() => setPaymentMethod('DIGITAL')}
+              disabled={isCheckingOut}
               style={{ touchAction: 'manipulation' }}
+              className="flex h-16 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold"
+              aria-pressed={paymentMethod === 'DIGITAL'}
             >
-              {isCheckingOut ? (
-                <>
-                  <Loader2 className="mr-2 size-5 animate-spin" />
-                  <span>Processing</span>
-                </>
-              ) : (
-                <span>Checkout ({totalItemsCount})</span>
-              )}
+              <Smartphone className="size-5 shrink-0" />
+              <div className="flex flex-col text-left">
+                <span className="leading-none">Digital</span>
+                <span
+                  className={cn(
+                    'text-xs font-normal leading-tight',
+                    paymentMethod === 'DIGITAL'
+                      ? 'text-primary-foreground/80'
+                      : 'text-muted-foreground'
+                  )}
+                >
+                  Telebirr / CBE
+                </span>
+              </div>
             </Button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <ShoppingCart className="size-6 text-muted-foreground" />
+                {totalItemsCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                    {totalItemsCount}
+                  </span>
+                )}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Cart total</div>
+                <div className="text-xl font-semibold tabular-nums text-foreground">
+                  {(totalCents / 100).toFixed(2)}{' '}
+                  <span className="text-xs font-normal text-muted-foreground">ETB</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {totalItemsCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={clearCart}
+                  aria-label="Reset cart"
+                  className="size-16 shrink-0 rounded-xl"
+                  style={{ touchAction: 'manipulation' }}
+                  disabled={isCheckingOut}
+                >
+                  <RotateCcw className="size-5" />
+                </Button>
+              )}
+
+              <Button
+                size="kiosk"
+                disabled={totalItemsCount === 0 || isCheckingOut}
+                onClick={handleCheckout}
+                className="min-w-36 font-semibold"
+                style={{ touchAction: 'manipulation' }}
+              >
+                {isCheckingOut ? (
+                  <>
+                    <Loader2 className="mr-2 size-5 animate-spin" />
+                    <span>Processing</span>
+                  </>
+                ) : (
+                  <span>
+                    Checkout {paymentMethod === 'DIGITAL' ? '(Digital)' : '(Cash)'}
+                  </span>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </footer>

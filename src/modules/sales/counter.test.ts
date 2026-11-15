@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  buildCheckoutPayload,
-  formatSaleReceiptFeedback,
-  type PaymentMethod,
-} from './counter';
+import { buildCheckoutPayload, formatSaleReceiptFeedback } from './counter';
 
 describe('Counter Sales Helper (Slice 3: Dual Cash & Digital Tracking)', () => {
   describe('buildCheckoutPayload', () => {
