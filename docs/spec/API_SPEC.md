@@ -142,7 +142,7 @@ Records a sale, validates server-side pricing, and atomically decrements invento
         "quantity": 2
       }
     ],
-    "paymentMethod": "CASH" // Optional, defaults to "CASH" ("DIGITAL" in Slice 3)
+    "paymentMethod": "CASH" // Optional: "CASH" | "DIGITAL" (defaults to "CASH")
   }
   ```
 
@@ -156,7 +156,7 @@ Records a sale, validates server-side pricing, and atomically decrements invento
     "id": "cuid_sale",
     "storeId": "cuid_store",
     "totalAmountCents": 50000,
-    "paymentMethod": "CASH",
+    "paymentMethod": "CASH", // "CASH" | "DIGITAL"
     "idempotencyKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
     "status": "COMPLETED",
     "createdAt": "2026-11-14T02:30:00.000Z",

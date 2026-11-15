@@ -56,7 +56,7 @@
 - **Verify before completion:** Always run `npm test`, `npm run typecheck`, `npm run backend:check`, and `npm run ui:check` before claiming a task is done.
 - **Maintain Docs Autonomously:** Record architectural decisions in `docs/adr/` and update `docs/WORKFLOW.md` proactively.
 - **Bounded DB Queries:** Always add `take: n` (maximum 100) on all Prisma `findMany` queries to prevent unbounded table scans.
-- **Prisma Interactive Transactions & Pooling:** Interactive transactions (`db.$transaction(async (tx) => ...)`) require dedicated connections. Never use `connection_limit=1` on transaction-mode poolers; use session mode (port 5432) to avoid Prisma `P2028` transaction timeouts.
+- **Prisma Interactive Transactions & Pooling:** Interactive transactions (`db.$transaction(async (tx) => ...)`) require dedicated connections. Never use `connection_limit=1` on transaction-mode poolers; use session mode (port 5432) to avoid Prisma `P2028` transaction timeouts. Always configure explicit resilience options `{ maxWait: 10000, timeout: 20000 }` on `db.$transaction` to handle cross-continental pooler latency without timing out.
 
 ## UI work
 
