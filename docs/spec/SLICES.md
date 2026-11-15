@@ -6,12 +6,12 @@
 
 ## 1. Milestones & Release Strategy
 
-| Milestone                     | Target            | Description                                                             |      Status      |
-| :---------------------------- | :---------------- | :---------------------------------------------------------------------- | :--------------: |
-| **M1: Walking Skeleton**      | Week 1 (Day 1–2)  | Live Supabase DB, Next.js API, basic counter UI, CI, Vercel host.       | 🟢 **Completed** |
-| **M2: Core Cashier Loop**     | Week 1 (Day 3–5)  | PIN Authentication (Slice 1) + Atomic Fast-Tap Checkout (Slice 2).      | 🟢 **Completed** |
-| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8)  | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4).     |  🟡 **Next Up**  |
-| **M4: Production Ready**      | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. |    ⚪ Planned    |
+| Milestone                     | Target            | Description                                                             |       Status       |
+| :---------------------------- | :---------------- | :---------------------------------------------------------------------- | :----------------: |
+| **M1: Walking Skeleton**      | Week 1 (Day 1–2)  | Live Supabase DB, Next.js API, basic counter UI, CI, Vercel host.       |  🟢 **Completed**  |
+| **M2: Core Cashier Loop**     | Week 1 (Day 3–5)  | PIN Authentication (Slice 1) + Atomic Fast-Tap Checkout (Slice 2).      |  🟢 **Completed**  |
+| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8)  | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4).     | 🟡 **In Progress** |
+| **M4: Production Ready**      | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. |     ⚪ Planned     |
 
 ---
 
@@ -166,10 +166,10 @@ _Before merging any slice Pull Request into `main`:_
   This is the primary market differentiator for neighborhood Ethiopian retail kiosks where 40–60% of daily transactions have shifted to mobile money.
 
 - **Acceptance Criteria:**
-  - [ ] **AC 3.1 (1-Tap Payment Toggle):** The counter checkout bar includes a high-contrast payment method selector (`CASH` vs `DIGITAL`) with touch targets $\ge 64\text{ dp}$.
-  - [ ] **AC 3.2 (Default State):** Defaults to `CASH` for fastest checkout, switchable with a single tap before pressing "Checkout".
-  - [ ] **AC 3.3 (Persistence):** `POST /api/sales` accepts `paymentMethod: "CASH" | "DIGITAL"` and persists it in the `sales` table.
-  - [ ] **AC 3.4 (Visual Confirmation):** Completed sale receipt toast clearly indicates whether the sale was logged as Cash or Digital.
+  - [x] **AC 3.1 (1-Tap Payment Toggle):** The counter checkout bar includes a high-contrast payment method selector (`CASH` vs `DIGITAL`) with touch targets $\ge 64\text{ dp}$.
+  - [x] **AC 3.2 (Default State):** Defaults to `CASH` for fastest checkout, switchable with a single tap before pressing "Checkout".
+  - [x] **AC 3.3 (Persistence):** `POST /api/sales` accepts `paymentMethod: "CASH" | "DIGITAL"` and persists it in the `sales` table.
+  - [x] **AC 3.4 (Visual Confirmation):** Completed sale receipt toast clearly indicates whether the sale was logged as Cash or Digital.
 
 - **Out of Scope:**
   - Bank scraping or automated Telebirr API webhooks (cashier confirms customer's SMS receipt visually).
@@ -183,7 +183,7 @@ _Before merging any slice Pull Request into `main`:_
   - Integration: Verify database persistence of both payment methods.
   - UI: Toggle button active states, keyboard shortcuts / fast touch response.
 
-- **Estimate:** 1 to 2 days (Actual: Pending).
+- **Estimate:** 1 to 2 days (Actual: 1 day).
 
 ---
 

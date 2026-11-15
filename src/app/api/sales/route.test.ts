@@ -187,4 +187,72 @@ describe('Sales API Route: POST /api/sales', () => {
     const json = await res.json();
     expect(json.error.code).toBe('CONFLICT');
   });
+
+  it('accepts paymentMethod: DIGITAL and passes to executeCheckout (AC 3.3)', async () => {
+    const mockDigitalSale = {
+      id: 'sale_digital_999',
+      storeId,
+      totalAmountCents: 8500,
+      paymentMethod: 'DIGITAL',
+      idempotencyKey: validUuid,
+      status: 'COMPLETED',
+      createdAt: new Date().toISOString(),
+      items: [
+        {
+          id: 'item_1',
+          productId: 'prod_1',
+          quantity: 1,
+          unitPriceCents: 8500,
+        },
+      ],
+    };
+
+    vi.mocked(checkoutUseCase.executeCheckout).mockResolvedValueOnce({
+      cached: false,
+      sale: mockDigitalSale as never,
+    });
+
+    const req = new Request('http://localhost:3000/api/sales', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': validUuid,
+        cookie: validSessionCookie,
+      },
+      body: JSON.stringify({
+        items: [{ productId: 'prod_1', quantity: 1 }],
+        paymentMethod: 'DIGITAL',
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.data.paymentMethod).toBe('DIGITAL');
+    expect(checkoutUseCase.executeCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paymentMethod: 'DIGITAL',
+      })
+    );
+  });
+
+  it('rejects invalid paymentMethod with 400 Bad Request', async () => {
+    const req = new Request('http://localhost:3000/api/sales', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': validUuid,
+        cookie: validSessionCookie,
+      },
+      body: JSON.stringify({
+        items: [{ productId: 'prod_1', quantity: 1 }],
+        paymentMethod: 'UNKNOWN_METHOD',
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+  });
 });

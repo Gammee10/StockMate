@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Slice 3: Dual Cash & Digital Payment Tracking (Milestone M3)
+
+- **1-Tap Payment Toggle (AC 3.1 & AC 3.2):** High-contrast payment method selector (`Cash` vs `Digital: Telebirr / CBE`) in counter checkout bar with touch targets $\ge 64\text{ dp}$ and `touch-action: manipulation`.
+- **Default & Fast Reset:** Defaults to `CASH` for counter checkout velocity; automatically reverts to `CASH` in $<500\text{ ms}$ upon completed sale or cart reset.
+- **Persistence & API Route (AC 3.3):** `POST /api/sales` accepts `paymentMethod: "CASH" | "DIGITAL"` and persists enum in PostgreSQL `sales` table.
+- **Receipt Toast Confirmation (AC 3.4):** Visual green confirmation banner explicitly indicates payment method (e.g., `Sale recorded: 150.00 ETB (Digital: Telebirr / CBE) • 2 items`).
+- **Interactive Transaction Resilience:** Configured `{ maxWait: 10000, timeout: 20000 }` on `db.$transaction` to handle cross-continental network latency spikes.
+- **ADR 0005:** Documented architecture decision for dual cash and mobile money tracking.
+
 ### Added - Slice 2: Fast-Tap Counter Checkout & Atomic Stock Decrement (Milestone M2)
 
 - **Fast-Tap Counter UI:** Touch-first kiosk POS interface at `/` with rapid tap-to-increment product tiles, item quantity adjustments, and floating checkout bar ($\ge 64\text{ dp}$ targets, `touch-action: manipulation`).

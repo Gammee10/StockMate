@@ -145,6 +145,67 @@ describe('Checkout Use Case: executeCheckout', () => {
     );
   });
 
+  it('persists paymentMethod: DIGITAL when digital payment is chosen (AC 3.3)', async () => {
+    vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(null);
+    vi.mocked(catalogService.getProductsForCheckout).mockResolvedValueOnce([
+      {
+        id: 'prod_1',
+        name: 'Sugar 1kg',
+        priceCents: 12000,
+        stock: 10,
+        isArchived: false,
+        storeId,
+      },
+    ] as never);
+
+    const mockCreatedSale = {
+      id: 'sale_digital_1',
+      storeId,
+      idempotencyKey,
+      totalAmountCents: 12000,
+      paymentMethod: 'DIGITAL',
+      status: 'COMPLETED',
+      createdAt: new Date(),
+      items: [
+        {
+          id: 'i1',
+          saleId: 'sale_digital_1',
+          productId: 'prod_1',
+          quantity: 1,
+          unitPriceCents: 12000,
+        },
+      ],
+    };
+
+    vi.mocked(db.$transaction).mockImplementationOnce(async (cb) => {
+      const mockTx = {};
+      return cb(mockTx as never);
+    });
+
+    vi.mocked(salesService.createSaleRecord).mockResolvedValueOnce(
+      mockCreatedSale as never
+    );
+
+    const result = await executeCheckout({
+      storeId,
+      idempotencyKey,
+      items: [{ productId: 'prod_1', quantity: 1 }],
+      paymentMethod: 'DIGITAL',
+    });
+
+    expect(result.cached).toBe(false);
+    expect(result.sale.paymentMethod).toBe('DIGITAL');
+    expect(salesService.createSaleRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storeId,
+        idempotencyKey,
+        totalAmountCents: 12000,
+        paymentMethod: 'DIGITAL',
+      }),
+      expect.anything()
+    );
+  });
+
   it('enforces Invariant #5 (Atomic Stock Guard): aborts and throws 409 Conflict when stock is insufficient', async () => {
     vi.mocked(salesService.findSaleByIdempotencyKey).mockResolvedValueOnce(null);
     vi.mocked(catalogService.getProductsForCheckout).mockResolvedValueOnce([
