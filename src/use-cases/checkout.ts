@@ -52,24 +52,30 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
 
   // 4. Invariant #5: Execute atomic conditional stock decrement and sale creation in transaction
   try {
-    const sale = await db.$transaction(async (tx) => {
-      // 4a. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
-      for (const item of items) {
-        await decrementProductStockAtomic(storeId, item.productId, item.quantity, tx);
-      }
+    const sale = await db.$transaction(
+      async (tx) => {
+        // 4a. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
+        for (const item of items) {
+          await decrementProductStockAtomic(storeId, item.productId, item.quantity, tx);
+        }
 
-      // 4b. Create sale & sale items
-      return await createSaleRecord(
-        {
-          storeId,
-          idempotencyKey,
-          totalAmountCents,
-          paymentMethod,
-          items: lineItems,
-        },
-        tx
-      );
-    });
+        // 4b. Create sale & sale items
+        return await createSaleRecord(
+          {
+            storeId,
+            idempotencyKey,
+            totalAmountCents,
+            paymentMethod,
+            items: lineItems,
+          },
+          tx
+        );
+      },
+      {
+        maxWait: 10000,
+        timeout: 20000,
+      }
+    );
 
     return {
       cached: false,
