@@ -1,6 +1,6 @@
 # StockMate 📦
 
-> **Ultra-fast, touch-first inventory and sales ledger for neighborhood retail counters.**
+> **Ultra-fast, touch-first inventory and sales ledger for neighborhood retail counters. **
 
 StockMate eliminates lost sales and stockouts for retail shopkeepers handling high customer volume and mixed cash/mobile payments. Designed to record sales in under 2 seconds with zero friction.
 
