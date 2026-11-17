@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Touch-Friendly Cart Stepper & Single-Item Deselection (Slice 5.1)
+
+- **Inline Card Stepper (`[-] [qty] [+]`):** When an item is selected on the counter grid, a prominent, high-contrast stepper pill appears with dedicated touch targets ($\ge 36\text{ dp}$ - $44\text{ dp}$) and event isolation (`stopPropagation`), preventing accidental additions when removing items.
+- **Single-Item Deselection:** Decrementing an item at quantity 1 completely deselects and removes that product from the cart without resetting the rest of the order.
+- **Cart Review Modal (`CartReviewModal`):** Accessible bottom sheet / dialog accessible by tapping the cart summary in the bottom checkout bar, displaying an itemized order breakdown with individual item prices, steppers, and 1-tap delete buttons.
+- **Pure Cart State Utilities:** `decrementCartQuantity`, `removeCartItem`, and `incrementCartQuantity` with complete unit test coverage.
+
 ### Added - Slice 5: Product Catalog CRUD & Visual Low-Stock Alerts (Milestone M4)
 
 - **Inventory Management Modal (AC 5.2 & AC 5.3):** Accessible dialog (`role="dialog"`) wired into the counter header (`Package` icon) enabling kiosk owners to add products, monitor stock levels, and trigger 1-tap quick restocks.
