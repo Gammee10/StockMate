@@ -52,3 +52,48 @@ export function formatSaleReceiptFeedback(input: SaleReceiptInput): SaleReceiptF
     summaryText,
   };
 }
+
+/**
+ * Decrements the quantity of a product in the cart.
+ * If quantity drops to <= 1, removes the item completely from the cart (Slice 5.1).
+ */
+export function decrementCartQuantity(
+  cart: { [productId: string]: number },
+  productId: string
+): { [productId: string]: number } {
+  const current = cart[productId] || 0;
+  if (current <= 1) {
+    const next = { ...cart };
+    delete next[productId];
+    return next;
+  }
+  return {
+    ...cart,
+    [productId]: current - 1,
+  };
+}
+
+/**
+ * Completely removes an item from the cart regardless of current quantity (Slice 5.1).
+ */
+export function removeCartItem(
+  cart: { [productId: string]: number },
+  productId: string
+): { [productId: string]: number } {
+  const next = { ...cart };
+  delete next[productId];
+  return next;
+}
+
+/**
+ * Increments the quantity of a product in the cart (Slice 5.1).
+ */
+export function incrementCartQuantity(
+  cart: { [productId: string]: number },
+  productId: string
+): { [productId: string]: number } {
+  return {
+    ...cart,
+    [productId]: (cart[productId] || 0) + 1,
+  };
+}

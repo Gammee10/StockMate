@@ -8,6 +8,7 @@ import {
   RotateCcw,
   LogOut,
   Minus,
+  Plus,
   Loader2,
   Banknote,
   Smartphone,
@@ -21,9 +22,13 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TillReconciliationModal } from '@/components/till-reconciliation-modal';
 import { InventoryManagementModal } from '@/components/inventory-management-modal';
+import { CartReviewModal } from '@/components/cart-review-modal';
 import {
   buildCheckoutPayload,
   formatSaleReceiptFeedback,
+  decrementCartQuantity,
+  removeCartItem,
+  incrementCartQuantity,
   type PaymentMethod,
   type SaleReceiptFeedback,
 } from '@/modules/sales/counter';
@@ -48,6 +53,7 @@ export default function CounterPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isTillOpen, setIsTillOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isCartReviewOpen, setIsCartReviewOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -80,28 +86,20 @@ export default function CounterPage() {
     if (errorMessage) setErrorMessage(null);
 
     startTransition(() => {
-      setCart((prev) => ({
-        ...prev,
-        [productId]: (prev[productId] || 0) + 1,
-      }));
+      setCart((prev) => incrementCartQuantity(prev, productId));
     });
   };
 
   const decrementCartItem = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     startTransition(() => {
-      setCart((prev) => {
-        const currentQty = prev[productId] || 0;
-        if (currentQty <= 1) {
-          const next = { ...prev };
-          delete next[productId];
-          return next;
-        }
-        return {
-          ...prev,
-          [productId]: currentQty - 1,
-        };
-      });
+      setCart((prev) => decrementCartQuantity(prev, productId));
+    });
+  };
+
+  const removeFromCart = (productId: string) => {
+    startTransition(() => {
+      setCart((prev) => removeCartItem(prev, productId));
     });
   };
 
@@ -347,20 +345,6 @@ export default function CounterPage() {
                           Stock: {product.stock}
                         </span>
                       )}
-
-                      {inCartQty > 0 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => decrementCartItem(e, product.id)}
-                          aria-label={`Remove one ${product.name}`}
-                          className="hover:bg-destructive/20 size-6 rounded-full hover:text-destructive"
-                          style={{ touchAction: 'manipulation' }}
-                        >
-                          <Minus className="size-3.5" />
-                        </Button>
-                      )}
                     </div>
 
                     <h3 className="line-clamp-2 text-sm font-medium text-foreground">
@@ -368,7 +352,7 @@ export default function CounterPage() {
                     </h3>
                   </div>
 
-                  <div className="mt-2 flex items-baseline justify-between">
+                  <div className="mt-2 flex items-center justify-between">
                     <span className="text-base font-semibold tabular-nums text-foreground">
                       {product.priceEtb}{' '}
                       <span className="text-xs font-normal text-muted-foreground">
@@ -377,9 +361,39 @@ export default function CounterPage() {
                     </span>
 
                     {inCartQty > 0 && (
-                      <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                        {inCartQty}
-                      </span>
+                      <div
+                        className="border-primary/30 shadow-xs flex items-center gap-1 rounded-lg border bg-card p-0.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => decrementCartItem(e, product.id)}
+                          aria-label={`Decrease quantity of ${product.name}`}
+                          style={{ touchAction: 'manipulation' }}
+                          className="hover:bg-destructive/10 size-7 rounded-md hover:text-destructive"
+                        >
+                          <Minus className="size-3.5" />
+                        </Button>
+                        <span className="min-w-5 text-center text-xs font-semibold tabular-nums text-foreground">
+                          {inCartQty}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product.id);
+                          }}
+                          aria-label={`Increase quantity of ${product.name}`}
+                          style={{ touchAction: 'manipulation' }}
+                          className="hover:bg-primary/10 size-7 rounded-md hover:text-primary"
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </Card>
@@ -452,7 +466,25 @@ export default function CounterPage() {
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'flex items-center gap-3 rounded-lg p-1 transition-colors',
+                totalItemsCount > 0 ? 'hover:bg-muted/50 cursor-pointer' : ''
+              )}
+              onClick={() => totalItemsCount > 0 && setIsCartReviewOpen(true)}
+              role={totalItemsCount > 0 ? 'button' : undefined}
+              tabIndex={totalItemsCount > 0 ? 0 : undefined}
+              aria-label={
+                totalItemsCount > 0
+                  ? `Review ${totalItemsCount} items in cart`
+                  : undefined
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  if (totalItemsCount > 0) setIsCartReviewOpen(true);
+                }
+              }}
+            >
               <div className="relative">
                 <ShoppingCart className="size-6 text-muted-foreground" />
                 {totalItemsCount > 0 && (
@@ -462,7 +494,9 @@ export default function CounterPage() {
                 )}
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Cart total</div>
+                <div className="text-xs text-muted-foreground">
+                  {totalItemsCount > 0 ? 'Cart total • View items' : 'Cart total'}
+                </div>
                 <div className="text-xl font-semibold tabular-nums text-foreground">
                   {(totalCents / 100).toFixed(2)}{' '}
                   <span className="text-xs font-normal text-muted-foreground">ETB</span>
@@ -518,6 +552,19 @@ export default function CounterPage() {
         isOpen={isInventoryOpen}
         onClose={() => setIsInventoryOpen(false)}
         onProductsUpdated={refetchProducts}
+      />
+
+      <CartReviewModal
+        isOpen={isCartReviewOpen}
+        onClose={() => setIsCartReviewOpen(false)}
+        cart={cart}
+        products={products}
+        onIncrement={addToCart}
+        onDecrement={(id) =>
+          decrementCartItem({ stopPropagation: () => {} } as React.MouseEvent, id)
+        }
+        onRemove={removeFromCart}
+        onClearAll={clearCart}
       />
     </main>
   );
