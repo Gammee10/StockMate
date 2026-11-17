@@ -170,9 +170,9 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     it('throws NOT_FOUND when atomic update matches 0 rows (invalid product or store)', async () => {
       vi.mocked(db.$executeRaw).mockResolvedValueOnce(0); // 0 rows updated
 
-      await expect(
-        quickRestockProductAtomic(storeId, productId, 10)
-      ).rejects.toThrow(AppError);
+      await expect(quickRestockProductAtomic(storeId, productId, 10)).rejects.toThrow(
+        AppError
+      );
     });
   });
 

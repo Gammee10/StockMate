@@ -147,7 +147,8 @@ export async function updateStoreProduct(
   if (input.name !== undefined) updateData.name = input.name;
   if (input.priceCents !== undefined) updateData.priceCents = input.priceCents;
   if (input.stock !== undefined) updateData.stock = input.stock;
-  if (input.lowStockThreshold !== undefined) updateData.lowStockThreshold = input.lowStockThreshold;
+  if (input.lowStockThreshold !== undefined)
+    updateData.lowStockThreshold = input.lowStockThreshold;
   if (input.isArchived !== undefined) updateData.isArchived = input.isArchived;
 
   // backend-check-ignore unscoped-write: storeId ownership is strictly validated before mutating
@@ -185,11 +186,15 @@ export async function quickRestockProductAtomic(
   `;
 
   if (count === 0) {
-    throw new AppError('NOT_FOUND', `Product ${productId} not found for store ${storeId}`, {
-      fields: {
-        productId: ['Product does not exist in store inventory or is archived'],
-      },
-    });
+    throw new AppError(
+      'NOT_FOUND',
+      `Product ${productId} not found for store ${storeId}`,
+      {
+        fields: {
+          productId: ['Product does not exist in store inventory or is archived'],
+        },
+      }
+    );
   }
 
   // backend-check-ignore unscoped-read: query is scoped by storeId and id

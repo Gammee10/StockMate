@@ -2,9 +2,19 @@
 import { z } from 'zod';
 
 export const createProductSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
-  priceCents: z.number().int('Price must be an integer').positive('Price must be greater than zero'),
-  stock: z.number().int('Stock must be an integer').nonnegative('Stock cannot be negative'),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be at most 100 characters'),
+  priceCents: z
+    .number()
+    .int('Price must be an integer')
+    .positive('Price must be greater than zero'),
+  stock: z
+    .number()
+    .int('Stock must be an integer')
+    .nonnegative('Stock cannot be negative'),
   lowStockThreshold: z
     .number()
     .int('Low stock threshold must be an integer')
@@ -13,9 +23,22 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be at most 100 characters').optional(),
-  priceCents: z.number().int('Price must be an integer').positive('Price must be greater than zero').optional(),
-  stock: z.number().int('Stock must be an integer').nonnegative('Stock cannot be negative').optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be at most 100 characters')
+    .optional(),
+  priceCents: z
+    .number()
+    .int('Price must be an integer')
+    .positive('Price must be greater than zero')
+    .optional(),
+  stock: z
+    .number()
+    .int('Stock must be an integer')
+    .nonnegative('Stock cannot be negative')
+    .optional(),
   lowStockThreshold: z
     .number()
     .int('Low stock threshold must be an integer')

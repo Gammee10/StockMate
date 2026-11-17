@@ -69,7 +69,9 @@ describe('Catalog Product ID API Route: /api/catalog/products/[id]', () => {
         isLowStock: false,
       };
 
-      vi.mocked(catalogService.updateStoreProduct).mockResolvedValueOnce(mockUpdated as never);
+      vi.mocked(catalogService.updateStoreProduct).mockResolvedValueOnce(
+        mockUpdated as never
+      );
 
       const req = new Request(`http://localhost:3000/api/catalog/products/${productId}`, {
         method: 'PATCH',
@@ -139,7 +141,9 @@ describe('Catalog Product ID API Route: /api/catalog/products/[id]', () => {
         isArchived: true,
       };
 
-      vi.mocked(catalogService.archiveStoreProduct).mockResolvedValueOnce(mockArchived as never);
+      vi.mocked(catalogService.archiveStoreProduct).mockResolvedValueOnce(
+        mockArchived as never
+      );
 
       const req = new Request(`http://localhost:3000/api/catalog/products/${productId}`, {
         method: 'DELETE',

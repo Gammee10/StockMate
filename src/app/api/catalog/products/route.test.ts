@@ -92,7 +92,9 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
     });
 
     it('returns 500 when database query encounters an error', async () => {
-      vi.mocked(db.product.findMany).mockRejectedValueOnce(new Error('Connection failure'));
+      vi.mocked(db.product.findMany).mockRejectedValueOnce(
+        new Error('Connection failure')
+      );
 
       const res = await GET();
       expect(res.status).toBe(500);
@@ -146,7 +148,9 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
         isLowStock: false,
       };
 
-      vi.mocked(catalogService.createStoreProduct).mockResolvedValueOnce(mockCreated as never);
+      vi.mocked(catalogService.createStoreProduct).mockResolvedValueOnce(
+        mockCreated as never
+      );
 
       const req = new Request('http://localhost:3000/api/catalog/products', {
         method: 'POST',

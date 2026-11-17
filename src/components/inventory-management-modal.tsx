@@ -212,7 +212,7 @@ export function InventoryManagementModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="inventory-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+      className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
     >
       <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border bg-card shadow-sm">
         {/* Header */}
@@ -244,7 +244,7 @@ export function InventoryManagementModal({
           {error && (
             <div
               role="alert"
-              className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              className="border-destructive/30 bg-destructive/10 flex items-center justify-between rounded-lg border p-3 text-sm text-destructive"
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="size-4 shrink-0" />
@@ -254,7 +254,7 @@ export function InventoryManagementModal({
                 variant="ghost"
                 size="sm"
                 onClick={fetchCatalog}
-                className="h-7 px-2 text-xs text-destructive hover:bg-destructive/20"
+                className="hover:bg-destructive/20 h-7 px-2 text-xs text-destructive"
               >
                 <RotateCcw className="mr-1 size-3" />
                 <span>Retry</span>
@@ -265,7 +265,7 @@ export function InventoryManagementModal({
           {successMessage && (
             <div
               role="status"
-              className="flex items-center justify-between rounded-lg border border-success/30 bg-success/15 p-3 text-sm text-success"
+              className="border-success/30 bg-success/15 flex items-center justify-between rounded-lg border p-3 text-sm text-success"
             >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 shrink-0" />
@@ -275,7 +275,7 @@ export function InventoryManagementModal({
                 variant="ghost"
                 size="sm"
                 onClick={() => setSuccessMessage(null)}
-                className="h-6 px-2 text-xs text-success hover:bg-success/20"
+                className="hover:bg-success/20 h-6 px-2 text-xs text-success"
               >
                 Dismiss
               </Button>
@@ -299,7 +299,7 @@ export function InventoryManagementModal({
           {showAddForm && (
             <form
               onSubmit={handleCreateProduct}
-              className="space-y-3 rounded-lg border border-border bg-muted/40 p-4"
+              className="bg-muted/40 space-y-3 rounded-lg border border-border p-4"
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">Add new product</h3>
@@ -319,7 +319,10 @@ export function InventoryManagementModal({
               )}
 
               <div className="space-y-1">
-                <label htmlFor="product-name" className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor="product-name"
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   Product name
                 </label>
                 <Input
@@ -335,7 +338,10 @@ export function InventoryManagementModal({
 
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div className="space-y-1">
-                  <label htmlFor="product-price" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="product-price"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Price in ETB
                   </label>
                   <Input
@@ -351,7 +357,10 @@ export function InventoryManagementModal({
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="product-stock" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="product-stock"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Initial stock
                   </label>
                   <Input
@@ -366,7 +375,10 @@ export function InventoryManagementModal({
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="product-threshold" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="product-threshold"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Low stock alert
                   </label>
                   <Input
@@ -424,7 +436,7 @@ export function InventoryManagementModal({
                   return (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-xs"
+                      className="shadow-xs flex items-center justify-between rounded-lg border border-border bg-card p-3"
                     >
                       <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center gap-2">
@@ -452,7 +464,7 @@ export function InventoryManagementModal({
                       </div>
 
                       {/* 1-Tap Quick Restock Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex shrink-0 items-center gap-1.5">
                         <Button
                           type="button"
                           variant="outline"
@@ -499,12 +511,13 @@ export function InventoryManagementModal({
 
         {/* Confirmation Dialog for Soft-Archiving */}
         {productToArchive && (
-          <div className="border-t border-border bg-muted/60 p-4">
+          <div className="bg-muted/60 border-t border-border p-4">
             <p className="text-sm font-medium text-foreground">
               Archive &quot;{productToArchive.name}&quot;?
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              The product will be removed from the counter screen without affecting past sales records.
+              The product will be removed from the counter screen without affecting past
+              sales records.
             </p>
             <div className="mt-3 flex justify-end gap-2">
               <Button
