@@ -48,11 +48,13 @@ Probes server uptime and database connectivity.
 
 ---
 
-## 2. Product Catalog (`GET /api/catalog/products`)
+## 2. Product Catalog & Inventory Endpoints
+
+### `GET /api/catalog/products`
 
 Fetches all active (unarchived) products for the authenticated store.
 
-- **Authentication:** Session Token (or Demo Store in Skeleton)
+- **Authentication:** Public / Session Token
 - **Response (200 OK):**
 
 ```json
@@ -73,6 +75,104 @@ Fetches all active (unarchived) products for the authenticated store.
   ]
 }
 ```
+
+### `POST /api/catalog/products` (AC 5.1)
+
+Creates a new product for the authenticated store catalog.
+
+- **Authentication:** Verified Session Token (`userRoute`)
+- **Request Body:**
+  ```json
+  {
+    "name": "Shiro Powder 500g",
+    "priceCents": 6500,
+    "stock": 10,
+    "lowStockThreshold": 5
+  }
+  ```
+- **Response (201 Created):**
+  ```json
+  {
+    "data": {
+      "id": "cuid_prod_1",
+      "name": "Shiro Powder 500g",
+      "priceCents": 6500,
+      "priceEtb": "65.00",
+      "stock": 10,
+      "lowStockThreshold": 5,
+      "isLowStock": false
+    }
+  }
+  ```
+
+### `PATCH /api/catalog/products/[id]` (AC 5.2)
+
+Updates product details (name, price, stock, low-stock threshold) scoped to the caller's store.
+
+- **Authentication:** Verified Session Token (`userRoute`)
+- **Request Body (Partial):**
+  ```json
+  {
+    "name": "Premium Shiro Powder 500g",
+    "priceCents": 7000
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "data": {
+      "id": "cuid_prod_1",
+      "name": "Premium Shiro Powder 500g",
+      "priceCents": 7000,
+      "priceEtb": "70.00",
+      "stock": 10,
+      "lowStockThreshold": 5,
+      "isLowStock": false
+    }
+  }
+  ```
+
+### `POST /api/catalog/products/[id]/restock` (AC 5.3)
+
+1-tap atomic quick restock for delivered goods (+5, +10, etc.).
+
+- **Authentication:** Verified Session Token (`userRoute`)
+- **Request Body:**
+  ```json
+  {
+    "quantity": 10
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+    "data": {
+      "id": "cuid_prod_1",
+      "name": "Premium Shiro Powder 500g",
+      "priceCents": 7000,
+      "priceEtb": "70.00",
+      "stock": 20,
+      "lowStockThreshold": 5,
+      "isLowStock": false
+    }
+  }
+  ```
+
+### `DELETE /api/catalog/products/[id]` (AC 5.4)
+
+Soft-archives a discontinued product (`isArchived: true`), hiding it from active counter checkouts while preserving sales ledger history and foreign keys.
+
+- **Authentication:** Verified Session Token (`userRoute`)
+- **Response (200 OK):**
+  ```json
+  {
+    "data": {
+      "id": "cuid_prod_1",
+      "name": "Premium Shiro Powder 500g",
+      "isArchived": true
+    }
+  }
+  ```
 
 ---
 

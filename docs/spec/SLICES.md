@@ -10,8 +10,8 @@
 | :---------------------------- | :---------------- | :---------------------------------------------------------------------- | :----------------: |
 | **M1: Walking Skeleton**      | Week 1 (Day 1–2)  | Live Supabase DB, Next.js API, basic counter UI, CI, Vercel host.       |  🟢 **Completed**  |
 | **M2: Core Cashier Loop**     | Week 1 (Day 3–5)  | PIN Authentication (Slice 1) + Atomic Fast-Tap Checkout (Slice 2).      |  🟢 **Completed**  |
-| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8)  | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4).     | 🟡 **In Progress** |
-| **M4: Production Ready**      | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. |     ⚪ Planned     |
+| **M3: Ethiopian Retail Beta** | Week 2 (Day 6–8)  | Dual Cash/Digital Tracking (Slice 3) + Daily Till Ledger (Slice 4).     |  🟢 **Completed**  |
+| **M4: Production Ready**      | Week 2 (Day 9–10) | Catalog Management & Low-Stock Alerts (Slice 5) + Production Hardening. | 🟡 **In Progress** |
 
 ---
 
@@ -235,10 +235,10 @@ _Before merging any slice Pull Request into `main`:_
   Completes the store owner's catalog management lifecycle once the core cashier loop and financial ledger are solid.
 
 - **Acceptance Criteria:**
-  - [ ] **AC 5.1 (Product Creation):** Owner can add a product with name, price in ETB (converted to integer cents by server), initial stock, and low-stock threshold.
-  - [ ] **AC 5.2 (Low-Stock Alert Badges):** Counter grid highlights products whose `stock <= lowStockThreshold` with high-visibility amber warning badges.
-  - [ ] **AC 5.3 (Quick-Restock):** Inventory view provides fast `+5` and `+10` tap buttons to quickly replenish delivered stock without retyping product details.
-  - [ ] **AC 5.4 (Archiving):** Discontinued products can be archived (`isArchived: true`), hiding them from the counter grid without breaking historical sales ledger records.
+  - [x] **AC 5.1 (Product Creation):** Owner can add a product with name, price in ETB (converted to integer cents by server), initial stock, and low-stock threshold.
+  - [x] **AC 5.2 (Low-Stock Alert Badges):** Counter grid highlights products whose `stock <= lowStockThreshold` with high-visibility amber warning badges.
+  - [x] **AC 5.3 (Quick-Restock):** Inventory view provides fast `+5` and `+10` tap buttons to quickly replenish delivered stock without retyping product details.
+  - [x] **AC 5.4 (Archiving):** Discontinued products can be archived (`isArchived: true`), hiding them from the counter grid without breaking historical sales ledger records.
 
 - **Out of Scope:**
   - Supplier purchase orders, barcode label printing, product images.
@@ -246,13 +246,14 @@ _Before merging any slice Pull Request into `main`:_
 - **Invariants Enforced:**
   - Invariant #1: Price stored in integer cents.
   - Invariant #3: Products strictly partitioned by `storeId`.
+  - Invariant #5: Atomic conditional increment on quick restock (`UPDATE products SET stock = stock + ?`).
 
 - **Test Plan:**
-  - Unit: Price string parser (`"120.50"` $\rightarrow$ `12050`), low-stock comparator.
+  - Unit: Price string parser (`"120.50"` $\rightarrow$ `12050`), low-stock comparator, Zod validators.
   - Integration: CRUD endpoints enforcing tenant isolation.
-  - UI: Touch modal for product creation, quick-increment buttons.
+  - UI: Touch modal for product creation, quick-increment buttons, low-stock monitor.
 
-- **Estimate:** 1 to 2 days (Actual: Pending).
+- **Estimate:** 1 to 2 days (Actual: 1 day).
 
 ---
 
