@@ -46,8 +46,12 @@ describe('Ledger Use Case: getTodayLedgerUseCase', () => {
       },
     ];
 
-    vi.mocked(salesService.getTodaySalesSummary).mockResolvedValueOnce(mockSummary as never);
-    vi.mocked(salesService.getTodayRecentSales).mockResolvedValueOnce(mockRecentSales as never);
+    vi.mocked(salesService.getTodaySalesSummary).mockResolvedValueOnce(
+      mockSummary as never
+    );
+    vi.mocked(salesService.getTodayRecentSales).mockResolvedValueOnce(
+      mockRecentSales as never
+    );
 
     const result = await getTodayLedgerUseCase({ storeId });
 
@@ -106,8 +110,12 @@ describe('Ledger Use Case: getTodayLedgerUseCase', () => {
       },
     ];
 
-    vi.mocked(salesService.getTodaySalesSummary).mockResolvedValueOnce(mockSummary as never);
-    vi.mocked(salesService.getTodayRecentSales).mockResolvedValueOnce(mockRecentSales as never);
+    vi.mocked(salesService.getTodaySalesSummary).mockResolvedValueOnce(
+      mockSummary as never
+    );
+    vi.mocked(salesService.getTodayRecentSales).mockResolvedValueOnce(
+      mockRecentSales as never
+    );
 
     const result = await getTodayLedgerUseCase({ storeId });
 

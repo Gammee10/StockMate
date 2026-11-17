@@ -76,9 +76,7 @@ export function TillReconciliationModal({
         onVoidSuccess();
       }
     } catch (err) {
-      setVoidError(
-        err instanceof Error ? err.message : 'Error voiding transaction'
-      );
+      setVoidError(err instanceof Error ? err.message : 'Error voiding transaction');
     } finally {
       setIsVoiding(false);
     }
@@ -102,7 +100,7 @@ export function TillReconciliationModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="till-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+      className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
     >
       <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-border bg-card shadow-sm">
         {/* Header */}
@@ -134,7 +132,7 @@ export function TillReconciliationModal({
           {error && (
             <div
               role="alert"
-              className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+              className="border-destructive/30 bg-destructive/10 flex items-center justify-between rounded-lg border p-3 text-sm text-destructive"
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="size-4 shrink-0" />
@@ -144,7 +142,7 @@ export function TillReconciliationModal({
                 variant="ghost"
                 size="sm"
                 onClick={fetchLedger}
-                className="h-7 px-2 text-xs text-destructive hover:bg-destructive/20"
+                className="hover:bg-destructive/20 h-7 px-2 text-xs text-destructive"
               >
                 <RotateCcw className="mr-1 size-3" />
                 <span>Retry</span>
@@ -234,18 +232,14 @@ export function TillReconciliationModal({
                             </span>
                             <Badge
                               variant={
-                                sale.paymentMethod === 'CASH'
-                                  ? 'outline'
-                                  : 'secondary'
+                                sale.paymentMethod === 'CASH' ? 'outline' : 'secondary'
                               }
                             >
                               {sale.paymentMethod}
                             </Badge>
                             <Badge
                               variant={
-                                sale.status === 'COMPLETED'
-                                  ? 'success'
-                                  : 'destructive'
+                                sale.status === 'COMPLETED' ? 'success' : 'destructive'
                               }
                             >
                               {sale.status}
@@ -269,15 +263,13 @@ export function TillReconciliationModal({
                                 setSaleToVoid(sale);
                                 setVoidError(null);
                               }}
-                              className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              className="hover:bg-destructive/10 h-8 px-2.5 text-xs text-destructive hover:text-destructive"
                             >
                               Void
                             </Button>
                           )}
                           {sale.status === 'COMPLETED' && !sale.isVoidable && (
-                            <span className="text-xs text-muted-foreground">
-                              Locked
-                            </span>
+                            <span className="text-xs text-muted-foreground">Locked</span>
                           )}
                         </div>
                       </div>
@@ -303,7 +295,7 @@ export function TillReconciliationModal({
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="void-alert-title"
-          className="fixed inset-0 z-60 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          className="z-60 bg-background/80 fixed inset-0 flex items-center justify-center p-4 backdrop-blur-sm"
         >
           <div className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div>
@@ -314,16 +306,15 @@ export function TillReconciliationModal({
                 Void transaction #{saleToVoid.id.slice(-6)}?
               </h4>
               <p className="mt-1 text-sm text-muted-foreground">
-                {(saleToVoid.totalAmountCents / 100).toFixed(2)} ETB will be
-                removed from daily revenue. Product inventory will be atomically
-                restored.
+                {(saleToVoid.totalAmountCents / 100).toFixed(2)} ETB will be removed from
+                daily revenue. Product inventory will be atomically restored.
               </p>
             </div>
 
             {voidError && (
               <div
                 role="alert"
-                className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive"
+                className="border-destructive/30 bg-destructive/10 flex items-center gap-2 rounded-lg border p-2 text-xs text-destructive"
               >
                 <AlertTriangle className="size-3.5 shrink-0" />
                 <span>{voidError}</span>
@@ -345,11 +336,7 @@ export function TillReconciliationModal({
                 disabled={isVoiding}
                 onClick={handleConfirmVoid}
               >
-                {isVoiding ? (
-                  <Loader2 className="size-5 animate-spin" />
-                ) : (
-                  'Confirm void'
-                )}
+                {isVoiding ? <Loader2 className="size-5 animate-spin" /> : 'Confirm void'}
               </Button>
             </div>
           </div>

@@ -109,14 +109,14 @@ describe('Void Sale Use Case: executeVoidSale', () => {
       paymentMethod: 'CASH',
       status: 'COMPLETED',
       createdAt: expiredCreatedAt,
-      items: [{ id: 'item_1', saleId, productId: 'prod_1', quantity: 1, unitPriceCents: 5000 }],
+      items: [
+        { id: 'item_1', saleId, productId: 'prod_1', quantity: 1, unitPriceCents: 5000 },
+      ],
     };
 
     vi.mocked(salesService.findSaleById).mockResolvedValueOnce(existingSale as never);
 
-    await expect(
-      executeVoidSale({ storeId, saleId })
-    ).rejects.toThrowError(AppError);
+    await expect(executeVoidSale({ storeId, saleId })).rejects.toThrowError(AppError);
 
     expect(db.$transaction).not.toHaveBeenCalled();
     expect(catalogService.incrementProductStockAtomic).not.toHaveBeenCalled();
@@ -132,14 +132,16 @@ describe('Void Sale Use Case: executeVoidSale', () => {
       paymentMethod: 'CASH',
       status: 'VOIDED',
       createdAt: freshCreatedAt,
-      items: [{ id: 'item_1', saleId, productId: 'prod_1', quantity: 1, unitPriceCents: 5000 }],
+      items: [
+        { id: 'item_1', saleId, productId: 'prod_1', quantity: 1, unitPriceCents: 5000 },
+      ],
     };
 
-    vi.mocked(salesService.findSaleById).mockResolvedValueOnce(alreadyVoidedSale as never);
+    vi.mocked(salesService.findSaleById).mockResolvedValueOnce(
+      alreadyVoidedSale as never
+    );
 
-    await expect(
-      executeVoidSale({ storeId, saleId })
-    ).rejects.toThrowError(AppError);
+    await expect(executeVoidSale({ storeId, saleId })).rejects.toThrowError(AppError);
 
     expect(db.$transaction).not.toHaveBeenCalled();
     expect(catalogService.incrementProductStockAtomic).not.toHaveBeenCalled();
@@ -148,9 +150,7 @@ describe('Void Sale Use Case: executeVoidSale', () => {
   it('rejects voiding if sale does not exist or belongs to another store (404 Not Found)', async () => {
     vi.mocked(salesService.findSaleById).mockResolvedValueOnce(null);
 
-    await expect(
-      executeVoidSale({ storeId, saleId })
-    ).rejects.toThrowError(AppError);
+    await expect(executeVoidSale({ storeId, saleId })).rejects.toThrowError(AppError);
 
     expect(db.$transaction).not.toHaveBeenCalled();
     expect(catalogService.incrementProductStockAtomic).not.toHaveBeenCalled();

@@ -121,10 +121,14 @@ export async function incrementProductStockAtomic(
   `;
 
   if (count === 0) {
-    throw new AppError('NOT_FOUND', `Product id ${productId} not found for store ${storeId}`, {
-      fields: {
-        productId: [`Product does not exist in store inventory`],
-      },
-    });
+    throw new AppError(
+      'NOT_FOUND',
+      `Product id ${productId} not found for store ${storeId}`,
+      {
+        fields: {
+          productId: [`Product does not exist in store inventory`],
+        },
+      }
+    );
   }
 }

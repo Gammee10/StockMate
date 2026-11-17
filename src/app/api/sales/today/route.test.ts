@@ -57,7 +57,9 @@ describe('Sales API Route: GET /api/sales/today', () => {
       ],
     };
 
-    vi.mocked(ledgerUseCase.getTodayLedgerUseCase).mockResolvedValueOnce(mockLedger as never);
+    vi.mocked(ledgerUseCase.getTodayLedgerUseCase).mockResolvedValueOnce(
+      mockLedger as never
+    );
 
     const req = new Request('http://localhost:3000/api/sales/today', {
       method: 'GET',

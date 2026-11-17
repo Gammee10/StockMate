@@ -9,11 +9,8 @@ const EAT_OFFSET_MS = 3 * 60 * 60 * 1000;
 export function getEatStartOfDayUtc(now = new Date()): Date {
   const eatTime = new Date(now.getTime() + EAT_OFFSET_MS);
   const startOfDayEatUtcMs =
-    Date.UTC(
-      eatTime.getUTCFullYear(),
-      eatTime.getUTCMonth(),
-      eatTime.getUTCDate()
-    ) - EAT_OFFSET_MS;
+    Date.UTC(eatTime.getUTCFullYear(), eatTime.getUTCMonth(), eatTime.getUTCDate()) -
+    EAT_OFFSET_MS;
 
   return new Date(startOfDayEatUtcMs);
 }
