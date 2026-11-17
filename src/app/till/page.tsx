@@ -94,6 +94,20 @@ export default function TillPage() {
     }
   };
 
+  const getItemsSummary = (sale: RecentSaleRecord) => {
+    if (!sale.items || sale.items.length === 0) return '0 items';
+    return sale.items
+      .map((it) => `${it.quantity}x ${it.product?.name || 'Item'}`)
+      .join(', ');
+  };
+
+  const getMinutesRemaining = (createdAt: Date | string) => {
+    const elapsedMinutes = Math.floor(
+      (Date.now() - new Date(createdAt).getTime()) / 60000
+    );
+    return Math.max(0, 15 - elapsedMinutes);
+  };
+
   return (
     <NavigationShell>
       <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
@@ -267,55 +281,62 @@ export default function TillPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentSales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell className="hidden sm:table-cell tabular-nums text-muted-foreground">
-                        {formatEatTime(sale.createdAt)}
-                      </TableCell>
-                      <TableCell className="max-w-48 truncate font-medium text-foreground">
-                        <div>{sale.itemsDescription}</div>
-                        <div className="text-muted-foreground sm:hidden flex items-center gap-1.5 mt-0.5 text-xs">
-                          <span>{formatEatTime(sale.createdAt)}</span>
-                          <span>&bull;</span>
-                          <span>{sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <Badge variant={sale.paymentMethod === 'DIGITAL' ? 'secondary' : 'outline'}>
-                          {sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold tabular-nums text-foreground">
-                        {(sale.totalAmountCents / 100).toFixed(2)} ETB
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {sale.isVoided ? (
-                          <Badge variant="destructive">Voided</Badge>
-                        ) : (
-                          <Badge variant="success">Completed</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {sale.isVoided ? (
-                          <span className="text-muted-foreground">Reversed</span>
-                        ) : sale.canVoid ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSaleToVoid(sale)}
-                            className="h-7 text-xs text-destructive hover:bg-destructive/10"
-                            style={{ touchAction: 'manipulation' }}
-                          >
-                            Void ({sale.minutesRemaining}m)
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground" title="Window expired">
-                            Locked (&gt;15m)
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {recentSales.map((sale) => {
+                    const isVoided = sale.status === 'VOIDED';
+                    const canVoid = sale.status === 'COMPLETED' && sale.isVoidable;
+                    const minutesLeft = getMinutesRemaining(sale.createdAt);
+                    const itemsSummary = getItemsSummary(sale);
+
+                    return (
+                      <TableRow key={sale.id}>
+                        <TableCell className="hidden sm:table-cell tabular-nums text-muted-foreground">
+                          {formatEatTime(sale.createdAt)}
+                        </TableCell>
+                        <TableCell className="max-w-48 truncate font-medium text-foreground">
+                          <div>{itemsSummary}</div>
+                          <div className="text-muted-foreground sm:hidden flex items-center gap-1.5 mt-0.5 text-xs">
+                            <span>{formatEatTime(sale.createdAt)}</span>
+                            <span>&bull;</span>
+                            <span>{sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant={sale.paymentMethod === 'DIGITAL' ? 'secondary' : 'outline'}>
+                            {sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold tabular-nums text-foreground">
+                          {(sale.totalAmountCents / 100).toFixed(2)} ETB
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {isVoided ? (
+                            <Badge variant="destructive">Voided</Badge>
+                          ) : (
+                            <Badge variant="success">Completed</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isVoided ? (
+                            <span className="text-muted-foreground">Reversed</span>
+                          ) : canVoid ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSaleToVoid(sale)}
+                              className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                              style={{ touchAction: 'manipulation' }}
+                            >
+                              Void ({minutesLeft}m)
+                            </Button>
+                          ) : (
+                            <span className="text-muted-foreground" title="Window expired">
+                              Locked (&gt;15m)
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -369,7 +390,7 @@ export default function TillPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Items:</span>
                     <span className="font-medium text-foreground truncate max-w-xs">
-                      {saleToVoid.itemsDescription}
+                      {getItemsSummary(saleToVoid)}
                     </span>
                   </div>
                 </div>

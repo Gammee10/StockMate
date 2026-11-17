@@ -1,27 +1,23 @@
+// src/app/page.tsx
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
 import {
   ShoppingCart,
   AlertTriangle,
-  CheckCircle2,
   RotateCcw,
-  LogOut,
   Minus,
   Plus,
   Loader2,
   Banknote,
   Smartphone,
-  Calculator,
-  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { TillReconciliationModal } from '@/components/till-reconciliation-modal';
-import { InventoryManagementModal } from '@/components/inventory-management-modal';
+import { NavigationShell } from '@/components/navigation-shell';
 import { CartReviewModal } from '@/components/cart-review-modal';
 import { CheckoutFeedbackModal } from '@/components/checkout-feedback-modal';
 import {
@@ -34,7 +30,7 @@ import {
   type SaleReceiptFeedback,
 } from '@/modules/sales/counter';
 
-interface Product {
+export interface Product {
   id: string;
   name: string;
   priceCents: number;
@@ -52,8 +48,6 @@ export default function CounterPage() {
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [isTillOpen, setIsTillOpen] = useState(false);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isCartReviewOpen, setIsCartReviewOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -127,11 +121,6 @@ export default function CounterPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  };
-
   // 1-Tap Checkout Handler (AC 2.1 - AC 2.5, AC 3.1 - AC 3.4)
   const handleCheckout = async () => {
     const payload = buildCheckoutPayload(cart, paymentMethod);
@@ -195,7 +184,10 @@ export default function CounterPage() {
 
       // AC 2.5 & AC 3.4: Immediate visual confirmation with payment method
       const totalEtb = (sale.totalAmountCents / 100).toFixed(2);
-      const totalCount = payload.items.reduce((sum, item) => sum + item.quantity, 0);
+      const totalCount = payload.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
 
       const feedback = formatSaleReceiptFeedback({
         totalEtb,
@@ -251,345 +243,272 @@ export default function CounterPage() {
   const totalItemsCount = Object.values(cart).reduce((sum, q) => sum + q, 0);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-between p-4 pb-56">
-      {/* Header */}
-      <header className="mb-4 flex items-center justify-between border-b border-border pb-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            StockMate counter
-          </h1>
-          <p className="text-xs text-muted-foreground">{storeName}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsInventoryOpen(true)}
-            className="h-8 gap-1.5 px-2.5 text-xs"
-          >
-            <Package className="size-3.5" />
-            <span>Inventory</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsTillOpen(true)}
-            className="h-8 gap-1.5 px-2.5 text-xs"
-          >
-            <Calculator className="size-3.5" />
-            <span>Daily till</span>
-          </Button>
-          <Badge variant="success">
-            <CheckCircle2 className="mr-1 size-3" />
-            <span>Online</span>
-          </Badge>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleLogout}
-            aria-label="Sign out"
-            className="size-8"
-          >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
-      </header>
-
-      {/* Screen-reader feedback announcement */}
-      <div className="sr-only" aria-live="polite">
-        {feedbackModal.isOpen &&
-          feedbackModal.type === 'success' &&
-          feedbackModal.feedback?.summaryText}
-        {feedbackModal.isOpen &&
-          feedbackModal.type === 'error' &&
-          feedbackModal.errorMessage}
-      </div>
-
-      {/* Product Grid */}
-      <section className="flex-1">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">
-            Fast-tap counter items
-          </h2>
-          <span className="text-xs text-muted-foreground">Tap tile to add</span>
+    <NavigationShell storeName={storeName}>
+      <main className="mx-auto flex min-h-[calc(100vh-80px)] max-w-lg flex-col justify-between p-4 pb-56">
+        {/* Screen-reader feedback announcement */}
+        <div className="sr-only" aria-live="polite">
+          {feedbackModal.isOpen &&
+            feedbackModal.type === 'success' &&
+            feedbackModal.feedback?.summaryText}
+          {feedbackModal.isOpen &&
+            feedbackModal.type === 'error' &&
+            feedbackModal.errorMessage}
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-28 rounded-xl" />
-            ))}
+        {/* Product Grid */}
+        <section className="flex-1">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">
+              Fast-tap counter items
+            </h2>
+            <span className="text-xs text-muted-foreground">Tap tile to add</span>
           </div>
-        ) : products.length === 0 ? (
-          <div className="rounded-xl border border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              No products available in catalog.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {products.map((product) => {
-              const inCartQty = cart[product.id] || 0;
-              const isOutOfStock = product.stock <= 0;
 
-              return (
-                <Card
-                  key={product.id}
-                  onClick={() => !isOutOfStock && addToCart(product.id)}
-                  className={cn(
-                    'relative flex min-h-28 select-none flex-col justify-between p-3 transition-colors',
-                    isOutOfStock
-                      ? 'bg-muted/20 cursor-not-allowed opacity-50'
-                      : 'hover:bg-muted/50 cursor-pointer active:scale-[0.98]',
-                    inCartQty > 0 && 'bg-primary/5 border-primary ring-1 ring-primary'
-                  )}
-                  style={{ touchAction: 'manipulation' }}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      {isOutOfStock ? (
-                        <Badge variant="destructive" className="px-1.5 py-0 text-xs">
-                          Out of stock
-                        </Badge>
-                      ) : product.isLowStock ? (
-                        <Badge variant="warning" className="px-1.5 py-0 text-xs">
-                          <AlertTriangle className="mr-1 size-3" />
-                          Low: {product.stock}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          Stock: {product.stock}
-                        </span>
-                      )}
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-xl" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <Card className="flex flex-col items-center justify-center p-8 text-center">
+              <ShoppingCart className="mb-2 size-8 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">
+                No active products in catalog
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Add products in the Inventory tab to start selling.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {products.map((product) => {
+                const inCartQty = cart[product.id] || 0;
+                const isSelected = inCartQty > 0;
+
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => addToCart(product.id)}
+                    style={{ touchAction: 'manipulation' }}
+                    className={cn(
+                      'relative flex min-h-28 flex-col justify-between rounded-xl border p-3 text-left transition-colors',
+                      isSelected
+                        ? 'border-primary bg-primary/10 shadow-sm'
+                        : 'border-border bg-card hover:border-primary/50'
+                    )}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1">
+                        {product.isLowStock ? (
+                          <Badge variant="warning" className="h-5 px-1.5 text-xs">
+                            <AlertTriangle className="mr-1 size-3" />
+                            <span>Low: {product.stock}</span>
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Stock: {product.stock}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-foreground">
+                        {product.name}
+                      </h3>
                     </div>
 
-                    <h3 className="line-clamp-2 text-sm font-medium text-foreground">
-                      {product.name}
-                    </h3>
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-base font-semibold tabular-nums text-foreground">
-                      {product.priceEtb}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        ETB
-                      </span>
-                    </span>
-
-                    {inCartQty > 0 && (
-                      <div
-                        className="border-primary/30 shadow-xs flex items-center gap-1 rounded-lg border bg-card p-0.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => decrementCartItem(e, product.id)}
-                          aria-label={`Decrease quantity of ${product.name}`}
-                          style={{ touchAction: 'manipulation' }}
-                          className="hover:bg-destructive/10 size-7 rounded-md hover:text-destructive"
-                        >
-                          <Minus className="size-3.5" />
-                        </Button>
-                        <span className="min-w-5 text-center text-xs font-semibold tabular-nums text-foreground">
-                          {inCartQty}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product.id);
-                          }}
-                          aria-label={`Increase quantity of ${product.name}`}
-                          style={{ touchAction: 'manipulation' }}
-                          className="hover:bg-primary/10 size-7 rounded-md hover:text-primary"
-                        >
-                          <Plus className="size-3.5" />
-                        </Button>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="text-sm font-semibold tabular-nums text-foreground">
+                        {product.priceEtb}{' '}
+                        <span className="text-xs text-muted-foreground">ETB</span>
                       </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
 
-      {/* Floating Counter Checkout Bar (Touch targets >= 64 dp) */}
-      <footer className="bg-background/95 fixed bottom-0 left-0 right-0 border-t border-border p-4 backdrop-blur">
-        <div className="mx-auto max-w-lg space-y-3">
-          {/* AC 3.1 & AC 3.2: 1-Tap Payment Method Selector (Touch targets >= 64 dp) */}
-          <div
-            className="grid grid-cols-2 gap-2"
-            role="group"
-            aria-label="Payment method selector"
-          >
-            <Button
-              type="button"
-              variant={paymentMethod === 'CASH' ? 'default' : 'outline'}
-              size="kiosk"
-              onClick={() => setPaymentMethod('CASH')}
-              disabled={isCheckingOut}
-              style={{ touchAction: 'manipulation' }}
-              className="flex h-16 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold"
-              aria-pressed={paymentMethod === 'CASH'}
-            >
-              <Banknote className="size-5 shrink-0" />
-              <div className="flex flex-col text-left">
-                <span className="leading-none">Cash</span>
-                <span
-                  className={cn(
-                    'text-xs font-normal leading-tight',
-                    paymentMethod === 'CASH'
-                      ? 'text-primary-foreground/80'
-                      : 'text-muted-foreground'
-                  )}
-                >
-                  Physical drawer
-                </span>
-              </div>
-            </Button>
+                      {/* Inline Card Stepper when selected */}
+                      {isSelected && (
+                        <div
+                          className="flex items-center rounded-lg border border-primary/30 bg-background/90 p-0.5 shadow-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => decrementCartItem(e, product.id)}
+                            aria-label={`Decrease quantity of ${product.name}`}
+                            className="size-7 text-foreground hover:bg-muted"
+                            style={{ touchAction: 'manipulation' }}
+                          >
+                            <Minus className="size-3.5" />
+                          </Button>
+                          <span className="min-w-5 px-1 text-center text-xs font-semibold tabular-nums text-foreground">
+                            {inCartQty}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product.id);
+                            }}
+                            aria-label={`Increase quantity of ${product.name}`}
+                            className="size-7 text-foreground hover:bg-muted"
+                            style={{ touchAction: 'manipulation' }}
+                          >
+                            <Plus className="size-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
-            <Button
-              type="button"
-              variant={paymentMethod === 'DIGITAL' ? 'default' : 'outline'}
-              size="kiosk"
-              onClick={() => setPaymentMethod('DIGITAL')}
-              disabled={isCheckingOut}
-              style={{ touchAction: 'manipulation' }}
-              className="flex h-16 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold"
-              aria-pressed={paymentMethod === 'DIGITAL'}
-            >
-              <Smartphone className="size-5 shrink-0" />
-              <div className="flex flex-col text-left">
-                <span className="leading-none">Digital</span>
-                <span
-                  className={cn(
-                    'text-xs font-normal leading-tight',
-                    paymentMethod === 'DIGITAL'
-                      ? 'text-primary-foreground/80'
-                      : 'text-muted-foreground'
-                  )}
-                >
-                  Telebirr / CBE
-                </span>
-              </div>
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between gap-3">
+        {/* Floating Kiosk Checkout Bar */}
+        <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 p-4 backdrop-blur-sm sm:static sm:mt-6 sm:rounded-xl sm:border sm:p-4">
+          <div className="mx-auto max-w-lg space-y-3">
+            {/* Dual Payment Selector (AC 3.1 & AC 3.2) */}
             <div
-              className={cn(
-                'flex items-center gap-3 rounded-lg p-1 transition-colors',
-                totalItemsCount > 0 ? 'hover:bg-muted/50 cursor-pointer' : ''
-              )}
-              onClick={() => totalItemsCount > 0 && setIsCartReviewOpen(true)}
-              role={totalItemsCount > 0 ? 'button' : undefined}
-              tabIndex={totalItemsCount > 0 ? 0 : undefined}
-              aria-label={
-                totalItemsCount > 0
-                  ? `Review ${totalItemsCount} items in cart`
-                  : undefined
-              }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  if (totalItemsCount > 0) setIsCartReviewOpen(true);
-                }
-              }}
+              className="grid grid-cols-2 gap-2"
+              role="radiogroup"
+              aria-label="Payment method"
             >
-              <div className="relative">
-                <ShoppingCart className="size-6 text-muted-foreground" />
-                {totalItemsCount > 0 && (
-                  <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentMethod === 'CASH'}
+                onClick={() => setPaymentMethod('CASH')}
+                style={{ touchAction: 'manipulation' }}
+                className={cn(
+                  'flex min-h-14 items-center justify-center gap-2 rounded-xl border p-2 text-sm font-semibold transition-colors',
+                  paymentMethod === 'CASH'
+                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                    : 'border-border bg-card text-foreground hover:bg-muted/50'
+                )}
+              >
+                <Banknote className="size-5 shrink-0" />
+                <div className="text-left leading-tight">
+                  <div>Cash</div>
+                  <div className="text-xs font-normal opacity-85">
+                    Physical drawer
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentMethod === 'DIGITAL'}
+                onClick={() => setPaymentMethod('DIGITAL')}
+                style={{ touchAction: 'manipulation' }}
+                className={cn(
+                  'flex min-h-14 items-center justify-center gap-2 rounded-xl border p-2 text-sm font-semibold transition-colors',
+                  paymentMethod === 'DIGITAL'
+                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                    : 'border-border bg-card text-foreground hover:bg-muted/50'
+                )}
+              >
+                <Smartphone className="size-5 shrink-0" />
+                <div className="text-left leading-tight">
+                  <div>Digital</div>
+                  <div className="text-xs font-normal opacity-85">
+                    Telebirr / CBE
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Total and Checkout Controls */}
+            <div className="flex items-center justify-between gap-3 pt-1">
+              {/* Cart review trigger */}
+              <button
+                type="button"
+                onClick={() => setIsCartReviewOpen(true)}
+                disabled={totalItemsCount === 0}
+                style={{ touchAction: 'manipulation' }}
+                className={cn(
+                  'flex flex-col text-left transition-opacity',
+                  totalItemsCount === 0 ? 'opacity-40' : 'hover:opacity-80'
+                )}
+              >
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                     {totalItemsCount}
                   </span>
-                )}
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">
-                  {totalItemsCount > 0 ? 'Cart total • View items' : 'Cart total'}
+                  <span>Cart total &bull; View items</span>
                 </div>
                 <div className="text-xl font-semibold tabular-nums text-foreground">
                   {(totalCents / 100).toFixed(2)}{' '}
-                  <span className="text-xs font-normal text-muted-foreground">ETB</span>
+                  <span className="text-xs text-muted-foreground">ETB</span>
                 </div>
+              </button>
+
+              <div className="flex items-center gap-2">
+                {totalItemsCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={clearCart}
+                    aria-label="Clear cart"
+                    className="size-11 rounded-xl"
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <RotateCcw className="size-5" />
+                  </Button>
+                )}
+
+                <Button
+                  size="kiosk"
+                  disabled={totalItemsCount === 0 || isCheckingOut}
+                  onClick={handleCheckout}
+                  className="min-w-36 font-semibold"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 className="mr-2 size-5 animate-spin" />
+                      <span>Processing</span>
+                    </>
+                  ) : (
+                    <span>
+                      Checkout {paymentMethod === 'DIGITAL' ? '(Digital)' : '(Cash)'}
+                    </span>
+                  )}
+                </Button>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              {totalItemsCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={clearCart}
-                  aria-label="Reset cart"
-                  className="size-16 shrink-0 rounded-xl"
-                  style={{ touchAction: 'manipulation' }}
-                  disabled={isCheckingOut}
-                >
-                  <RotateCcw className="size-5" />
-                </Button>
-              )}
-
-              <Button
-                size="kiosk"
-                disabled={totalItemsCount === 0 || isCheckingOut}
-                onClick={handleCheckout}
-                className="min-w-36 font-semibold"
-                style={{ touchAction: 'manipulation' }}
-              >
-                {isCheckingOut ? (
-                  <>
-                    <Loader2 className="mr-2 size-5 animate-spin" />
-                    <span>Processing</span>
-                  </>
-                ) : (
-                  <span>
-                    Checkout {paymentMethod === 'DIGITAL' ? '(Digital)' : '(Cash)'}
-                  </span>
-                )}
-              </Button>
-            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
 
-      <TillReconciliationModal
-        isOpen={isTillOpen}
-        onClose={() => setIsTillOpen(false)}
-        onVoidSuccess={refetchProducts}
-      />
+        {/* Cart Review Drawer / Modal */}
+        <CartReviewModal
+          isOpen={isCartReviewOpen}
+          onClose={() => setIsCartReviewOpen(false)}
+          cart={cart}
+          products={products}
+          onIncrement={addToCart}
+          onDecrement={(id) =>
+            decrementCartItem(
+              { stopPropagation: () => {} } as React.MouseEvent,
+              id
+            )
+          }
+          onRemove={removeFromCart}
+          onClearAll={clearCart}
+        />
 
-      <InventoryManagementModal
-        isOpen={isInventoryOpen}
-        onClose={() => setIsInventoryOpen(false)}
-        onProductsUpdated={refetchProducts}
-      />
-
-      <CartReviewModal
-        isOpen={isCartReviewOpen}
-        onClose={() => setIsCartReviewOpen(false)}
-        cart={cart}
-        products={products}
-        onIncrement={addToCart}
-        onDecrement={(id) =>
-          decrementCartItem({ stopPropagation: () => {} } as React.MouseEvent, id)
-        }
-        onRemove={removeFromCart}
-        onClearAll={clearCart}
-      />
-
-      <CheckoutFeedbackModal
-        isOpen={feedbackModal.isOpen}
-        type={feedbackModal.type}
-        feedback={feedbackModal.feedback}
-        errorMessage={feedbackModal.errorMessage}
-        onClose={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
-      />
-    </main>
+        {/* Animated Checkout Feedback Modal */}
+        <CheckoutFeedbackModal
+          isOpen={feedbackModal.isOpen}
+          type={feedbackModal.type}
+          feedback={feedbackModal.feedback}
+          errorMessage={feedbackModal.errorMessage}
+          onClose={() =>
+            setFeedbackModal((prev) => ({ ...prev, isOpen: false }))
+          }
+        />
+      </main>
+    </NavigationShell>
   );
 }
