@@ -32,9 +32,13 @@
 4. **Idempotency on Checkouts:**
    - `POST /api/sales` must always require an `Idempotency-Key` header (UUID).
    - Replaying the same key must return the cached sale without re-decrementing stock.
-5. **Atomic Stock Decrement:**
+5. **Atomic Stock Decrement & Restoration:**
    - Must use atomic SQL conditional guards: `UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?`.
+   - Must restore stock atomically on void: `UPDATE products SET stock = stock + ? WHERE id = ? AND store_id = ?`.
    - Never allow negative stock.
+6. **15-Minute Void Window Guard:**
+   - Completed transactions can only be voided within 15 minutes (`Date.now() - sale.createdAt <= 15 * 60 * 1000`).
+   - Transactions older than 15 minutes are strictly immutable from counter interfaces (`400 Bad Request`) to prevent end-of-day ledger fraud.
 
 ---
 

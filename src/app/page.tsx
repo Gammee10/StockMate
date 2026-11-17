@@ -11,12 +11,14 @@ import {
   Loader2,
   Banknote,
   Smartphone,
+  Calculator,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { TillReconciliationModal } from '@/components/till-reconciliation-modal';
 import {
   buildCheckoutPayload,
   formatSaleReceiptFeedback,
@@ -42,12 +44,12 @@ export default function CounterPage() {
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isTillOpen, setIsTillOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  // Load active catalog and store metadata
-  useEffect(() => {
+  const refetchProducts = () => {
     fetch('/api/catalog/products')
       .then((res) => res.json())
       .then((data) => {
@@ -57,12 +59,16 @@ export default function CounterPage() {
             setStoreName(data.products[0].storeName);
           }
         }
-        setLoading(false);
       })
       .catch((err) => {
         console.error('Fetch error:', err);
-        setLoading(false);
       });
+  };
+
+  // Load active catalog and store metadata
+  useEffect(() => {
+    refetchProducts();
+    setLoading(false);
   }, []);
 
   const addToCart = (productId: string) => {
@@ -204,6 +210,15 @@ export default function CounterPage() {
           <p className="text-xs text-muted-foreground">{storeName}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsTillOpen(true)}
+            className="h-8 gap-1.5 px-2.5 text-xs"
+          >
+            <Calculator className="size-3.5" />
+            <span>Daily till</span>
+          </Button>
           <Badge variant="success">
             <CheckCircle2 className="mr-1 size-3" />
             <span>Online</span>
@@ -480,6 +495,12 @@ export default function CounterPage() {
           </div>
         </div>
       </footer>
+
+      <TillReconciliationModal
+        isOpen={isTillOpen}
+        onClose={() => setIsTillOpen(false)}
+        onVoidSuccess={refetchProducts}
+      />
     </main>
   );
 }

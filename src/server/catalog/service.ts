@@ -102,3 +102,33 @@ export async function decrementProductStockAtomic(
     });
   }
 }
+
+/**
+ * Enforces Invariant #5: Atomic Stock Restoration on Void.
+ * Atomically increments product stock by the voided quantity inside transaction.
+ */
+export async function incrementProductStockAtomic(
+  storeId: string,
+  productId: string,
+  quantity: number,
+  tx: Prisma.TransactionClient
+): Promise<void> {
+  const count = await tx.$executeRaw`
+    UPDATE products
+    SET stock = stock + ${quantity}, updated_at = NOW()
+    WHERE id = ${productId}
+      AND store_id = ${storeId}
+  `;
+
+  if (count === 0) {
+    throw new AppError(
+      'NOT_FOUND',
+      `Product id ${productId} not found for store ${storeId}`,
+      {
+        fields: {
+          productId: [`Product does not exist in store inventory`],
+        },
+      }
+    );
+  }
+}

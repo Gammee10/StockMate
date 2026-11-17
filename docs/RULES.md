@@ -19,8 +19,12 @@
 4. **Idempotency on Unsafe Checkouts:**
    - `POST /api/sales` must always require a client-generated UUID `Idempotency-Key` header.
    - Duplicate keys within 24 hours must return the cached sale without re-decrementing stock.
-5. **No Negative Stock:**
+5. **No Negative Stock & Atomic Inventory Restoration:**
    - Decrements must use conditional atomic SQL: `UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?`.
+   - Voids must atomically restore inventory: `UPDATE products SET stock = stock + ? WHERE id = ? AND store_id = ?`.
+6. **15-Minute Void Window Guard:**
+   - Completed transactions can only be voided within 15 minutes of completion.
+   - Retroactive sales alteration after 15 minutes is strictly rejected with `HTTP 400 Bad Request` (`VOID_WINDOW_EXPIRED`).
 
 ---
 

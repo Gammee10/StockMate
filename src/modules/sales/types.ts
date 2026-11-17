@@ -38,6 +38,33 @@ export interface SaleWithItems {
   }>;
 }
 
+export interface TodaySalesSummary {
+  cashRevenueCents: number;
+  digitalRevenueCents: number;
+  totalRevenueCents: number;
+  completedCount: number;
+  voidedCount: number;
+  voidedRevenueCents: number;
+}
+
+export interface RecentSaleRecord extends SaleWithItems {
+  isVoidable: boolean;
+  items: Array<{
+    id?: string;
+    productId: string;
+    quantity: number;
+    unitPriceCents: number;
+    product?: {
+      name: string;
+    };
+  }>;
+}
+
+export interface TodayLedgerResponse {
+  summary: TodaySalesSummary;
+  recentSales: RecentSaleRecord[];
+}
+
 export interface CheckoutResult {
   cached: boolean;
   sale: SaleWithItems;
