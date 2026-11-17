@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Slice 5: Product Catalog CRUD & Visual Low-Stock Alerts (Milestone M4)
+
+- **Inventory Management Modal (AC 5.2 & AC 5.3):** Accessible dialog (`role="dialog"`) wired into the counter header (`Package` icon) enabling kiosk owners to add products, monitor stock levels, and trigger 1-tap quick restocks.
+- **Product Creation API (AC 5.1):** `POST /api/catalog/products` creates items with price in ETB, automatically converted to integer cents (**Invariant #1**), initial stock, and low-stock threshold, strictly scoped by session token `storeId` (**Invariant #3**).
+- **Product Update API (AC 5.2):** `PATCH /api/catalog/products/[id]` updates product name, price, stock, or threshold with tenant isolation.
+- **1-Tap Quick Restock (AC 5.3):** `POST /api/catalog/products/[id]/restock` replenishes delivered inventory (+5, +10) via atomic SQL increments (`UPDATE products SET stock = stock + ? WHERE id = ? AND store_id = ?`) (**Invariant #5**).
+- **Visual Low-Stock Alerts (AC 5.2):** Automatic amber warning badges (`variant="warning"`, `stock <= lowStockThreshold`) highlighted across counter checkout tiles and inventory modal.
+- **Soft Archiving (AC 5.4):** `DELETE /api/catalog/products/[id]` marks discontinued items `isArchived: true`, immediately removing them from active checkouts while preserving sales ledger integrity and foreign keys.
+- **ADR 0007:** Documented architectural decisions for catalog CRUD, atomic restock, and soft archival.
+
 ### Added - Slice 4: Daily Sales Ledger & End-of-Day Till Reconciliation (Milestone M3)
 
 - **Daily Till Reconciliation Modal (AC 4.2):** Accessible dialog directly available from counter header displaying expected cash in drawer vs digital wallet balance (Telebirr / CBE Birr), and recent transactions list with method and status badges.

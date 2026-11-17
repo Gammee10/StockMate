@@ -13,6 +13,7 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 - **Mixed Payment Support:** Instant cash tracking and 1-tap digital payments (Telebirr / CBE).
 - **End-of-Day Till Reconciliation:** Instant ledger view matching physical cash in drawer against digital bank balances (Telebirr / CBE).
 - **15-Minute Safe Void:** 1-tap void for recent errors that atomically restores product stock while strictly preventing retroactive ledger tampering.
+- **Product Catalog & Low-Stock Alerts:** 1-tap quick restock (+5, +10), catalog editing with integer cents precision, soft-archiving, and visual low-stock badges.
 - **Zero Running Cost:** Designed for \$0/month baseline deployment on Vercel + Supabase.
 - **Production-Grade Architecture:** Modular monolith with strict domain boundaries, automated fitness functions, and comprehensive ADRs.
 

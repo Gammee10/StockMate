@@ -12,6 +12,7 @@ import {
   Banknote,
   Smartphone,
   Calculator,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TillReconciliationModal } from '@/components/till-reconciliation-modal';
+import { InventoryManagementModal } from '@/components/inventory-management-modal';
 import {
   buildCheckoutPayload,
   formatSaleReceiptFeedback,
@@ -45,6 +47,7 @@ export default function CounterPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isTillOpen, setIsTillOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -210,6 +213,15 @@ export default function CounterPage() {
           <p className="text-xs text-muted-foreground">{storeName}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsInventoryOpen(true)}
+            className="h-8 gap-1.5 px-2.5 text-xs"
+          >
+            <Package className="size-3.5" />
+            <span>Inventory</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -500,6 +512,12 @@ export default function CounterPage() {
         isOpen={isTillOpen}
         onClose={() => setIsTillOpen(false)}
         onVoidSuccess={refetchProducts}
+      />
+
+      <InventoryManagementModal
+        isOpen={isInventoryOpen}
+        onClose={() => setIsInventoryOpen(false)}
+        onProductsUpdated={refetchProducts}
       />
     </main>
   );
