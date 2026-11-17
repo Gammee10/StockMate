@@ -205,3 +205,102 @@ One or more requested `productId`s do not exist in the caller's store catalog or
 ```
 
 Transaction rolled back atomically; zero stock decremented.
+
+---
+
+## 5. Daily Sales Ledger (`GET /api/sales/today`)
+
+Calculates aggregated revenue metrics and recent sales for the authenticated store from midnight East Africa Time (EAT, UTC+3).
+
+- **Authentication:** Session Token (`stockmate_session` cookie)
+- **Timezone Boundary:** Midnight EAT (00:00:00 EAT = 21:00:00 UTC of prior day)
+
+### Response (`200 OK`)
+
+```json
+{
+  "data": {
+    "summary": {
+      "cashRevenueCents": 150000,
+      "digitalRevenueCents": 320000,
+      "totalRevenueCents": 470000,
+      "completedCount": 14,
+      "voidedCount": 1,
+      "voidedRevenueCents": 5000
+    },
+    "recentSales": [
+      {
+        "id": "cuid_sale_1",
+        "storeId": "cuid_store",
+        "totalAmountCents": 5000,
+        "paymentMethod": "CASH",
+        "idempotencyKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "status": "COMPLETED",
+        "createdAt": "2026-11-17T11:45:00.000Z",
+        "isVoidable": true,
+        "items": [
+          {
+            "id": "item_1",
+            "productId": "cuid_prod_1",
+            "quantity": 1,
+            "unitPriceCents": 5000,
+            "product": {
+              "name": "Cooking Oil 1L"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 6. Void Sale (`POST /api/sales/[id]/void`)
+
+Voids a completed sale within the 15-minute allowable window and atomically restores product inventory.
+
+- **Authentication:** Session Token (`stockmate_session` cookie)
+- **Path Parameters:**
+  - `id`: Unique identifier of the sale to void.
+
+### Responses
+
+#### `200 OK` (Sale Voided)
+
+```json
+{
+  "data": {
+    "id": "cuid_sale_1",
+    "storeId": "cuid_store",
+    "totalAmountCents": 5000,
+    "paymentMethod": "CASH",
+    "idempotencyKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "status": "VOIDED",
+    "createdAt": "2026-11-17T11:45:00.000Z",
+    "items": [...]
+  }
+}
+```
+
+#### `400 Bad Request` (`VOID_WINDOW_EXPIRED`)
+
+Returned when transaction was completed more than 15 minutes ago.
+```json
+{
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Cannot void sale after 15 minutes have elapsed"
+  }
+}
+```
+
+#### `404 Not Found` (`SALE_NOT_FOUND`)
+
+Sale does not exist or belongs to another store tenant.
+
+#### `409 Conflict` (`ALREADY_VOIDED`)
+
+Sale has already been voided. Cannot be re-voided.
+

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Slice 4: Daily Sales Ledger & End-of-Day Till Reconciliation (Milestone M3)
+
+- **Daily Till Reconciliation Modal (AC 4.2):** Accessible dialog directly available from counter header displaying expected cash in drawer vs digital wallet balance (Telebirr / CBE Birr), and recent transactions list with method and status badges.
+- **EAT-Scoped Revenue Aggregation (AC 4.1):** `GET /api/sales/today` computes `cashRevenueCents`, `digitalRevenueCents`, `totalRevenueCents`, `completedCount`, `voidedCount`, and `voidedRevenueCents` strictly in integer cents (Invariant #1) starting from midnight East Africa Time (UTC+3).
+- **15-Minute Void Window Guard (AC 4.3):** `POST /api/sales/[id]/void` allows cashiers to void recent erroneous transactions within 15 minutes. Transactions older than 15 minutes are strictly locked (`400 Bad Request` - `VOID_WINDOW_EXPIRED`) to prevent end-of-day ledger fraud.
+- **Atomic Stock Restoration (Invariant #5):** Voiding executes atomic SQL inventory restoration (`UPDATE products SET stock = stock + ? WHERE id = ? AND store_id = ?`) inside an interactive transaction with `{ maxWait: 10000, timeout: 20000 }` resilience buffers.
+- **Counter Inventory Sync:** Voiding instantly refetches active catalog and synchronizes counter product tile stock levels.
+- **ADR 0006:** Recorded architectural decision for daily ledger boundaries and 15-minute void workflow.
+
 ### Added - Slice 3: Dual Cash & Digital Payment Tracking (Milestone M3)
 
 - **1-Tap Payment Toggle (AC 3.1 & AC 3.2):** High-contrast payment method selector (`Cash` vs `Digital: Telebirr / CBE`) in counter checkout bar with touch targets $\ge 64\text{ dp}$ and `touch-action: manipulation`.

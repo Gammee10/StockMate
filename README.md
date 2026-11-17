@@ -11,6 +11,8 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 - **Rush-Hour Speed:** Large 64dp+ touch targets; 1-tap cart additions and 1-tap checkout.
 - **Strict Invariants:** Atomic conditional stock decrements; guaranteed zero negative inventory.
 - **Mixed Payment Support:** Instant cash tracking and 1-tap digital payments (Telebirr / CBE).
+- **End-of-Day Till Reconciliation:** Instant ledger view matching physical cash in drawer against digital bank balances (Telebirr / CBE).
+- **15-Minute Safe Void:** 1-tap void for recent errors that atomically restores product stock while strictly preventing retroactive ledger tampering.
 - **Zero Running Cost:** Designed for \$0/month baseline deployment on Vercel + Supabase.
 - **Production-Grade Architecture:** Modular monolith with strict domain boundaries, automated fitness functions, and comprehensive ADRs.
 

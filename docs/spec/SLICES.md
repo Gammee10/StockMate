@@ -198,13 +198,13 @@ _Before merging any slice Pull Request into `main`:_
   Closes the accounting loop for the owner after sales and payments are actively flowing.
 
 - **Acceptance Criteria:**
-  - [ ] **AC 4.1 (Today's Summary API):** `GET /api/sales/today` computes today's aggregated metrics (in East Africa Time UTC+3):
+  - [x] **AC 4.1 (Today's Summary API):** `GET /api/sales/today` computes today's aggregated metrics (in East Africa Time UTC+3):
     - `totalRevenueCents` & `totalRevenueEtb`
     - `cashRevenueCents` & `cashRevenueEtb`
     - `digitalRevenueCents` & `digitalRevenueEtb`
     - `salesCount`
-  - [ ] **AC 4.2 (Till Reconciliation View):** Clean summary screen showing expected physical cash in till vs expected digital wallet balance.
-  - [ ] **AC 4.3 (Void Transaction & Restock):** Cashier can void an erroneous transaction within 15 minutes of completion. Voiding updates sale status to `VOIDED` and atomically restores product inventory (`UPDATE products SET stock = stock + ?`).
+  - [x] **AC 4.2 (Till Reconciliation View):** Clean summary screen showing expected physical cash in till vs expected digital wallet balance.
+  - [x] **AC 4.3 (Void Transaction & Restock):** Cashier can void an erroneous transaction within 15 minutes of completion. Voiding updates sale status to `VOIDED` and atomically restores product inventory (`UPDATE products SET stock = stock + ?`).
 
 - **Out of Scope:**
   - Multi-month PDF exports or complex tax reporting.
@@ -213,13 +213,14 @@ _Before merging any slice Pull Request into `main`:_
 - **Invariants Enforced:**
   - Invariant #1: All financial sums calculated in integer cents.
   - Invariant #3: Query strictly filtered by authenticated `storeId`.
+  - Invariant #5: Atomic conditional inventory increment inside interactive transaction.
 
 - **Test Plan:**
   - Unit: Timezone boundary calculation (UTC+3 midnight).
   - Integration: Ledger aggregation accuracy across mixed cash/digital sales; void sale stock restoration transaction.
   - UI: Till summary drawer, void button with confirmation modal.
 
-- **Estimate:** 1 to 2 days (Actual: Pending).
+- **Estimate:** 1 to 2 days (Actual: 1 day).
 
 ---
 
