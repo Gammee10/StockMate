@@ -256,7 +256,7 @@ export default function InventoryPage() {
         {successMessage && (
           <div
             role="status"
-            className="flex items-center justify-between rounded-lg border border-success/30 bg-success/15 p-4 text-sm font-medium text-success"
+            className="border-success/30 bg-success/15 flex items-center justify-between rounded-lg border p-4 text-sm font-medium text-success"
           >
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 shrink-0" />
@@ -266,7 +266,7 @@ export default function InventoryPage() {
               variant="ghost"
               size="sm"
               onClick={() => setSuccessMessage(null)}
-              className="h-7 text-xs text-success hover:bg-success/20"
+              className="hover:bg-success/20 h-7 text-xs text-success"
             >
               Dismiss
             </Button>
@@ -277,7 +277,7 @@ export default function InventoryPage() {
         {error && (
           <div
             role="alert"
-            className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+            className="border-destructive/30 bg-destructive/10 flex items-center justify-between rounded-lg border p-4 text-sm text-destructive"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0" />
@@ -287,7 +287,7 @@ export default function InventoryPage() {
               variant="ghost"
               size="sm"
               onClick={fetchCatalog}
-              className="h-7 text-xs text-destructive hover:bg-destructive/20"
+              className="hover:bg-destructive/20 h-7 text-xs text-destructive"
             >
               Retry
             </Button>
@@ -302,42 +302,54 @@ export default function InventoryPage() {
           <dl className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <dt className="text-sm font-medium text-muted-foreground">Active products</dt>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Active products
+                </dt>
                 <Package className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? <Skeleton className="h-8 w-16" /> : products.length}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Available on checkout counter</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Available on checkout counter
+              </p>
             </div>
 
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <dt className="text-sm font-medium text-muted-foreground">Low stock alerts</dt>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Low stock alerts
+                </dt>
                 <AlertTriangle className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? <Skeleton className="h-8 w-16" /> : lowStockCount}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Items requiring immediate restock</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Items requiring immediate restock
+              </p>
             </div>
 
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <dt className="text-sm font-medium text-muted-foreground">Total stock units</dt>
+                <dt className="text-sm font-medium text-muted-foreground">
+                  Total stock units
+                </dt>
                 <Package className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? <Skeleton className="h-8 w-20" /> : `${totalUnits} units`}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Combined inventory in store</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Combined inventory in store
+              </p>
             </div>
           </dl>
         </section>
 
         {/* Filter & Search Bar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <Input
               type="search"
@@ -360,7 +372,7 @@ export default function InventoryPage() {
               variant={filterLowStockOnly ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => setFilterLowStockOnly(true)}
-              className="h-8 text-xs font-medium gap-1.5"
+              className="h-8 gap-1.5 text-xs font-medium"
             >
               <AlertTriangle className="size-3 text-warning" />
               <span>Low stock ({lowStockCount})</span>
@@ -381,9 +393,7 @@ export default function InventoryPage() {
               <div className="mb-2 flex size-10 items-center justify-center rounded-lg border border-border bg-muted">
                 <Package className="size-5 text-muted-foreground" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">
-                No products found
-              </h3>
+              <h3 className="text-sm font-semibold text-foreground">No products found</h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 {searchQuery || filterLowStockOnly
                   ? 'Try clearing your search query or filter.'
@@ -395,11 +405,13 @@ export default function InventoryPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead className="hidden sm:table-cell text-right">Price</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   <TableHead className="text-right">Quick restock</TableHead>
-                  <TableHead className="hidden sm:table-cell text-right">Action</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">
+                    Action
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -411,8 +423,10 @@ export default function InventoryPage() {
                       {/* Product Name (Main Cell) */}
                       <TableCell className="font-medium text-foreground">
                         <div>{p.name}</div>
-                        <div className="text-muted-foreground sm:hidden flex items-center gap-2 mt-0.5 text-xs">
-                          <span className="font-semibold text-foreground">{p.priceEtb} ETB</span>
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+                          <span className="font-semibold text-foreground">
+                            {p.priceEtb} ETB
+                          </span>
                           {p.isLowStock && (
                             <Badge variant="warning" className="h-4 px-1 text-xs">
                               Low
@@ -422,14 +436,14 @@ export default function InventoryPage() {
                       </TableCell>
 
                       {/* Price in ETB (Desktop) */}
-                      <TableCell className="hidden sm:table-cell text-right font-semibold tabular-nums text-foreground">
+                      <TableCell className="hidden text-right font-semibold tabular-nums text-foreground sm:table-cell">
                         {p.priceEtb} ETB
                       </TableCell>
 
                       {/* Current Stock */}
                       <TableCell className="tabular-nums">
                         <span className="font-semibold text-foreground">{p.stock}</span>
-                        <span className="text-xs text-muted-foreground ml-1">units</span>
+                        <span className="ml-1 text-xs text-muted-foreground">units</span>
                       </TableCell>
 
                       {/* Low Stock Badge (Desktop) */}
@@ -471,7 +485,7 @@ export default function InventoryPage() {
                       </TableCell>
 
                       {/* Archival Action */}
-                      <TableCell className="hidden sm:table-cell text-right">
+                      <TableCell className="hidden text-right sm:table-cell">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -497,13 +511,16 @@ export default function InventoryPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-product-title"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in-0 duration-150"
+            className="bg-background/80 animate-in fade-in-0 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-150"
           >
-            <div className="relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm animate-in zoom-in-95 duration-200">
+            <div className="animate-in zoom-in-95 relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm duration-200">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Package className="size-5 text-foreground" />
-                  <h3 id="add-product-title" className="text-base font-semibold text-foreground">
+                  <h3
+                    id="add-product-title"
+                    className="text-base font-semibold text-foreground"
+                  >
                     Add new product
                   </h3>
                 </div>
@@ -519,13 +536,16 @@ export default function InventoryPage() {
 
               <form onSubmit={handleCreateProduct} className="space-y-4">
                 {formError && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2.5 text-xs text-destructive">
+                  <div className="border-destructive/30 bg-destructive/10 rounded-md border p-2.5 text-xs text-destructive">
                     {formError}
                   </div>
                 )}
 
                 <div className="space-y-1.5">
-                  <label htmlFor="product-name" className="text-xs font-medium text-foreground">
+                  <label
+                    htmlFor="product-name"
+                    className="text-xs font-medium text-foreground"
+                  >
                     Product name
                   </label>
                   <Input
@@ -539,7 +559,10 @@ export default function InventoryPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="product-price" className="text-xs font-medium text-foreground">
+                  <label
+                    htmlFor="product-price"
+                    className="text-xs font-medium text-foreground"
+                  >
                     Price in ETB
                   </label>
                   <Input
@@ -557,7 +580,10 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="product-stock" className="text-xs font-medium text-foreground">
+                    <label
+                      htmlFor="product-stock"
+                      className="text-xs font-medium text-foreground"
+                    >
                       Initial stock
                     </label>
                     <Input
@@ -572,7 +598,10 @@ export default function InventoryPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="product-threshold" className="text-xs font-medium text-foreground">
+                    <label
+                      htmlFor="product-threshold"
+                      className="text-xs font-medium text-foreground"
+                    >
                       Low stock alert
                     </label>
                     <Input
@@ -623,13 +652,16 @@ export default function InventoryPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="archive-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in-0 duration-150"
+            className="bg-background/80 animate-in fade-in-0 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-150"
           >
-            <div className="relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm animate-in zoom-in-95 duration-200">
+            <div className="animate-in zoom-in-95 relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm duration-200">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Archive className="size-5 text-destructive shrink-0" />
-                  <h3 id="archive-modal-title" className="text-base font-semibold text-foreground">
+                  <Archive className="size-5 shrink-0 text-destructive" />
+                  <h3
+                    id="archive-modal-title"
+                    className="text-base font-semibold text-foreground"
+                  >
                     Archive product
                   </h3>
                 </div>
@@ -645,10 +677,13 @@ export default function InventoryPage() {
 
               <div className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  Are you sure you want to archive <strong className="text-foreground">{productToArchive.name}</strong>? It will immediately disappear from the active cashier counter.
+                  Are you sure you want to archive{' '}
+                  <strong className="text-foreground">{productToArchive.name}</strong>? It
+                  will immediately disappear from the active cashier counter.
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Past sales receipts and till records will continue to display this item with total accuracy.
+                  Past sales receipts and till records will continue to display this item
+                  with total accuracy.
                 </p>
               </div>
 

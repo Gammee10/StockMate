@@ -30,7 +30,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
 
 export function isNavActive(currentPath: string, targetHref: string): boolean {
   if (targetHref === '/counter') {
-    return currentPath === '/' || currentPath === '/counter' || currentPath.startsWith('/counter/');
+    return (
+      currentPath === '/' ||
+      currentPath === '/counter' ||
+      currentPath.startsWith('/counter/')
+    );
   }
   return currentPath === targetHref || currentPath.startsWith(`${targetHref}/`);
 }
@@ -57,7 +61,7 @@ export function NavigationShell({
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Global Navigation Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
+      <header className="bg-background/95 sticky top-0 z-40 border-b border-border backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-2.5 px-4 py-3 sm:px-6">
           {/* Top Bar: Brand, Store Metadata, Status & Logout */}
           <div className="flex items-center justify-between gap-3">
@@ -80,7 +84,10 @@ export function NavigationShell({
             </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden items-center gap-1 sm:flex" aria-label="Main Navigation">
+            <nav
+              className="hidden items-center gap-1 sm:flex"
+              aria-label="Main Navigation"
+            >
               {NAV_ITEMS.map((item) => {
                 const active = isNavActive(pathname, item.href);
                 const IconComponent =
@@ -125,7 +132,7 @@ export function NavigationShell({
 
           {/* Mobile Navigation Tabs (Touch targets >= 44dp) */}
           <nav
-            className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-muted/50 p-1 sm:hidden"
+            className="bg-muted/50 grid grid-cols-3 gap-1 rounded-lg border border-border p-1 sm:hidden"
             aria-label="Mobile Navigation Tabs"
           >
             {NAV_ITEMS.map((item) => {
@@ -144,8 +151,8 @@ export function NavigationShell({
                   className={cn(
                     'flex h-11 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors',
                     active
-                      ? 'bg-background text-foreground shadow-sm font-semibold'
-                      : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                      ? 'bg-background font-semibold text-foreground shadow-sm'
+                      : 'hover:bg-background/50 text-muted-foreground hover:text-foreground'
                   )}
                   style={{ touchAction: 'manipulation' }}
                   aria-current={active ? 'page' : undefined}

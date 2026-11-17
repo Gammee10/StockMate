@@ -184,10 +184,7 @@ export default function CounterPage() {
 
       // AC 2.5 & AC 3.4: Immediate visual confirmation with payment method
       const totalEtb = (sale.totalAmountCents / 100).toFixed(2);
-      const totalCount = payload.items.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-      );
+      const totalCount = payload.items.reduce((sum, item) => sum + item.quantity, 0);
 
       const feedback = formatSaleReceiptFeedback({
         totalEtb,
@@ -295,8 +292,8 @@ export default function CounterPage() {
                     className={cn(
                       'relative flex min-h-28 flex-col justify-between rounded-xl border p-3 text-left transition-colors',
                       isSelected
-                        ? 'border-primary bg-primary/10 shadow-sm'
-                        : 'border-border bg-card hover:border-primary/50'
+                        ? 'bg-primary/10 border-primary shadow-sm'
+                        : 'hover:border-primary/50 border-border bg-card'
                     )}
                   >
                     <div>
@@ -326,7 +323,7 @@ export default function CounterPage() {
                       {/* Inline Card Stepper when selected */}
                       {isSelected && (
                         <div
-                          className="flex items-center rounded-lg border border-primary/30 bg-background/90 p-0.5 shadow-sm"
+                          className="border-primary/30 bg-background/90 flex items-center rounded-lg border p-0.5 shadow-sm"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Button
@@ -366,7 +363,7 @@ export default function CounterPage() {
         </section>
 
         {/* Floating Kiosk Checkout Bar */}
-        <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 p-4 backdrop-blur-sm sm:static sm:mt-6 sm:rounded-xl sm:border sm:p-4">
+        <footer className="bg-card/95 fixed bottom-0 left-0 right-0 z-40 border-t border-border p-4 backdrop-blur-sm sm:static sm:mt-6 sm:rounded-xl sm:border sm:p-4">
           <div className="mx-auto max-w-lg space-y-3">
             {/* Dual Payment Selector (AC 3.1 & AC 3.2) */}
             <div
@@ -384,15 +381,13 @@ export default function CounterPage() {
                   'flex min-h-14 items-center justify-center gap-2 rounded-xl border p-2 text-sm font-semibold transition-colors',
                   paymentMethod === 'CASH'
                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                    : 'border-border bg-card text-foreground hover:bg-muted/50'
+                    : 'hover:bg-muted/50 border-border bg-card text-foreground'
                 )}
               >
                 <Banknote className="size-5 shrink-0" />
                 <div className="text-left leading-tight">
                   <div>Cash</div>
-                  <div className="text-xs font-normal opacity-85">
-                    Physical drawer
-                  </div>
+                  <div className="text-xs font-normal opacity-85">Physical drawer</div>
                 </div>
               </button>
 
@@ -406,15 +401,13 @@ export default function CounterPage() {
                   'flex min-h-14 items-center justify-center gap-2 rounded-xl border p-2 text-sm font-semibold transition-colors',
                   paymentMethod === 'DIGITAL'
                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                    : 'border-border bg-card text-foreground hover:bg-muted/50'
+                    : 'hover:bg-muted/50 border-border bg-card text-foreground'
                 )}
               >
                 <Smartphone className="size-5 shrink-0" />
                 <div className="text-left leading-tight">
                   <div>Digital</div>
-                  <div className="text-xs font-normal opacity-85">
-                    Telebirr / CBE
-                  </div>
+                  <div className="text-xs font-normal opacity-85">Telebirr / CBE</div>
                 </div>
               </button>
             </div>
@@ -489,10 +482,7 @@ export default function CounterPage() {
           products={products}
           onIncrement={addToCart}
           onDecrement={(id) =>
-            decrementCartItem(
-              { stopPropagation: () => {} } as React.MouseEvent,
-              id
-            )
+            decrementCartItem({ stopPropagation: () => {} } as React.MouseEvent, id)
           }
           onRemove={removeFromCart}
           onClearAll={clearCart}
@@ -504,9 +494,7 @@ export default function CounterPage() {
           type={feedbackModal.type}
           feedback={feedbackModal.feedback}
           errorMessage={feedbackModal.errorMessage}
-          onClose={() =>
-            setFeedbackModal((prev) => ({ ...prev, isOpen: false }))
-          }
+          onClose={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
         />
       </main>
     </NavigationShell>

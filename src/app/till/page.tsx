@@ -132,7 +132,7 @@ export default function TillPage() {
         {error && (
           <div
             role="alert"
-            className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+            className="border-destructive/30 bg-destructive/10 flex items-center justify-between rounded-lg border p-4 text-sm text-destructive"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0" />
@@ -142,7 +142,7 @@ export default function TillPage() {
               variant="ghost"
               size="sm"
               onClick={fetchLedger}
-              className="h-7 text-xs text-destructive hover:bg-destructive/20"
+              className="hover:bg-destructive/20 h-7 text-xs text-destructive"
             >
               Retry
             </Button>
@@ -163,14 +163,16 @@ export default function TillPage() {
                 </dt>
                 <Banknote className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
                   `${((summary?.cashRevenueCents || 0) / 100).toFixed(2)} ETB`
                 )}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Physical till drawer balance</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Physical till drawer balance
+              </p>
             </div>
 
             {/* Card 2: Digital Payments */}
@@ -181,14 +183,16 @@ export default function TillPage() {
                 </dt>
                 <Smartphone className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
                   `${((summary?.digitalRevenueCents || 0) / 100).toFixed(2)} ETB`
                 )}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Telebirr & CBE Birr total</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Telebirr & CBE Birr total
+              </p>
             </div>
 
             {/* Card 3: Total Completed Sales */}
@@ -199,7 +203,7 @@ export default function TillPage() {
                 </dt>
                 <Receipt className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
@@ -219,7 +223,7 @@ export default function TillPage() {
                 </dt>
                 <RotateCcw className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
@@ -241,7 +245,8 @@ export default function TillPage() {
                 Today&apos;s sales history
               </h2>
               <p className="text-xs text-muted-foreground">
-                Transactions within 15 minutes can be voided to reverse ledger and restore stock.
+                Transactions within 15 minutes can be voided to reverse ledger and restore
+                stock.
               </p>
             </div>
             <span className="text-xs text-muted-foreground">
@@ -265,7 +270,8 @@ export default function TillPage() {
                   No sales recorded today
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  When you complete checkouts at the counter, they will appear here in real time.
+                  When you complete checkouts at the counter, they will appear here in
+                  real time.
                 </p>
               </div>
             ) : (
@@ -289,19 +295,25 @@ export default function TillPage() {
 
                     return (
                       <TableRow key={sale.id}>
-                        <TableCell className="hidden sm:table-cell tabular-nums text-muted-foreground">
+                        <TableCell className="hidden tabular-nums text-muted-foreground sm:table-cell">
                           {formatEatTime(sale.createdAt)}
                         </TableCell>
                         <TableCell className="max-w-48 truncate font-medium text-foreground">
                           <div>{itemsSummary}</div>
-                          <div className="text-muted-foreground sm:hidden flex items-center gap-1.5 mt-0.5 text-xs">
+                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
                             <span>{formatEatTime(sale.createdAt)}</span>
                             <span>&bull;</span>
-                            <span>{sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}</span>
+                            <span>
+                              {sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <Badge variant={sale.paymentMethod === 'DIGITAL' ? 'secondary' : 'outline'}>
+                          <Badge
+                            variant={
+                              sale.paymentMethod === 'DIGITAL' ? 'secondary' : 'outline'
+                            }
+                          >
                             {sale.paymentMethod === 'DIGITAL' ? 'Digital' : 'Cash'}
                           </Badge>
                         </TableCell>
@@ -323,13 +335,16 @@ export default function TillPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => setSaleToVoid(sale)}
-                              className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                              className="hover:bg-destructive/10 h-7 text-xs text-destructive"
                               style={{ touchAction: 'manipulation' }}
                             >
                               Void ({minutesLeft}m)
                             </Button>
                           ) : (
-                            <span className="text-muted-foreground" title="Window expired">
+                            <span
+                              className="text-muted-foreground"
+                              title="Window expired"
+                            >
                               Locked (&gt;15m)
                             </span>
                           )}
@@ -349,13 +364,16 @@ export default function TillPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="void-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in-0 duration-150"
+            className="bg-background/80 animate-in fade-in-0 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-150"
           >
-            <div className="relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm animate-in zoom-in-95 duration-200">
+            <div className="animate-in zoom-in-95 relative flex w-full max-w-md flex-col rounded-xl border border-border bg-card p-6 shadow-sm duration-200">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="size-5 text-destructive shrink-0" />
-                  <h3 id="void-modal-title" className="text-base font-semibold text-foreground">
+                  <AlertTriangle className="size-5 shrink-0 text-destructive" />
+                  <h3
+                    id="void-modal-title"
+                    className="text-base font-semibold text-foreground"
+                  >
                     Void sale transaction
                   </h3>
                 </div>
@@ -371,10 +389,11 @@ export default function TillPage() {
 
               <div className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  Are you sure you want to void this transaction? This will reverse the sale in the daily ledger and atomically restore inventory stock levels.
+                  Are you sure you want to void this transaction? This will reverse the
+                  sale in the daily ledger and atomically restore inventory stock levels.
                 </p>
 
-                <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-1.5 text-xs">
+                <div className="bg-muted/40 space-y-1.5 rounded-lg border border-border p-3 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Amount:</span>
                     <span className="font-semibold tabular-nums text-foreground">
@@ -384,19 +403,21 @@ export default function TillPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Payment method:</span>
                     <span className="font-medium text-foreground">
-                      {saleToVoid.paymentMethod === 'DIGITAL' ? 'Digital (Telebirr/CBE)' : 'Cash (Physical Drawer)'}
+                      {saleToVoid.paymentMethod === 'DIGITAL'
+                        ? 'Digital (Telebirr/CBE)'
+                        : 'Cash (Physical Drawer)'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Items:</span>
-                    <span className="font-medium text-foreground truncate max-w-xs">
+                    <span className="max-w-xs truncate font-medium text-foreground">
                       {getItemsSummary(saleToVoid)}
                     </span>
                   </div>
                 </div>
 
                 {voidError && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2.5 text-xs text-destructive">
+                  <div className="border-destructive/30 bg-destructive/10 rounded-md border p-2.5 text-xs text-destructive">
                     {voidError}
                   </div>
                 )}
