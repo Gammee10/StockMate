@@ -30,7 +30,17 @@ export function CheckoutFeedbackModal({
       onClose();
     }, timeoutMs);
 
-    return () => clearTimeout(timer);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, type, onClose]);
 
   if (!isOpen) return null;
