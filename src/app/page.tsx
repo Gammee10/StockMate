@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { TillReconciliationModal } from '@/components/till-reconciliation-modal';
 import { InventoryManagementModal } from '@/components/inventory-management-modal';
 import { CartReviewModal } from '@/components/cart-review-modal';
+import { CheckoutFeedbackModal } from '@/components/checkout-feedback-modal';
 import {
   buildCheckoutPayload,
   formatSaleReceiptFeedback,
@@ -56,6 +57,17 @@ export default function CounterPage() {
   const [isCartReviewOpen, setIsCartReviewOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    feedback?: SaleReceiptFeedback | null;
+    errorMessage?: string | null;
+  }>({
+    isOpen: false,
+    type: 'success',
+    feedback: null,
+    errorMessage: null,
+  });
   const [, startTransition] = useTransition();
 
   const refetchProducts = () => {
@@ -82,6 +94,9 @@ export default function CounterPage() {
 
   const addToCart = (productId: string) => {
     // Clear flash feedback on new tap to reset counter
+    if (feedbackModal.isOpen) {
+      setFeedbackModal((prev) => ({ ...prev, isOpen: false }));
+    }
     if (saleSuccess) setSaleSuccess(null);
     if (errorMessage) setErrorMessage(null);
 
@@ -107,6 +122,9 @@ export default function CounterPage() {
     setCart({});
     setPaymentMethod('CASH');
     setErrorMessage(null);
+    if (feedbackModal.isOpen) {
+      setFeedbackModal((prev) => ({ ...prev, isOpen: false }));
+    }
   };
 
   const handleLogout = async () => {
@@ -143,12 +161,31 @@ export default function CounterPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const msg =
+        const rawMsg =
           errorData.error?.message ||
           (response.status === 409
             ? 'Insufficient stock for one or more items.'
             : 'Checkout failed. Please try again.');
-        setErrorMessage(msg);
+
+        // Client-side fallback to ensure any "Insufficient stock for product id <id>" is converted to product name if present
+        let displayMsg = rawMsg;
+        const idMatch = rawMsg.match(
+          /Insufficient stock for product id ([a-zA-Z0-9_-]+)/
+        );
+        if (idMatch && idMatch[1]) {
+          const matchedProd = products.find((p) => p.id === idMatch[1]);
+          if (matchedProd) {
+            displayMsg = `Insufficient stock for "${matchedProd.name}".`;
+          }
+        }
+
+        setErrorMessage(displayMsg);
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          feedback: null,
+          errorMessage: displayMsg,
+        });
         setIsCheckingOut(false);
         return;
       }
@@ -167,6 +204,12 @@ export default function CounterPage() {
       });
 
       setSaleSuccess(feedback);
+      setFeedbackModal({
+        isOpen: true,
+        type: 'success',
+        feedback,
+        errorMessage: null,
+      });
 
       // Update in-memory stock for responsive inventory display
       setProducts((prev) =>
@@ -188,7 +231,14 @@ export default function CounterPage() {
       setIsCheckingOut(false);
     } catch (err) {
       console.error('Checkout network error:', err);
-      setErrorMessage('Network connection error. Please retry.');
+      const networkMsg = 'Network connection error. Please retry.';
+      setErrorMessage(networkMsg);
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        feedback: null,
+        errorMessage: networkMsg,
+      });
       setIsCheckingOut(false);
     }
   };
@@ -245,48 +295,14 @@ export default function CounterPage() {
         </div>
       </header>
 
-      {/* Instant Feedback Banners (AC 2.5 & AC 3.4) */}
-      <div className="mb-3 space-y-2">
-        {saleSuccess && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="border-success/30 bg-success/15 flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium text-success"
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-4 shrink-0" />
-              <span>{saleSuccess.summaryText}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSaleSuccess(null)}
-              className="hover:bg-success/20 h-6 px-2 text-xs text-success hover:text-success"
-            >
-              Dismiss
-            </Button>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div
-            role="alert"
-            className="border-destructive/30 bg-destructive/15 flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium text-destructive"
-          >
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="size-4 shrink-0" />
-              <span>{errorMessage}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setErrorMessage(null)}
-              className="hover:bg-destructive/20 h-6 px-2 text-xs text-destructive hover:text-destructive"
-            >
-              Dismiss
-            </Button>
-          </div>
-        )}
+      {/* Screen-reader feedback announcement */}
+      <div className="sr-only" aria-live="polite">
+        {feedbackModal.isOpen &&
+          feedbackModal.type === 'success' &&
+          feedbackModal.feedback?.summaryText}
+        {feedbackModal.isOpen &&
+          feedbackModal.type === 'error' &&
+          feedbackModal.errorMessage}
       </div>
 
       {/* Product Grid */}
@@ -565,6 +581,14 @@ export default function CounterPage() {
         }
         onRemove={removeFromCart}
         onClearAll={clearCart}
+      />
+
+      <CheckoutFeedbackModal
+        isOpen={feedbackModal.isOpen}
+        type={feedbackModal.type}
+        feedback={feedbackModal.feedback}
+        errorMessage={feedbackModal.errorMessage}
+        onClose={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </main>
   );

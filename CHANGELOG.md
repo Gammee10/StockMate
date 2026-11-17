@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Animated Checkout Feedback Modal & Human-Readable Stockout Errors (Slice 5.2)
+
+- **Animated Checkout Feedback Modal (`CheckoutFeedbackModal`):** High-contrast modal dialog providing instantaneous visual feedback after counter transactions without disrupting cashier velocity.
+  - **Success Animation (✓):** Large animated SVG checkmark with circular dash-stroke sweep, showing sale total in ETB, payment badge ("Cash Drawer" or "Telebirr / Digital"), item count, and confirmation message `"Saved to daily till"`.
+  - **Error Animation (✕):** Large animated SVG cross with warning highlight and subtle shake animation on stockout or checkout failure.
+  - **Zero Cashier Friction:** Auto-dismisses quickly (2.2s for success, 3.0s for failure) and features a prominent 1-tap dismiss button (`Done` / `Got it`) and keyboard `Escape` support so counter transactions remain fast.
+- **Human-Readable Stockout Error Messages:**
+  - `decrementProductStockAtomic` now accepts `productName?: string` and formats user-facing errors as `Insufficient stock for "<Product Name>"` (e.g., `Insufficient stock for "Cooking Oil 1L"`) rather than leaking internal database CUIDs (`Insufficient stock for product id cmw416...`).
+  - Added client-side fallback regex mapping to guarantee no raw ID is ever presented to cashiers.
+
 ### Added - Touch-Friendly Cart Stepper & Single-Item Deselection (Slice 5.1)
 
 - **Inline Card Stepper (`[-] [qty] [+]`):** When an item is selected on the counter grid, a prominent, high-contrast stepper pill appears with dedicated touch targets ($\ge 36\text{ dp}$ - $44\text{ dp}$) and event isolation (`stopPropagation`), preventing accidental additions when removing items.

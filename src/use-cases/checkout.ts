@@ -56,7 +56,14 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
       async (tx) => {
         // 4a. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
         for (const item of items) {
-          await decrementProductStockAtomic(storeId, item.productId, item.quantity, tx);
+          const product = productMap.get(item.productId);
+          await decrementProductStockAtomic(
+            storeId,
+            item.productId,
+            item.quantity,
+            tx,
+            product?.name
+          );
         }
 
         // 4b. Create sale & sale items

@@ -267,7 +267,8 @@ export async function decrementProductStockAtomic(
   storeId: string,
   productId: string,
   quantity: number,
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  productName?: string
 ): Promise<void> {
   const count = await tx.$executeRaw`
     UPDATE products
@@ -279,7 +280,8 @@ export async function decrementProductStockAtomic(
   `;
 
   if (count === 0) {
-    throw new AppError('CONFLICT', `Insufficient stock for product id ${productId}`, {
+    const itemLabel = productName ? `"${productName}"` : `product id ${productId}`;
+    throw new AppError('CONFLICT', `Insufficient stock for ${itemLabel}`, {
       fields: {
         stock: [`Requested ${quantity}, but available stock is insufficient`],
       },
