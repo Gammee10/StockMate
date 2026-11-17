@@ -169,7 +169,9 @@ export default function CounterPage() {
 
         // Client-side fallback to ensure any "Insufficient stock for product id <id>" is converted to product name if present
         let displayMsg = rawMsg;
-        const idMatch = rawMsg.match(/Insufficient stock for product id ([a-zA-Z0-9_-]+)/);
+        const idMatch = rawMsg.match(
+          /Insufficient stock for product id ([a-zA-Z0-9_-]+)/
+        );
         if (idMatch && idMatch[1]) {
           const matchedProd = products.find((p) => p.id === idMatch[1]);
           if (matchedProd) {
@@ -295,8 +297,12 @@ export default function CounterPage() {
 
       {/* Screen-reader feedback announcement */}
       <div className="sr-only" aria-live="polite">
-        {feedbackModal.isOpen && feedbackModal.type === 'success' && feedbackModal.feedback?.summaryText}
-        {feedbackModal.isOpen && feedbackModal.type === 'error' && feedbackModal.errorMessage}
+        {feedbackModal.isOpen &&
+          feedbackModal.type === 'success' &&
+          feedbackModal.feedback?.summaryText}
+        {feedbackModal.isOpen &&
+          feedbackModal.type === 'error' &&
+          feedbackModal.errorMessage}
       </div>
 
       {/* Product Grid */}

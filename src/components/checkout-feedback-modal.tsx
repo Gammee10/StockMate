@@ -53,11 +53,11 @@ export function CheckoutFeedbackModal({
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in-0 duration-150"
+      className="bg-background/80 animate-in fade-in-0 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative flex w-full max-w-sm flex-col items-center justify-center rounded-xl border border-border bg-card p-6 text-center shadow-sm animate-in zoom-in-95 duration-200"
+        className="animate-in zoom-in-95 relative flex w-full max-w-sm flex-col items-center justify-center rounded-xl border border-border bg-card p-6 text-center shadow-sm duration-200"
       >
         {/* Top Close Button */}
         <Button
@@ -74,7 +74,7 @@ export function CheckoutFeedbackModal({
 
         {/* Animated Icon Section */}
         {isSuccess ? (
-          <div className="mb-3 flex size-20 items-center justify-center rounded-full border-4 border-success/30 bg-success/10 animate-in zoom-in-75 duration-300">
+          <div className="border-success/30 bg-success/10 animate-in zoom-in-75 mb-3 flex size-20 items-center justify-center rounded-full border-4 duration-300">
             <svg
               className="size-10 text-success"
               viewBox="0 0 24 24"
@@ -89,7 +89,7 @@ export function CheckoutFeedbackModal({
             </svg>
           </div>
         ) : (
-          <div className="mb-3 flex size-20 items-center justify-center rounded-full border-4 border-destructive/30 bg-destructive/10 animate-in zoom-in-75 duration-300">
+          <div className="border-destructive/30 bg-destructive/10 animate-in zoom-in-75 mb-3 flex size-20 items-center justify-center rounded-full border-4 duration-300">
             <svg
               className="size-10 text-destructive"
               viewBox="0 0 24 24"
@@ -128,7 +128,7 @@ export function CheckoutFeedbackModal({
               {feedback.paymentLabel} &bull; {feedback.count}{' '}
               {feedback.count === 1 ? 'item' : 'items'}
             </p>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <div className="bg-muted/50 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
               <Receipt className="size-3 text-primary" />
               <span>Saved to daily till</span>
             </div>

@@ -229,7 +229,13 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       };
 
       await expect(
-        decrementProductStockAtomic(storeId, productId, 5, mockTx as never, 'Cooking Oil 1L')
+        decrementProductStockAtomic(
+          storeId,
+          productId,
+          5,
+          mockTx as never,
+          'Cooking Oil 1L'
+        )
       ).rejects.toThrow('Insufficient stock for "Cooking Oil 1L"');
     });
 
