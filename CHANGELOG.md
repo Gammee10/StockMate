@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Multi-Page Route Architecture & Global Navigation Shell (Slice 5.3)
+
+- **Dedicated Multi-Page Route Architecture:**
+  - **Counter POS / Cash Register (`/counter` & `/`):** Dedicated counter workspace with fast-tap product tiles, inline cart steppers, dual payment toggle, and 1-tap checkout.
+  - **Daily Till & Reconciliation (`/till`):** Dedicated full-page view featuring EAT midnight-scoped financial summary stats, cash drawer vs digital wallet balances, itemized transactions table with mobile-first column collapsing, and 15-minute void action.
+  - **Inventory & Stock Management (`/inventory`):** Dedicated full-page inventory view with active catalog stats, low-stock alerts, search/filter bar, 1-tap `+5`/`+10` quick restocks, new product creation dialog, and soft archival.
+- **Global Navigation Shell (`NavigationShell`):**
+  - Persistent sticky top navigation across all protected routes with brand header, store name metadata, online status badge, and 1-tap sign out.
+  - Responsive navigation links with desktop tab pills and mobile segmented control bar ($\ge 44\text{ dp}$ touch targets, `touch-action: manipulation`).
+  - Active route highlighting powered by `usePathname` and `isNavActive`.
+- **Reusable Design System Components:**
+  - `PageHeader`: Standard page header pattern (`title`, `description`, `actions`) following ui-polish guidelines.
+  - `Table`: Accessible, responsive table component (`Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`).
+
 ### Added - Animated Checkout Feedback Modal & Human-Readable Stockout Errors (Slice 5.2)
 
 - **Animated Checkout Feedback Modal (`CheckoutFeedbackModal`):** High-contrast modal dialog providing instantaneous visual feedback after counter transactions without disrupting cashier velocity.
