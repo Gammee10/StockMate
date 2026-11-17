@@ -4,6 +4,7 @@ import {
   updateStoreProduct,
   quickRestockProductAtomic,
   archiveStoreProduct,
+  decrementProductStockAtomic,
 } from './service';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
@@ -208,6 +209,38 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       vi.mocked(db.product.findFirst).mockResolvedValueOnce(null);
 
       await expect(archiveStoreProduct(storeId, productId)).rejects.toThrow(AppError);
+    });
+  });
+
+  describe('decrementProductStockAtomic', () => {
+    it('executes atomic SQL decrement inside transaction', async () => {
+      const mockTx = {
+        $executeRaw: vi.fn().mockResolvedValueOnce(1),
+      };
+
+      await decrementProductStockAtomic(storeId, productId, 2, mockTx as never);
+
+      expect(mockTx.$executeRaw).toHaveBeenCalled();
+    });
+
+    it('formats human-readable error with product name when stock is insufficient', async () => {
+      const mockTx = {
+        $executeRaw: vi.fn().mockResolvedValueOnce(0),
+      };
+
+      await expect(
+        decrementProductStockAtomic(storeId, productId, 5, mockTx as never, 'Cooking Oil 1L')
+      ).rejects.toThrow('Insufficient stock for "Cooking Oil 1L"');
+    });
+
+    it('falls back to product id when product name is not provided', async () => {
+      const mockTx = {
+        $executeRaw: vi.fn().mockResolvedValueOnce(0),
+      };
+
+      await expect(
+        decrementProductStockAtomic(storeId, productId, 5, mockTx as never)
+      ).rejects.toThrow(`Insufficient stock for product id ${productId}`);
     });
   });
 });

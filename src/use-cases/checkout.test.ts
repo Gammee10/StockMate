@@ -134,6 +134,13 @@ describe('Checkout Use Case: executeCheckout', () => {
 
     expect(result.cached).toBe(false);
     expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledTimes(2);
+    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledWith(
+      storeId,
+      'prod_1',
+      2,
+      expect.anything(),
+      'Cooking Oil 1L'
+    );
     expect(salesService.createSaleRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         storeId,
