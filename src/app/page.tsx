@@ -362,7 +362,7 @@ export default function CounterPage() {
 
                     {inCartQty > 0 && (
                       <div
-                        className="flex items-center gap-1 rounded-lg border border-primary/30 bg-card p-0.5 shadow-xs"
+                        className="border-primary/30 shadow-xs flex items-center gap-1 rounded-lg border bg-card p-0.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Button
@@ -372,7 +372,7 @@ export default function CounterPage() {
                           onClick={(e) => decrementCartItem(e, product.id)}
                           aria-label={`Decrease quantity of ${product.name}`}
                           style={{ touchAction: 'manipulation' }}
-                          className="size-7 rounded-md hover:bg-destructive/10 hover:text-destructive"
+                          className="hover:bg-destructive/10 size-7 rounded-md hover:text-destructive"
                         >
                           <Minus className="size-3.5" />
                         </Button>
@@ -389,7 +389,7 @@ export default function CounterPage() {
                           }}
                           aria-label={`Increase quantity of ${product.name}`}
                           style={{ touchAction: 'manipulation' }}
-                          className="size-7 rounded-md hover:bg-primary/10 hover:text-primary"
+                          className="hover:bg-primary/10 size-7 rounded-md hover:text-primary"
                         >
                           <Plus className="size-3.5" />
                         </Button>
@@ -469,13 +469,15 @@ export default function CounterPage() {
             <div
               className={cn(
                 'flex items-center gap-3 rounded-lg p-1 transition-colors',
-                totalItemsCount > 0 ? 'cursor-pointer hover:bg-muted/50' : ''
+                totalItemsCount > 0 ? 'hover:bg-muted/50 cursor-pointer' : ''
               )}
               onClick={() => totalItemsCount > 0 && setIsCartReviewOpen(true)}
               role={totalItemsCount > 0 ? 'button' : undefined}
               tabIndex={totalItemsCount > 0 ? 0 : undefined}
               aria-label={
-                totalItemsCount > 0 ? `Review ${totalItemsCount} items in cart` : undefined
+                totalItemsCount > 0
+                  ? `Review ${totalItemsCount} items in cart`
+                  : undefined
               }
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {

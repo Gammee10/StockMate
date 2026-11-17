@@ -50,9 +50,9 @@ export function CartReviewModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="cart-review-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-sm"
+      className="bg-background/80 fixed inset-0 z-50 flex items-end justify-center p-0 backdrop-blur-sm sm:items-center sm:p-4"
     >
-      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-xl sm:rounded-xl border border-border bg-card shadow-sm animate-in fade-in-0 slide-in-from-bottom-4">
+      <div className="animate-in fade-in-0 slide-in-from-bottom-4 flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-xl border border-border bg-card shadow-sm sm:rounded-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
@@ -62,7 +62,8 @@ export function CartReviewModal({
                 id="cart-review-title"
                 className="text-base font-semibold tracking-tight text-foreground"
               >
-                Current order ({totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'})
+                Current order ({totalItemsCount}{' '}
+                {totalItemsCount === 1 ? 'item' : 'items'})
               </h2>
               <p className="text-xs text-muted-foreground">
                 Adjust quantities or remove individual items
@@ -96,7 +97,7 @@ export function CartReviewModal({
               return (
                 <div
                   key={id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3"
+                  className="bg-muted/30 flex items-center justify-between rounded-lg border border-border p-3"
                 >
                   <div className="min-w-0 flex-1 pr-3">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -111,7 +112,7 @@ export function CartReviewModal({
                   </div>
 
                   {/* Quantity Stepper & Remove */}
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       type="button"
                       variant="outline"
@@ -160,9 +161,11 @@ export function CartReviewModal({
 
         {/* Footer */}
         {cartEntries.length > 0 && (
-          <div className="border-t border-border bg-card p-4 space-y-3">
+          <div className="space-y-3 border-t border-border bg-card p-4">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Order total:</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Order total:
+              </span>
               <span className="text-lg font-semibold tabular-nums text-foreground">
                 {(totalCents / 100).toFixed(2)}{' '}
                 <span className="text-xs font-normal text-muted-foreground">ETB</span>
@@ -176,7 +179,7 @@ export function CartReviewModal({
                 size="sm"
                 onClick={onClearAll}
                 style={{ touchAction: 'manipulation' }}
-                className="text-xs text-destructive hover:bg-destructive/10"
+                className="hover:bg-destructive/10 text-xs text-destructive"
               >
                 Clear all
               </Button>
