@@ -14,7 +14,8 @@
     "backend:check": "node .agents/skills/backend-solid/scripts/check-backend.mjs",
     "ui:check": "node .agents/skills/ui-polish/scripts/check-ui.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\"",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

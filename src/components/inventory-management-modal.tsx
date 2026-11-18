@@ -23,6 +23,7 @@ export interface ProductItem {
   name: string;
   priceCents: number;
   priceEtb: string;
+  costCents?: number | null;
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;
@@ -48,6 +49,7 @@ export function InventoryManagementModal({
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState('');
   const [priceEtb, setPriceEtb] = useState('');
+  const [costPriceEtb, setCostPriceEtb] = useState('');
   const [stock, setStock] = useState('10');
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,6 +101,16 @@ export function InventoryManagementModal({
       return;
     }
 
+    let costCents: number | null = null;
+    if (costPriceEtb.trim()) {
+      const parsedCost = toCents(costPriceEtb);
+      if (parsedCost === null || parsedCost < 0) {
+        setFormError('Enter a valid non-negative cost price in ETB or leave blank');
+        return;
+      }
+      costCents = parsedCost;
+    }
+
     const stockNum = parseInt(stock, 10);
     if (isNaN(stockNum) || stockNum < 0) {
       setFormError('Stock must be a non-negative whole number');
@@ -119,6 +131,7 @@ export function InventoryManagementModal({
         body: JSON.stringify({
           name: trimmedName,
           priceCents,
+          costCents,
           stock: stockNum,
           lowStockThreshold: thresholdNum,
         }),
@@ -131,6 +144,7 @@ export function InventoryManagementModal({
 
       setName('');
       setPriceEtb('');
+      setCostPriceEtb('');
       setStock('10');
       setLowStockThreshold('5');
       setShowAddForm(false);
@@ -330,13 +344,13 @@ export function InventoryManagementModal({
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label
                     htmlFor="product-price"
                     className="text-xs font-medium text-muted-foreground"
                   >
-                    Price in ETB
+                    Selling price (ETB)
                   </label>
                   <Input
                     id="product-price"
@@ -350,6 +364,29 @@ export function InventoryManagementModal({
                   />
                 </div>
 
+                <div className="space-y-1">
+                  <label
+                    htmlFor="product-cost"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Cost price (ETB){' '}
+                    <span className="text-muted-foreground/70 font-normal">
+                      (optional)
+                    </span>
+                  </label>
+                  <Input
+                    id="product-cost"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="e.g. 210.00"
+                    value={costPriceEtb}
+                    onChange={(e) => setCostPriceEtb(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label
                     htmlFor="product-stock"

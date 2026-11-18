@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Product Cost Price & Accurate Restock Cost Analytics (Task 1.3)
+
+- **Database Schema (`prisma/schema.prisma`):**
+  - Added additive nullable column `costCents Int? @map("cost_price_cents")` to `Product` model.
+- **Catalog Types & Validators (`src/server/catalog/`):**
+  - Updated `createProductSchema` and `updateProductSchema` to accept optional non-negative integer `costCents` or `null`.
+  - Added `costCents: number | null` to `CatalogProductView`, `CreateProductInput`, and `UpdateProductInput`.
+  - Persisted `costCents` on product creation and updates in `createStoreProduct` and `updateStoreProduct`.
+- **Inventory Creation UI (`src/components/inventory-management-modal.tsx` & `src/app/inventory/page.tsx`):**
+  - Added optional "Cost price (ETB)" input next to selling price.
+  - Safely converts ETB input to integer cents via `toCents` before persisting.
+- **Accurate Stock Velocity Restock Analytics (`src/server/analytics/` & `src/app/analytics/page.tsx`):**
+  - Replaced misleading selling-price calculation for reorder cost with `estimatedReorderCostCents = recommendedReorderQty * (costCents ?? priceCents)`.
+  - Added `costIsEstimated: boolean` to `ProductVelocityMetrics` and `itemsWithoutCost: number` to `StockVelocitySummary`.
+  - Replaced label with "Est. Cost" and dynamically surfaces helper notice when items lack cost price ("N items have no cost price, so their selling price is used").
+  - Updated clipboard export sheet to reflect accurate restock cost.
+
 ### Added - Counter Search Box & Dynamic Store Name Loading (Task 1.2)
 
 - **Counter Live Search Box (`src/app/page.tsx`):**

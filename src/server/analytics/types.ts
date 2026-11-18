@@ -13,6 +13,8 @@ export interface ProductVelocityMetrics {
   productName: string;
   priceCents: number;
   priceEtb: string;
+  costCents: number | null;
+  costIsEstimated: boolean;
   currentStock: number;
   lowStockThreshold: number;
   unitsSold: number;
@@ -37,6 +39,7 @@ export interface StockVelocitySummary {
   deadStockCount: number;
   totalEstimatedRestockCostCents: number;
   totalEstimatedRestockCostEtb: string;
+  itemsWithoutCost: number;
 }
 
 export interface StockVelocityReport {

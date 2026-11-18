@@ -13,6 +13,7 @@ interface ProductInput {
   id: string;
   name: string;
   priceCents: number;
+  costCents?: number | null;
   stock: number;
   lowStockThreshold: number;
 }
@@ -104,13 +105,18 @@ export function calculateProductVelocity(
     targetSupplyDays
   );
 
-  const estimatedReorderCostCents = recommendedReorderQty * product.priceCents;
+  const costCents = product.costCents ?? null;
+  const effectiveCostPerUnit = costCents ?? product.priceCents;
+  const estimatedReorderCostCents = recommendedReorderQty * effectiveCostPerUnit;
+  const costIsEstimated = costCents === null;
 
   return {
     productId: product.id,
     productName: product.name,
     priceCents: product.priceCents,
     priceEtb: (product.priceCents / 100).toFixed(2),
+    costCents,
+    costIsEstimated,
     currentStock: product.stock,
     lowStockThreshold: product.lowStockThreshold,
     unitsSold,
@@ -210,6 +216,7 @@ export async function computeStockVelocityReport(
     deadStockCount: productMetrics.filter((p) => p.stockStatus === 'DEAD_STOCK').length,
     totalEstimatedRestockCostCents,
     totalEstimatedRestockCostEtb: (totalEstimatedRestockCostCents / 100).toFixed(2),
+    itemsWithoutCost: productMetrics.filter((p) => p.costIsEstimated).length,
   };
 
   return {

@@ -2,6 +2,7 @@
 export interface CreateProductInput {
   name: string;
   priceCents: number;
+  costCents?: number | null;
   stock: number;
   lowStockThreshold?: number;
 }
@@ -9,6 +10,7 @@ export interface CreateProductInput {
 export interface UpdateProductInput {
   name?: string;
   priceCents?: number;
+  costCents?: number | null;
   stock?: number;
   lowStockThreshold?: number;
   isArchived?: boolean;
@@ -19,6 +21,7 @@ export interface CatalogProductView {
   name: string;
   priceCents: number;
   priceEtb: string;
+  costCents: number | null;
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;

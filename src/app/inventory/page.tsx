@@ -35,6 +35,7 @@ export interface ProductItem {
   name: string;
   priceCents: number;
   priceEtb: string;
+  costCents?: number | null;
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;
@@ -52,6 +53,7 @@ export default function InventoryPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState('');
   const [priceEtb, setPriceEtb] = useState('');
+  const [costPriceEtb, setCostPriceEtb] = useState('');
   const [stock, setStock] = useState('10');
   const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,6 +97,16 @@ export default function InventoryPage() {
       return;
     }
 
+    let costCents: number | null = null;
+    if (costPriceEtb.trim()) {
+      const parsedCost = toCents(costPriceEtb);
+      if (parsedCost === null || parsedCost < 0) {
+        setFormError('Enter a valid non-negative cost price in ETB or leave blank');
+        return;
+      }
+      costCents = parsedCost;
+    }
+
     const stockNum = parseInt(stock, 10);
     if (isNaN(stockNum) || stockNum < 0) {
       setFormError('Stock must be a non-negative whole number');
@@ -115,6 +127,7 @@ export default function InventoryPage() {
         body: JSON.stringify({
           name: trimmedName,
           priceCents,
+          costCents,
           stock: stockNum,
           lowStockThreshold: thresholdNum,
         }),
@@ -127,6 +140,7 @@ export default function InventoryPage() {
 
       setName('');
       setPriceEtb('');
+      setCostPriceEtb('');
       setStock('10');
       setLowStockThreshold('5');
       setShowAddForm(false);
@@ -552,24 +566,48 @@ export default function InventoryPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="product-price"
-                    className="text-xs font-medium text-foreground"
-                  >
-                    Price in ETB
-                  </label>
-                  <Input
-                    id="product-price"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={priceEtb}
-                    onChange={(e) => setPriceEtb(e.target.value)}
-                    placeholder="e.g. 250.00"
-                    className="text-xs"
-                    required
-                  />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="product-price"
+                      className="text-xs font-medium text-foreground"
+                    >
+                      Selling price in ETB
+                    </label>
+                    <Input
+                      id="product-price"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={priceEtb}
+                      onChange={(e) => setPriceEtb(e.target.value)}
+                      placeholder="e.g. 250.00"
+                      className="text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="product-cost"
+                      className="text-xs font-medium text-foreground"
+                    >
+                      Cost price in ETB{' '}
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </label>
+                    <Input
+                      id="product-cost"
+                      type="number"
+                      step="0.01"
+                      min="0.00"
+                      value={costPriceEtb}
+                      onChange={(e) => setCostPriceEtb(e.target.value)}
+                      placeholder="e.g. 210.00"
+                      className="text-xs"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

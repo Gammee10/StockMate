@@ -178,7 +178,14 @@ export default function AnalyticsPage() {
           `${idx + 1}. ${item.productName}: Order ${item.recommendedReorderQty} units (Current stock: ${item.currentStock})`
       ),
       '',
-      `Total Estimated Wholesale Value: ${report?.summary.totalEstimatedRestockCostEtb} ETB`,
+      `Total Estimated Restock Cost: ${report?.summary.totalEstimatedRestockCostEtb} ETB`,
+      ...(report?.summary.itemsWithoutCost && report.summary.itemsWithoutCost > 0
+        ? [
+            `(${report.summary.itemsWithoutCost} ${
+              report.summary.itemsWithoutCost === 1 ? 'item has' : 'items have'
+            } no cost price, so selling price is used)`,
+          ]
+        : []),
     ];
 
     try {
@@ -400,10 +407,18 @@ export default function AnalyticsPage() {
 
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Est. Wholesale Cost</div>
+                  <div className="text-xs text-muted-foreground">Est. Cost</div>
                   <div className="text-sm font-semibold tabular-nums text-foreground">
                     {report.summary.totalEstimatedRestockCostEtb} ETB
                   </div>
+                  {report.summary.itemsWithoutCost > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {report.summary.itemsWithoutCost}{' '}
+                      {report.summary.itemsWithoutCost === 1
+                        ? 'item has no cost price, so selling price is used'
+                        : 'items have no cost price, so their selling price is used'}
+                    </div>
+                  )}
                 </div>
 
                 <Button

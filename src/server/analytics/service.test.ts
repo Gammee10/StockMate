@@ -93,8 +93,34 @@ describe('Stock Velocity Analytics Service', () => {
       expect(metrics.daysOfStockRemaining).toBe(3.0); // 6 / 2.0
       expect(metrics.stockStatus).toBe('LOW_STOCK'); // runway 3 days <= 5
       expect(metrics.recommendedReorderQty).toBe(8); // ceil(2 * 7) - 6 = 8
-      expect(metrics.estimatedReorderCostCents).toBe(200000); // 8 * 25000
+      expect(metrics.costCents).toBeNull();
+      expect(metrics.costIsEstimated).toBe(true);
+      expect(metrics.estimatedReorderCostCents).toBe(200000); // 8 * 25000 (selling price fallback)
       expect(metrics.estimatedReorderCostEtb).toBe('2000.00');
+    });
+
+    it('calculates estimated reorder cost using costCents when available', () => {
+      const product = {
+        id: 'prod_oil',
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        costCents: 19500, // 195.00 ETB cost
+        stock: 6,
+        lowStockThreshold: 5,
+      };
+
+      const saleItems = [
+        { quantity: 8, unitPriceCents: 25000 },
+        { quantity: 6, unitPriceCents: 25000 },
+      ];
+
+      const metrics = calculateProductVelocity(product, saleItems, 7, 7);
+
+      expect(metrics.costCents).toBe(19500);
+      expect(metrics.costIsEstimated).toBe(false);
+      expect(metrics.recommendedReorderQty).toBe(8);
+      expect(metrics.estimatedReorderCostCents).toBe(156000); // 8 * 19500
+      expect(metrics.estimatedReorderCostEtb).toBe('1560.00');
     });
 
     it('handles product with zero sales gracefully', () => {
@@ -161,6 +187,7 @@ describe('Stock Velocity Analytics Service', () => {
       expect(report.summary.totalRevenueEtb).toBe('1400.00');
       expect(report.summary.deadStockCount).toBe(1);
       expect(report.summary.criticalLowCount).toBe(1);
+      expect(report.summary.itemsWithoutCost).toBe(2);
       expect(report.products).toHaveLength(2);
     });
   });
