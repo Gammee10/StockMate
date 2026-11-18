@@ -9,7 +9,11 @@ export const GET = userRoute(
   { query: stockVelocityQuerySchema },
   async ({ user, query }) => {
     // Invariant #3: user.storeId is derived strictly from verified session
-    const report = await computeStockVelocityReport(user.storeId, query.range);
+    const report = await computeStockVelocityReport(
+      user.storeId,
+      query.range,
+      query.targetRunwayDays
+    );
     return ok(report);
   }
 );

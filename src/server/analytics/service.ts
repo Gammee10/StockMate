@@ -127,7 +127,8 @@ export function calculateProductVelocity(
 
 export async function computeStockVelocityReport(
   storeId: string,
-  range: StockVelocityRange = '7d'
+  range: StockVelocityRange = '7d',
+  targetRunwayDays = 7
 ): Promise<StockVelocityReport> {
   const now = new Date();
   let windowDays = 7;
@@ -171,7 +172,7 @@ export async function computeStockVelocityReport(
   });
 
   const productMetrics: ProductVelocityMetrics[] = products.map((product) =>
-    calculateProductVelocity(product, product.saleItems, windowDays, 7)
+    calculateProductVelocity(product, product.saleItems, windowDays, targetRunwayDays)
   );
 
   // Sort: prioritize urgency (OUT_OF_STOCK -> CRITICAL_LOW -> LOW_STOCK -> velocity descending)
