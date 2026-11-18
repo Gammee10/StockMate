@@ -472,7 +472,9 @@ export default function AnalyticsPage() {
                   {filteredProducts.map((p) => (
                     <TableRow
                       key={p.productId}
-                      className={p.productId === selectedProductId ? 'bg-primary/5' : undefined}
+                      className={
+                        p.productId === selectedProductId ? 'bg-primary/5' : undefined
+                      }
                     >
                       {/* Product Name (Main Cell) */}
                       <TableCell className="font-medium text-foreground">
