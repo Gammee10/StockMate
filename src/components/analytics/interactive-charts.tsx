@@ -2,7 +2,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { BarChart3, Clock, PieChart, X, TrendingUp, Check, Copy } from 'lucide-react';
+import {
+  BarChart3,
+  PieChart,
+  Grid2X2,
+  Columns3,
+  X,
+  TrendingUp,
+  Check,
+  Copy,
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -17,6 +26,7 @@ import type {
   ProductVelocityMetrics,
   StockVelocityStatus,
 } from '@/server/analytics/types';
+import type { ProductQuadrant } from './chart-utils';
 import {
   calculateVelocityBarWidth,
   calculateInventoryDistribution,
@@ -25,8 +35,13 @@ import {
   getAtRiskRunwayProducts,
   getRunwayUrgencyLevel,
 } from './chart-utils';
+import { InteractiveDonutChart } from './interactive-donut-chart';
+import { VelocityMatrix } from './velocity-matrix';
+import { DemandSupplyChart } from './demand-supply-chart';
+import { formatMoney } from '@/lib/money';
 
-export type ChartViewTab = 'velocity' | 'runway' | 'distribution';
+export type ChartViewTab =
+  'donut' | 'matrix' | 'demand_supply' | 'velocity' | 'runway' | 'distribution';
 
 interface InteractiveChartsProps {
   products: ProductVelocityMetrics[];
@@ -34,7 +49,10 @@ interface InteractiveChartsProps {
   loading?: boolean;
   selectedProductId: string | null;
   onSelectProduct: (productId: string | null) => void;
-  onFilterStatus?: (status: StockVelocityStatus) => void;
+  selectedStatus?: StockVelocityStatus | null;
+  onFilterStatus?: (status: StockVelocityStatus | null) => void;
+  selectedQuadrant?: ProductQuadrant | null;
+  onSelectQuadrant?: (quadrant: ProductQuadrant | null) => void;
 }
 
 export function InteractiveCharts({
@@ -43,9 +61,12 @@ export function InteractiveCharts({
   loading = false,
   selectedProductId,
   onSelectProduct,
+  selectedStatus = null,
   onFilterStatus,
+  selectedQuadrant = null,
+  onSelectQuadrant,
 }: InteractiveChartsProps) {
-  const [activeTab, setActiveTab] = useState<ChartViewTab>('velocity');
+  const [activeTab, setActiveTab] = useState<ChartViewTab>('donut');
   const [copiedInsight, setCopiedInsight] = useState(false);
 
   // Top products by velocity
@@ -91,7 +112,7 @@ export function InteractiveCharts({
   };
 
   const handleCopyInsight = (product: ProductVelocityMetrics) => {
-    const text = `Restock Order: ${product.productName} - Need: +${product.recommendedReorderQty} units (Current stock: ${product.currentStock}, Velocity: ${product.salesVelocityPerDay}/day)`;
+    const text = `Restock Order: ${product.productName} - Need: +${product.recommendedReorderQty} units (Current stock: ${product.currentStock}, Velocity: ${product.salesVelocityPerDay}/day, Est: ${(product.estimatedReorderCostCents / 100).toFixed(2)} ETB)`;
     navigator.clipboard.writeText(text);
     setCopiedInsight(true);
     setTimeout(() => setCopiedInsight(false), 2000);
@@ -111,49 +132,68 @@ export function InteractiveCharts({
             </CardDescription>
           </div>
 
-          {/* Interactive Chart Type Switcher */}
+          {/* 4 Interactive Visual Views */}
           <div
             role="tablist"
             aria-label="Analytics visual chart types"
-            className="bg-muted/50 flex items-center rounded-lg border border-border p-1"
+            className="bg-muted/50 flex flex-wrap items-center rounded-lg border border-border p-1"
           >
             <Button
               role="tab"
-              aria-selected={activeTab === 'velocity'}
-              variant={activeTab === 'velocity' ? 'secondary' : 'ghost'}
+              aria-selected={activeTab === 'donut' || activeTab === 'distribution'}
+              variant={
+                activeTab === 'donut' || activeTab === 'distribution'
+                  ? 'secondary'
+                  : 'ghost'
+              }
+              size="sm"
+              onClick={() => setActiveTab('donut')}
+              className="h-8 gap-1.5 px-3 text-xs font-medium"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <PieChart className="size-3.5" />
+              <span>Health Donut</span>
+            </Button>
+
+            <Button
+              role="tab"
+              aria-selected={activeTab === 'matrix'}
+              variant={activeTab === 'matrix' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('matrix')}
+              className="h-8 gap-1.5 px-3 text-xs font-medium"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <Grid2X2 className="size-3.5" />
+              <span>2×2 Strategy</span>
+            </Button>
+
+            <Button
+              role="tab"
+              aria-selected={activeTab === 'demand_supply'}
+              variant={activeTab === 'demand_supply' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('demand_supply')}
+              className="h-8 gap-1.5 px-3 text-xs font-medium"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <Columns3 className="size-3.5" />
+              <span>Demand vs Stock</span>
+            </Button>
+
+            <Button
+              role="tab"
+              aria-selected={activeTab === 'velocity' || activeTab === 'runway'}
+              variant={
+                activeTab === 'velocity' || activeTab === 'runway' ? 'secondary' : 'ghost'
+              }
               size="sm"
               onClick={() => setActiveTab('velocity')}
               className="h-8 gap-1.5 px-3 text-xs font-medium"
               style={{ touchAction: 'manipulation' }}
             >
               <BarChart3 className="size-3.5" />
-              <span>Velocity</span>
-            </Button>
-
-            <Button
-              role="tab"
-              aria-selected={activeTab === 'runway'}
-              variant={activeTab === 'runway' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('runway')}
-              className="h-8 gap-1.5 px-3 text-xs font-medium"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <Clock className="size-3.5" />
-              <span>Runway</span>
-            </Button>
-
-            <Button
-              role="tab"
-              aria-selected={activeTab === 'distribution'}
-              variant={activeTab === 'distribution' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('distribution')}
-              className="h-8 gap-1.5 px-3 text-xs font-medium"
-              style={{ touchAction: 'manipulation' }}
-            >
-              <PieChart className="size-3.5" />
-              <span>Distribution</span>
+              <span>Velocity & Runway</span>
             </Button>
           </div>
         </div>
@@ -181,108 +221,50 @@ export function InteractiveCharts({
           </div>
         ) : (
           <>
-            {/* TAB 1: VELOCITY COMPARISON BARS */}
-            {activeTab === 'velocity' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Top products ranked by sales velocity (units/day)</span>
-                  <span>Tap a bar to inspect details</span>
-                </div>
-
-                <div className="space-y-3">
-                  {topVelocityProducts.map((p) => {
-                    const isSelected = selectedProductId === p.productId;
-                    const barWidth = calculateVelocityBarWidth(
-                      p.salesVelocityPerDay,
-                      maxVelocity
-                    );
-
-                    return (
-                      <div
-                        key={p.productId}
-                        onClick={() => onSelectProduct(isSelected ? null : p.productId)}
-                        className={`group relative cursor-pointer rounded-lg border p-3 transition-colors ${
-                          isSelected
-                            ? 'bg-primary/5 border-primary'
-                            : 'hover:bg-muted/40 border-border bg-card'
-                        }`}
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {p.productName}
-                            </span>
-                            {getStatusBadge(p.stockStatus)}
-                          </div>
-                          <div className="flex items-center gap-2 text-right">
-                            <span className="text-sm font-semibold tabular-nums text-foreground">
-                              {p.salesVelocityPerDay}/day
-                            </span>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              ({p.unitsSold} sold in {windowDays}d)
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Progress Bar Container */}
-                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={`h-full transition-colors duration-300 ${
-                              p.salesVelocityPerDay >= 2.0
-                                ? 'bg-primary'
-                                : p.salesVelocityPerDay > 0
-                                  ? 'bg-primary/70'
-                                  : 'bg-muted-foreground/30'
-                            }`}
-                            style={{ width: `${barWidth}%` }}
-                          />
-                        </div>
-
-                        {/* Subtext info */}
-                        <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Current stock: {p.currentStock} units</span>
-                          <span>
-                            {p.daysOfStockRemaining !== null
-                              ? `${formatRunwayLabel(p.daysOfStockRemaining)}`
-                              : 'No depletion risk'}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* VIEW 1: HEALTH DONUT */}
+            {(activeTab === 'donut' || activeTab === 'distribution') && (
+              <InteractiveDonutChart
+                distribution={distribution}
+                selectedStatus={selectedStatus}
+                onSelectStatus={(status) => onFilterStatus?.(status)}
+              />
             )}
 
-            {/* TAB 2: STOCKOUT RUNWAY PROGRESS METERS */}
-            {activeTab === 'runway' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Urgent stockout risks (runway under 14 days)</span>
-                  <span>Tap to inspect restock order</span>
-                </div>
+            {/* VIEW 2: 2x2 STRATEGY MATRIX */}
+            {activeTab === 'matrix' && (
+              <VelocityMatrix
+                products={products}
+                selectedQuadrant={selectedQuadrant}
+                onSelectQuadrant={(quadrant) => onSelectQuadrant?.(quadrant)}
+              />
+            )}
 
-                {atRiskProducts.length === 0 ? (
-                  <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg border border-border p-6 text-center">
-                    <Check className="mb-2 size-6 text-primary" />
-                    <h4 className="text-sm font-semibold text-foreground">
-                      No immediate stockout risks
-                    </h4>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      All products currently have ample stock runway above 14 days.
-                    </p>
+            {/* VIEW 3: DEMAND VS SUPPLY DUAL-COLUMNS */}
+            {activeTab === 'demand_supply' && (
+              <DemandSupplyChart
+                products={products}
+                selectedProductId={selectedProductId}
+                onSelectProduct={onSelectProduct}
+                limit={6}
+              />
+            )}
+
+            {/* VIEW 4: VELOCITY & RUNWAY METERS */}
+            {(activeTab === 'velocity' || activeTab === 'runway') && (
+              <div className="space-y-6">
+                {/* Top Velocity Bars */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Top products ranked by sales velocity (units/day)</span>
+                    <span>Tap to inspect</span>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {atRiskProducts.map((p) => {
+
+                  <div className="space-y-2.5">
+                    {topVelocityProducts.map((p) => {
                       const isSelected = selectedProductId === p.productId;
-                      const urgency = getRunwayUrgencyLevel(p.daysOfStockRemaining);
-                      const maxRunway = 14;
-                      const remaining = p.daysOfStockRemaining ?? 0;
-                      const barPercentage = Math.min(
-                        100,
-                        Math.max(5, (remaining / maxRunway) * 100)
+                      const barWidth = calculateVelocityBarWidth(
+                        p.salesVelocityPerDay,
+                        maxVelocity
                       );
 
                       return (
@@ -301,227 +283,154 @@ export function InteractiveCharts({
                               <span className="text-sm font-medium text-foreground">
                                 {p.productName}
                               </span>
-                              {urgency === 'out_of_stock' && (
-                                <Badge variant="destructive">Depleted</Badge>
-                              )}
-                              {urgency === 'critical' && (
-                                <Badge variant="destructive">Critical</Badge>
-                              )}
-                              {urgency === 'warning' && (
-                                <Badge variant="warning">Low buffer</Badge>
-                              )}
+                              {getStatusBadge(p.stockStatus)}
                             </div>
-                            <span
-                              className={`text-sm font-semibold tabular-nums ${
-                                urgency === 'out_of_stock' || urgency === 'critical'
-                                  ? 'text-destructive'
-                                  : urgency === 'warning'
-                                    ? 'text-warning'
-                                    : 'text-foreground'
-                              }`}
-                            >
-                              {formatRunwayLabel(p.daysOfStockRemaining)}
-                            </span>
+                            <div className="flex items-center gap-2 text-right">
+                              <span className="text-sm font-semibold tabular-nums text-foreground">
+                                {p.salesVelocityPerDay}/day
+                              </span>
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                ({p.unitsSold} sold in {windowDays}d)
+                              </span>
+                            </div>
                           </div>
 
-                          {/* Runway Progress Track */}
+                          {/* Progress Bar Container */}
                           <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
                             <div
                               className={`h-full transition-colors duration-300 ${
-                                urgency === 'out_of_stock' || urgency === 'critical'
-                                  ? 'bg-destructive'
-                                  : urgency === 'warning'
-                                    ? 'bg-warning'
-                                    : 'bg-primary'
+                                p.salesVelocityPerDay >= 2.0
+                                  ? 'bg-primary'
+                                  : p.salesVelocityPerDay > 0
+                                    ? 'bg-primary/70'
+                                    : 'bg-muted-foreground/30'
                               }`}
-                              style={{ width: `${barPercentage}%` }}
+                              style={{ width: `${barWidth}%` }}
                             />
                           </div>
 
+                          {/* Subtext info */}
                           <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>In stock: {p.currentStock} units</span>
-                            <span className="font-medium text-primary">
-                              Recommended reorder: +{p.recommendedReorderQty} units
+                            <span>Current stock: {p.currentStock} units</span>
+                            <span>
+                              {p.daysOfStockRemaining !== null
+                                ? `${formatRunwayLabel(p.daysOfStockRemaining)}`
+                                : 'No depletion risk'}
                             </span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 3: INVENTORY COMPOSITION RATIO */}
-            {activeTab === 'distribution' && (
-              <div className="space-y-5">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    Catalog inventory composition ({distribution.totalCount} products)
-                  </span>
-                  <span>Tap a category to filter</span>
                 </div>
 
-                {/* Segmented Distribution Bar */}
-                <div className="flex h-5 w-full overflow-hidden rounded-md border border-border bg-muted">
-                  {distribution.outOfStock.percentage > 0 && (
-                    <div
-                      className="bg-destructive transition-colors"
-                      style={{ width: `${distribution.outOfStock.percentage}%` }}
-                      title={`Out of stock: ${distribution.outOfStock.count} (${distribution.outOfStock.percentage}%)`}
-                    />
-                  )}
-                  {distribution.criticalLow.percentage > 0 && (
-                    <div
-                      className="bg-destructive/80 transition-colors"
-                      style={{ width: `${distribution.criticalLow.percentage}%` }}
-                      title={`Critical low: ${distribution.criticalLow.count} (${distribution.criticalLow.percentage}%)`}
-                    />
-                  )}
-                  {distribution.lowStock.percentage > 0 && (
-                    <div
-                      className="bg-warning transition-colors"
-                      style={{ width: `${distribution.lowStock.percentage}%` }}
-                      title={`Low stock: ${distribution.lowStock.count} (${distribution.lowStock.percentage}%)`}
-                    />
-                  )}
-                  {distribution.healthy.percentage > 0 && (
-                    <div
-                      className="bg-primary transition-colors"
-                      style={{ width: `${distribution.healthy.percentage}%` }}
-                      title={`Healthy stock: ${distribution.healthy.count} (${distribution.healthy.percentage}%)`}
-                    />
-                  )}
-                  {distribution.deadStock.percentage > 0 && (
-                    <div
-                      className="bg-muted-foreground/40 transition-colors"
-                      style={{ width: `${distribution.deadStock.percentage}%` }}
-                      title={`Dead stock: ${distribution.deadStock.count} (${distribution.deadStock.percentage}%)`}
-                    />
-                  )}
-                </div>
-
-                {/* 5 Status Cards Grid */}
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                  {/* Out of Stock */}
-                  <div
-                    onClick={() => onFilterStatus?.('OUT_OF_STOCK')}
-                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">
-                        Out of stock
-                      </span>
-                      <div className="size-2 rounded-full bg-destructive" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="text-lg font-semibold tabular-nums text-foreground">
-                        {distribution.outOfStock.count}
-                      </div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {distribution.outOfStock.percentage}% of catalog
-                      </div>
-                    </div>
+                {/* Urgent Stockout Runway Meters */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Critical runway items (≤ 14 days)</span>
+                    <span>Reorder advice</span>
                   </div>
 
-                  {/* Critical Low */}
-                  <div
-                    onClick={() => onFilterStatus?.('CRITICAL_LOW')}
-                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">
-                        Critical (≤ 2d)
-                      </span>
-                      <div className="bg-destructive/80 size-2 rounded-full" />
+                  {atRiskProducts.length === 0 ? (
+                    <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg border border-border p-6 text-center">
+                      <Check className="mb-2 size-6 text-primary" />
+                      <h4 className="text-sm font-semibold text-foreground">
+                        No immediate stockout risks
+                      </h4>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        All products currently have ample stock runway above 14 days.
+                      </p>
                     </div>
-                    <div className="mt-2">
-                      <div className="text-lg font-semibold tabular-nums text-foreground">
-                        {distribution.criticalLow.count}
-                      </div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {distribution.criticalLow.percentage}% of catalog
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {atRiskProducts.map((p) => {
+                        const isSelected = selectedProductId === p.productId;
+                        const urgency = getRunwayUrgencyLevel(p.daysOfStockRemaining);
+                        const maxRunway = 14;
+                        const remaining = p.daysOfStockRemaining ?? 0;
+                        const barPercentage = Math.min(
+                          100,
+                          Math.max(5, (remaining / maxRunway) * 100)
+                        );
 
-                  {/* Low Stock */}
-                  <div
-                    onClick={() => onFilterStatus?.('LOW_STOCK')}
-                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">
-                        Low stock (≤ 5d)
-                      </span>
-                      <div className="size-2 rounded-full bg-warning" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="text-lg font-semibold tabular-nums text-foreground">
-                        {distribution.lowStock.count}
-                      </div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {distribution.lowStock.percentage}% of catalog
-                      </div>
-                    </div>
-                  </div>
+                        return (
+                          <div
+                            key={p.productId}
+                            onClick={() =>
+                              onSelectProduct(isSelected ? null : p.productId)
+                            }
+                            className={`group cursor-pointer rounded-lg border p-3 transition-colors ${
+                              isSelected
+                                ? 'bg-primary/5 border-primary'
+                                : 'hover:bg-muted/40 border-border bg-card'
+                            }`}
+                            style={{ touchAction: 'manipulation' }}
+                          >
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground">
+                                  {p.productName}
+                                </span>
+                                {urgency === 'out_of_stock' && (
+                                  <Badge variant="destructive">Depleted</Badge>
+                                )}
+                                {urgency === 'critical' && (
+                                  <Badge variant="destructive">Critical</Badge>
+                                )}
+                                {urgency === 'warning' && (
+                                  <Badge variant="warning">Low buffer</Badge>
+                                )}
+                              </div>
+                              <span
+                                className={`text-sm font-semibold tabular-nums ${
+                                  urgency === 'out_of_stock' || urgency === 'critical'
+                                    ? 'text-destructive'
+                                    : urgency === 'warning'
+                                      ? 'text-warning'
+                                      : 'text-foreground'
+                                }`}
+                              >
+                                {formatRunwayLabel(p.daysOfStockRemaining)}
+                              </span>
+                            </div>
 
-                  {/* Healthy */}
-                  <div
-                    onClick={() => onFilterStatus?.('HEALTHY')}
-                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
-                    style={{ touchAction: 'manipulation' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Healthy</span>
-                      <div className="size-2 rounded-full bg-primary" />
-                    </div>
-                    <div className="mt-2">
-                      <div className="text-lg font-semibold tabular-nums text-foreground">
-                        {distribution.healthy.count}
-                      </div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {distribution.healthy.percentage}% of catalog
-                      </div>
-                    </div>
-                  </div>
+                            {/* Runway Progress Track */}
+                            <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className={`h-full transition-colors duration-300 ${
+                                  urgency === 'out_of_stock' || urgency === 'critical'
+                                    ? 'bg-destructive'
+                                    : urgency === 'warning'
+                                      ? 'bg-warning'
+                                      : 'bg-primary'
+                                }`}
+                                style={{ width: `${barPercentage}%` }}
+                              />
+                            </div>
 
-                  {/* Dead Stock */}
-                  <div
-                    onClick={() => onFilterStatus?.('DEAD_STOCK')}
-                    className="hover:bg-muted/40 col-span-2 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors sm:col-span-1"
-                    style={{ touchAction: 'manipulation' }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">
-                        Dead stock
-                      </span>
-                      <div className="bg-muted-foreground/40 size-2 rounded-full" />
+                            <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                              <span>In stock: {p.currentStock} units</span>
+                              <span className="font-medium text-primary">
+                                Reorder: +{p.recommendedReorderQty} units
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="mt-2">
-                      <div className="text-lg font-semibold tabular-nums text-foreground">
-                        {distribution.deadStock.count}
-                      </div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {distribution.deadStock.percentage}% of catalog
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* INTERACTIVE INSPECTOR CARD (WHEN A PRODUCT IS PINNED/SELECTED) */}
+            {/* INTERACTIVE INSPECTOR CARD (PINNED PRODUCT) */}
             {selectedProduct && (
               <div className="border-primary/30 bg-primary/5 relative rounded-lg border p-4 transition-colors">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onSelectProduct(null)}
-                  className="absolute right-2 top-2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2 top-2 size-7 p-0 text-muted-foreground hover:text-foreground"
                   aria-label="Close insight"
                 >
                   <X className="size-4" />
@@ -536,8 +445,8 @@ export function InteractiveCharts({
                       {getStatusBadge(selectedProduct.stockStatus)}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Price: {(selectedProduct.priceCents / 100).toFixed(2)} ETB &bull;
-                      Revenue: {(selectedProduct.revenueCents / 100).toFixed(2)} ETB
+                      Price: {formatMoney(selectedProduct.priceCents)} &bull; Revenue:{' '}
+                      {formatMoney(selectedProduct.revenueCents)}
                     </p>
                   </div>
 
@@ -608,7 +517,7 @@ export function InteractiveCharts({
                     <span className="text-muted-foreground">
                       Est. cost:{' '}
                       <strong className="text-foreground">
-                        {(selectedProduct.estimatedReorderCostCents / 100).toFixed(2)} ETB
+                        {formatMoney(selectedProduct.estimatedReorderCostCents)}
                       </strong>
                     </span>
                   </div>

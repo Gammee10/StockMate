@@ -38,10 +38,7 @@ export interface DonutSegment {
 }
 
 export type ProductQuadrant =
-  | 'urgent_restock'
-  | 'star_performer'
-  | 'slow_mover'
-  | 'dead_capital';
+  'urgent_restock' | 'star_performer' | 'slow_mover' | 'dead_capital';
 
 export interface QuadrantData {
   quadrant: ProductQuadrant;
@@ -55,11 +52,9 @@ export interface QuadrantData {
 }
 
 export type ProductSortKey =
-  | 'velocity_desc'
-  | 'runway_asc'
-  | 'stock_asc'
-  | 'revenue_desc'
-  | 'name_asc';
+  'velocity_desc' | 'runway_asc' | 'stock_asc' | 'revenue_desc' | 'name_asc';
+
+export type ProductSortOption = ProductSortKey;
 
 export interface PaginationResult<T> {
   items: T[];
@@ -265,7 +260,9 @@ export function calculateDonutSegments(
 /**
  * Classifies a product into one of the 4 retail inventory matrix quadrants.
  */
-export function classifyProductQuadrant(product: ProductVelocityMetrics): ProductQuadrant {
+export function classifyProductQuadrant(
+  product: ProductVelocityMetrics
+): ProductQuadrant {
   const isHighVelocity = product.salesVelocityPerDay >= 1.0;
   const isLowStock =
     product.currentStock <= product.lowStockThreshold ||
@@ -372,7 +369,11 @@ export function sortProducts(
 /**
  * Paginate an array of items for scalable, low-memory touch rendering.
  */
-export function paginateProducts<T>(items: T[], page: number, pageSize = 10): PaginationResult<T> {
+export function paginateProducts<T>(
+  items: T[],
+  page: number,
+  pageSize = 10
+): PaginationResult<T> {
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
