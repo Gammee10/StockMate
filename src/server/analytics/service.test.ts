@@ -6,12 +6,24 @@ import {
   computeStockVelocityReport,
 } from './service';
 import { db } from '@/server/db';
+import { logger } from '@/lib/logger';
 
 vi.mock('@/server/db', () => ({
   db: {
     product: {
       findMany: vi.fn(),
     },
+    saleItem: {
+      groupBy: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    warn: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -144,23 +156,23 @@ describe('Stock Velocity Analytics Service', () => {
   });
 
   describe('computeStockVelocityReport', () => {
-    it('queries products for storeId and computes aggregate report summary', async () => {
+    it('queries products for storeId and computes aggregate report summary using saleItem.groupBy', async () => {
       const mockProducts = [
         {
           id: 'p1',
           name: 'Fast Item',
           priceCents: 10000,
+          costCents: 8000,
           stock: 2,
           lowStockThreshold: 5,
-          saleItems: [{ quantity: 14, unitPriceCents: 10000 }],
         },
         {
           id: 'p2',
           name: 'Dead Item',
           priceCents: 5000,
+          costCents: null,
           stock: 20,
           lowStockThreshold: 5,
-          saleItems: [],
         },
       ];
 
@@ -168,17 +180,48 @@ describe('Stock Velocity Analytics Service', () => {
         mockProducts
       );
 
+      (db.saleItem.groupBy as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+        {
+          productId: 'p1',
+          unitPriceCents: 10000,
+          _sum: { quantity: 14 },
+        },
+      ]);
+
       const report = await computeStockVelocityReport('store_123', '7d');
 
-      expect(db.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
+      expect(db.product.findMany).toHaveBeenCalledWith({
+        where: {
+          storeId: 'store_123',
+          isArchived: false,
+        },
+        orderBy: { id: 'asc' },
+        take: 100,
+        select: {
+          id: true,
+          name: true,
+          priceCents: true,
+          costCents: true,
+          stock: true,
+          lowStockThreshold: true,
+        },
+      });
+
+      expect(db.saleItem.groupBy).toHaveBeenCalledWith({
+        by: ['productId', 'unitPriceCents'],
+        where: {
+          sale: {
             storeId: 'store_123',
-            isArchived: false,
-          }),
-          take: 100,
-        })
-      );
+            status: 'COMPLETED',
+            createdAt: {
+              gte: expect.any(Date),
+            },
+          },
+        },
+        _sum: {
+          quantity: true,
+        },
+      });
 
       expect(report.range).toBe('7d');
       expect(report.windowDays).toBe(7);
@@ -187,8 +230,122 @@ describe('Stock Velocity Analytics Service', () => {
       expect(report.summary.totalRevenueEtb).toBe('1400.00');
       expect(report.summary.deadStockCount).toBe(1);
       expect(report.summary.criticalLowCount).toBe(1);
-      expect(report.summary.itemsWithoutCost).toBe(2);
+      expect(report.summary.itemsWithoutCost).toBe(1); // p2 has no cost
       expect(report.products).toHaveLength(2);
+    });
+
+    it('paginates products in batches of 100 to support 250+ products without dropping any', async () => {
+      // Generate 250 products: batch 1 (100), batch 2 (100), batch 3 (50)
+      const batch1 = Array.from({ length: 100 }, (_, i) => ({
+        id: `prod_${String(i).padStart(3, '0')}`,
+        name: `Product ${i}`,
+        priceCents: 1000,
+        costCents: 800,
+        stock: 10,
+        lowStockThreshold: 5,
+      }));
+
+      const batch2 = Array.from({ length: 100 }, (_, i) => ({
+        id: `prod_${String(i + 100).padStart(3, '0')}`,
+        name: `Product ${i + 100}`,
+        priceCents: 2000,
+        costCents: 1500,
+        stock: 5,
+        lowStockThreshold: 5,
+      }));
+
+      const batch3 = Array.from({ length: 50 }, (_, i) => ({
+        id: `prod_${String(i + 200).padStart(3, '0')}`,
+        name: `Product ${i + 200}`,
+        priceCents: 3000,
+        costCents: 2000,
+        stock: 0,
+        lowStockThreshold: 5,
+      }));
+
+      (db.product.findMany as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce(batch1)
+        .mockResolvedValueOnce(batch2)
+        .mockResolvedValueOnce(batch3);
+
+      // Grouped sales for a product in batch 1, batch 2, and batch 3
+      (db.saleItem.groupBy as ReturnType<typeof vi.fn>).mockResolvedValueOnce([
+        {
+          productId: 'prod_005',
+          unitPriceCents: 1000,
+          _sum: { quantity: 10 },
+        },
+        {
+          productId: 'prod_150',
+          unitPriceCents: 2000,
+          _sum: { quantity: 5 },
+        },
+        {
+          productId: 'prod_249',
+          unitPriceCents: 3000,
+          _sum: { quantity: 2 },
+        },
+      ]);
+
+      const report = await computeStockVelocityReport('store_456', '30d');
+
+      expect(db.product.findMany).toHaveBeenCalledTimes(3);
+
+      // Verify cursor chaining
+      expect(db.product.findMany).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          take: 100,
+        })
+      );
+      expect(db.product.findMany).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          cursor: { id: 'prod_099' },
+          skip: 1,
+          take: 100,
+        })
+      );
+      expect(db.product.findMany).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          cursor: { id: 'prod_199' },
+          skip: 1,
+          take: 100,
+        })
+      );
+
+      // All 250 products must be present in report
+      expect(report.products).toHaveLength(250);
+      expect(report.summary.totalUnitsSold).toBe(17); // 10 + 5 + 2
+      expect(report.summary.totalRevenueCents).toBe(26000); // 10*1000 + 5*2000 + 2*3000 = 10000 + 10000 + 6000
+      expect(report.summary.totalRevenueEtb).toBe('260.00');
+    });
+
+    it('warns and caps at 1000 products when ceiling is reached', async () => {
+      // 10 batches of 100 products = 1000 products
+      for (let b = 0; b < 10; b++) {
+        const batch = Array.from({ length: 100 }, (_, i) => ({
+          id: `p_${b * 100 + i}`,
+          name: `Item ${b * 100 + i}`,
+          priceCents: 1000,
+          costCents: null,
+          stock: 10,
+          lowStockThreshold: 5,
+        }));
+        (db.product.findMany as ReturnType<typeof vi.fn>).mockResolvedValueOnce(batch);
+      }
+
+      (db.saleItem.groupBy as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+
+      const report = await computeStockVelocityReport('store_large', '7d');
+
+      expect(db.product.findMany).toHaveBeenCalledTimes(10);
+      expect(report.products).toHaveLength(1000);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('1000'),
+        expect.objectContaining({ storeId: 'store_large', count: 1000 })
+      );
     });
   });
 });
