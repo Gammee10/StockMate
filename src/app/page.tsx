@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useMemo } from 'react';
 import {
   ShoppingCart,
   AlertTriangle,
@@ -11,10 +11,13 @@ import {
   Loader2,
   Banknote,
   Smartphone,
+  Search,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { NavigationShell } from '@/components/navigation-shell';
@@ -26,6 +29,7 @@ import {
   decrementCartQuantity,
   removeCartItem,
   incrementCartQuantity,
+  filterProductsByName,
   type PaymentMethod,
   type SaleReceiptFeedback,
 } from '@/modules/sales/counter';
@@ -39,12 +43,12 @@ export interface Product {
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;
-  storeName?: string;
 }
 
 export default function CounterPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [storeName] = useState<string>("Dawit's Kiosk");
+  const [storeName, setStoreName] = useState<string>('Your store');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
@@ -75,11 +79,28 @@ export default function CounterPage() {
       });
   };
 
-  // Load active catalog and store metadata
+  // Load active catalog and real store name from auth session (Task 1.2)
   useEffect(() => {
     refetchProducts();
     setLoading(false);
+
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.store?.name) {
+          setStoreName(data.store.name);
+        }
+      })
+      .catch(() => {
+        // Fallback remains "Your store"
+      });
   }, []);
+
+  // Filtered products by search query
+  const displayedProducts = useMemo(
+    () => filterProductsByName(products, searchQuery),
+    [products, searchQuery]
+  );
 
   const addToCart = (productId: string) => {
     // Clear flash feedback on new tap to reset counter
@@ -256,6 +277,32 @@ export default function CounterPage() {
             <span className="text-xs text-muted-foreground">Tap tile to add</span>
           </div>
 
+          {/* Search Box (Task 1.2) */}
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search counter items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 pl-9 pr-9 text-xs"
+              style={{ touchAction: 'manipulation' }}
+              aria-label="Search counter items"
+            />
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-1 top-1 size-7 p-0 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {[...Array(6)].map((_, i) => (
@@ -272,9 +319,28 @@ export default function CounterPage() {
                 Add products in the Inventory tab to start selling.
               </p>
             </Card>
+          ) : displayedProducts.length === 0 ? (
+            <Card className="flex flex-col items-center justify-center p-8 text-center">
+              <Search className="mb-2 size-8 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">
+                No items match &quot;{searchQuery}&quot;
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Check the spelling or try searching for another product.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="mt-3 text-xs"
+              >
+                Clear search
+              </Button>
+            </Card>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {products.map((product) => {
+              {displayedProducts.map((product) => {
                 const inCartQty = cart[product.id] || 0;
                 const isSelected = inCartQty > 0;
 

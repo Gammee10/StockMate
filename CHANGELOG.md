@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Counter Search Box & Dynamic Store Name Loading (Task 1.2)
+
+- **Counter Live Search Box (`src/app/page.tsx`):**
+  - Integrated search input above fast-tap product tiles using `filterProductsByName`.
+  - Supports real-time case-insensitive filtering with 1-tap clear button (`X`).
+  - Preserves cart items and checkout state across search filtering; adding items to the cart does not clear or reset the active search query.
+  - Added dedicated empty state card ("No items match '[query]'") with a "Clear search" action.
+- **Pure Search Filtering Helper (`src/modules/sales/counter.ts`):**
+  - Added `filterProductsByName(products, query)` with 100% test coverage in `counter.test.ts`.
+- **Dynamic Store Name Loading (`GET /api/auth/me`):**
+  - Replaced hardcoded `"Dawit's Kiosk"` fallback with neutral `"Your store"` initial state.
+  - Dynamically fetches authenticated merchant store name from `/api/auth/me` without flashing placeholder text.
+  - Updated `NavigationShell` default store name prop to `"Your store"`.
+
 ### Fixed - Store-Scoped Catalog Listing & Elimination of Cross-Store Leak (Task 1.1)
 
 - **Guarded Catalog API (`GET /api/catalog/products`):**

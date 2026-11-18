@@ -97,3 +97,18 @@ export function incrementCartQuantity(
     [productId]: (cart[productId] || 0) + 1,
   };
 }
+
+/**
+ * Filters products by name, case-insensitive, with whitespace trimming (Task 1.2).
+ * Returns all products when query is empty or whitespace.
+ */
+export function filterProductsByName<T extends { name: string }>(
+  products: T[],
+  query: string
+): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return products;
+  }
+  return products.filter((p) => p.name.toLowerCase().includes(q));
+}
