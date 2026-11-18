@@ -1,10 +1,6 @@
 // src/server/catalog/types.ts
 export type StockMovementType =
-  | 'INITIAL'
-  | 'SALE'
-  | 'VOID_RESTORE'
-  | 'RESTOCK'
-  | 'ADJUSTMENT';
+  'INITIAL' | 'SALE' | 'VOID_RESTORE' | 'RESTOCK' | 'ADJUSTMENT';
 
 export interface CreateProductInput {
   name: string;
