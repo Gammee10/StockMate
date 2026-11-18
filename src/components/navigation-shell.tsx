@@ -48,7 +48,7 @@ interface NavigationShellProps {
 
 export function NavigationShell({
   children,
-  storeName = "Dawit's Kiosk",
+  storeName = 'Your store',
 }: NavigationShellProps) {
   const pathname = usePathname() || '/counter';
 

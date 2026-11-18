@@ -5,6 +5,7 @@ import {
   decrementCartQuantity,
   removeCartItem,
   incrementCartQuantity,
+  filterProductsByName,
 } from './counter';
 
 describe('Counter Sales Helper (Slice 3: Dual Cash & Digital Tracking)', () => {
@@ -116,6 +117,40 @@ describe('Counter Sales Helper (Slice 3: Dual Cash & Digital Tracking)', () => {
 
         expect(updated).toEqual({ prod_1: 2, prod_2: 1 });
       });
+    });
+  });
+
+  describe('filterProductsByName (Task 1.2)', () => {
+    const products = [
+      { id: '1', name: 'Cooking Oil 1L' },
+      { id: '2', name: 'Laundry Soap' },
+      { id: '3', name: 'Sugar 1kg' },
+      { id: '4', name: 'Olive Oil 500ml' },
+    ];
+
+    it('returns all products when query is empty', () => {
+      expect(filterProductsByName(products, '')).toEqual(products);
+    });
+
+    it('returns all products when query is only whitespace', () => {
+      expect(filterProductsByName(products, '   ')).toEqual(products);
+    });
+
+    it('filters products by name matching case-insensitively', () => {
+      const result = filterProductsByName(products, 'OIL');
+      expect(result).toHaveLength(2);
+      expect(result.map((p) => p.name)).toEqual(['Cooking Oil 1L', 'Olive Oil 500ml']);
+    });
+
+    it('trims leading and trailing spaces in query', () => {
+      const result = filterProductsByName(products, '   soap   ');
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('Laundry Soap');
+    });
+
+    it('returns empty array when no products match', () => {
+      const result = filterProductsByName(products, 'nonexistent product');
+      expect(result).toEqual([]);
     });
   });
 });
