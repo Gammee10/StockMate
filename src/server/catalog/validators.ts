@@ -11,6 +11,12 @@ export const createProductSchema = z.object({
     .number()
     .int('Price must be an integer')
     .positive('Price must be greater than zero'),
+  costCents: z
+    .number()
+    .int('Cost price must be an integer')
+    .nonnegative('Cost price cannot be negative')
+    .optional()
+    .nullable(),
   stock: z
     .number()
     .int('Stock must be an integer')
@@ -34,6 +40,12 @@ export const updateProductSchema = z.object({
     .int('Price must be an integer')
     .positive('Price must be greater than zero')
     .optional(),
+  costCents: z
+    .number()
+    .int('Cost price must be an integer')
+    .nonnegative('Cost price cannot be negative')
+    .optional()
+    .nullable(),
   stock: z
     .number()
     .int('Stock must be an integer')

@@ -43,6 +43,7 @@ export async function listStoreProducts(
     name: p.name,
     priceCents: p.priceCents,
     priceEtb: (p.priceCents / 100).toFixed(2),
+    costCents: p.costCents ?? null,
     stock: p.stock,
     lowStockThreshold: p.lowStockThreshold,
     isLowStock: p.stock <= p.lowStockThreshold,
@@ -92,6 +93,7 @@ export async function createStoreProduct(
       storeId,
       name: input.name,
       priceCents: input.priceCents,
+      costCents: input.costCents ?? null,
       stock: input.stock,
       lowStockThreshold,
       isArchived: false,
@@ -103,6 +105,7 @@ export async function createStoreProduct(
     name: product.name,
     priceCents: product.priceCents,
     priceEtb: (product.priceCents / 100).toFixed(2),
+    costCents: product.costCents ?? null,
     stock: product.stock,
     lowStockThreshold: product.lowStockThreshold,
     isLowStock: product.stock <= product.lowStockThreshold,
@@ -137,6 +140,7 @@ export async function updateStoreProduct(
   const updateData: {
     name?: string;
     priceCents?: number;
+    costCents?: number | null;
     stock?: number;
     lowStockThreshold?: number;
     isArchived?: boolean;
@@ -144,6 +148,7 @@ export async function updateStoreProduct(
 
   if (input.name !== undefined) updateData.name = input.name;
   if (input.priceCents !== undefined) updateData.priceCents = input.priceCents;
+  if (input.costCents !== undefined) updateData.costCents = input.costCents;
   if (input.stock !== undefined) updateData.stock = input.stock;
   if (input.lowStockThreshold !== undefined)
     updateData.lowStockThreshold = input.lowStockThreshold;
@@ -160,6 +165,7 @@ export async function updateStoreProduct(
     name: updated.name,
     priceCents: updated.priceCents,
     priceEtb: (updated.priceCents / 100).toFixed(2),
+    costCents: updated.costCents ?? null,
     stock: updated.stock,
     lowStockThreshold: updated.lowStockThreshold,
     isLowStock: updated.stock <= updated.lowStockThreshold,
@@ -212,6 +218,7 @@ export async function quickRestockProductAtomic(
     name: product.name,
     priceCents: product.priceCents,
     priceEtb: (product.priceCents / 100).toFixed(2),
+    costCents: product.costCents ?? null,
     stock: product.stock,
     lowStockThreshold: product.lowStockThreshold,
     isLowStock: product.stock <= product.lowStockThreshold,

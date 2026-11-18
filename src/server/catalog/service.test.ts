@@ -57,6 +57,7 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
           storeId,
           name: 'Teff Flour 5kg',
           priceCents: 45000,
+          costCents: null,
           stock: 15,
           lowStockThreshold: 5,
           isArchived: false,
@@ -68,10 +69,47 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         name: 'Teff Flour 5kg',
         priceCents: 45000,
         priceEtb: '450.00',
+        costCents: null,
         stock: 15,
         lowStockThreshold: 5,
         isLowStock: false,
       });
+    });
+
+    it('creates product with optional costCents and persists it', async () => {
+      vi.mocked(db.product.create).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        costCents: 21000,
+        stock: 20,
+        lowStockThreshold: 5,
+        isArchived: false,
+        updatedAt: new Date(),
+      } as never);
+
+      const result = await createStoreProduct(storeId, {
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        costCents: 21000,
+        stock: 20,
+        lowStockThreshold: 5,
+      });
+
+      expect(db.product.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          name: 'Cooking Oil 1L',
+          priceCents: 25000,
+          costCents: 21000,
+          stock: 20,
+          lowStockThreshold: 5,
+          isArchived: false,
+        },
+      });
+
+      expect(result.costCents).toBe(21000);
     });
 
     it('marks isLowStock true when initial stock <= lowStockThreshold', async () => {
@@ -135,6 +173,40 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
 
       expect(result.name).toBe('Updated Sugar 1kg');
       expect(result.priceEtb).toBe('130.00');
+      expect(result.costCents).toBeNull();
+    });
+
+    it('updates costCents when provided in input', async () => {
+      vi.mocked(db.product.findFirst).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        isArchived: false,
+      } as never);
+
+      vi.mocked(db.product.update).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        name: 'Updated Sugar 1kg',
+        priceCents: 13000,
+        costCents: 11000,
+        stock: 40,
+        lowStockThreshold: 5,
+        isArchived: false,
+        updatedAt: new Date(),
+      } as never);
+
+      const result = await updateStoreProduct(storeId, productId, {
+        costCents: 11000,
+      });
+
+      expect(db.product.update).toHaveBeenCalledWith({
+        where: { id: productId },
+        data: {
+          costCents: 11000,
+        },
+      });
+
+      expect(result.costCents).toBe(11000);
     });
 
     it('throws NOT_FOUND when product does not exist in store', async () => {
@@ -290,6 +362,7 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         name: 'Cooking Oil 1L',
         priceCents: 25000,
         priceEtb: '250.00',
+        costCents: null,
         stock: 12,
         lowStockThreshold: 5,
         isLowStock: false,

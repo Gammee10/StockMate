@@ -100,6 +100,50 @@ describe('Catalog Validators', () => {
         }).success
       ).toBe(false);
     });
+
+    it('accepts optional non-negative integer costCents or null', () => {
+      const withCost = createProductSchema.safeParse({
+        name: 'Sugar 1kg',
+        priceCents: 12000,
+        costCents: 10000,
+        stock: 50,
+      });
+      expect(withCost.success).toBe(true);
+      if (withCost.success) {
+        expect(withCost.data.costCents).toBe(10000);
+      }
+
+      const withNullCost = createProductSchema.safeParse({
+        name: 'Sugar 1kg',
+        priceCents: 12000,
+        costCents: null,
+        stock: 50,
+      });
+      expect(withNullCost.success).toBe(true);
+      if (withNullCost.success) {
+        expect(withNullCost.data.costCents).toBeNull();
+      }
+    });
+
+    it('rejects negative or floating point costCents', () => {
+      expect(
+        createProductSchema.safeParse({
+          name: 'Sugar 1kg',
+          priceCents: 12000,
+          costCents: -500,
+          stock: 50,
+        }).success
+      ).toBe(false);
+
+      expect(
+        createProductSchema.safeParse({
+          name: 'Sugar 1kg',
+          priceCents: 12000,
+          costCents: 100.5,
+          stock: 50,
+        }).success
+      ).toBe(false);
+    });
   });
 
   describe('updateProductSchema', () => {
@@ -115,6 +159,24 @@ describe('Catalog Validators', () => {
         isArchived: true,
       });
       expect(result.success).toBe(true);
+    });
+
+    it('accepts updating or clearing costCents', () => {
+      const setCost = updateProductSchema.safeParse({
+        costCents: 9500,
+      });
+      expect(setCost.success).toBe(true);
+      if (setCost.success) {
+        expect(setCost.data.costCents).toBe(9500);
+      }
+
+      const clearCost = updateProductSchema.safeParse({
+        costCents: null,
+      });
+      expect(clearCost.success).toBe(true);
+      if (clearCost.success) {
+        expect(clearCost.data.costCents).toBeNull();
+      }
     });
 
     it('rejects invalid fields in update', () => {
