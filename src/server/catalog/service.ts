@@ -3,48 +3,42 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
-import type { CreateProductInput, UpdateProductInput, CatalogProductView } from './types';
+import type {
+  CreateProductInput,
+  UpdateProductInput,
+  CatalogProductView,
+  ListStoreProductsOptions,
+  ListProductsResult,
+} from './types';
 
 type DbOrTx = typeof db | Prisma.TransactionClient;
 
-export async function getProductsCatalog(limit = 50): Promise<CatalogProductView[]> {
-  const products = await db.product.findMany({
-    where: { isArchived: false },
-    take: Math.min(limit, 100),
-    include: {
-      store: {
-        select: { name: true },
-      },
-    },
-    orderBy: { name: 'asc' },
-  });
-
-  return products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    priceCents: p.priceCents,
-    priceEtb: (p.priceCents / 100).toFixed(2),
-    stock: p.stock,
-    lowStockThreshold: p.lowStockThreshold,
-    isLowStock: p.stock <= p.lowStockThreshold,
-    storeName: p.store.name,
-  }));
-}
-
-export async function getStoreProducts(
+/**
+ * Returns a paginated slice of active products strictly scoped to the store (Invariant #3).
+ * Supports cursor-based pagination and optional case-insensitive substring search.
+ */
+export async function listStoreProducts(
   storeId: string,
-  limit = 100
-): Promise<CatalogProductView[]> {
+  options: ListStoreProductsOptions = {}
+): Promise<ListProductsResult> {
+  const limit = Math.min(Math.max(options.limit ?? 100, 1), 100);
+  const cursor = options.cursor?.trim();
+  const q = options.q?.trim();
+
+  const where: Prisma.ProductWhereInput = {
+    storeId,
+    isArchived: false,
+    ...(q ? { name: { contains: q, mode: 'insensitive' } } : {}),
+  };
+
   const products = await db.product.findMany({
-    where: {
-      storeId,
-      isArchived: false,
-    },
-    take: Math.min(limit, 200),
-    orderBy: { name: 'asc' },
+    where,
+    orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    take: limit,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
 
-  return products.map((p) => ({
+  const items: CatalogProductView[] = products.map((p) => ({
     id: p.id,
     name: p.name,
     priceCents: p.priceCents,
@@ -53,6 +47,10 @@ export async function getStoreProducts(
     lowStockThreshold: p.lowStockThreshold,
     isLowStock: p.stock <= p.lowStockThreshold,
   }));
+
+  const nextCursor = items.length === limit ? items[items.length - 1].id : null;
+
+  return { items, nextCursor };
 }
 
 export async function getProductsForCheckout(

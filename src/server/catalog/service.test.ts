@@ -5,6 +5,7 @@ import {
   quickRestockProductAtomic,
   archiveStoreProduct,
   decrementProductStockAtomic,
+  listStoreProducts,
 } from './service';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
@@ -14,6 +15,7 @@ vi.mock('@/server/db', () => ({
     product: {
       create: vi.fn(),
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
     },
     $executeRaw: vi.fn(),
@@ -247,6 +249,92 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       await expect(
         decrementProductStockAtomic(storeId, productId, 5, mockTx as never)
       ).rejects.toThrow(`Insufficient stock for product id ${productId}`);
+    });
+  });
+
+  describe('listStoreProducts', () => {
+    it('scopes findMany strictly to storeId, excludes archived items, and caps limit at 100', async () => {
+      const mockProducts = [
+        {
+          id: 'p1',
+          name: 'Cooking Oil 1L',
+          priceCents: 25000,
+          stock: 12,
+          lowStockThreshold: 5,
+        },
+        {
+          id: 'p2',
+          name: 'Sugar 1kg',
+          priceCents: 10000,
+          stock: 4,
+          lowStockThreshold: 5,
+        },
+      ];
+
+      vi.mocked(db.product.findMany).mockResolvedValueOnce(mockProducts as never);
+
+      const result = await listStoreProducts(storeId, { limit: 150 });
+
+      expect(db.product.findMany).toHaveBeenCalledWith({
+        where: {
+          storeId,
+          isArchived: false,
+        },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        take: 100, // Capped at 100
+      });
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0]).toEqual({
+        id: 'p1',
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        priceEtb: '250.00',
+        stock: 12,
+        lowStockThreshold: 5,
+        isLowStock: false,
+      });
+      expect(result.items[1].isLowStock).toBe(true);
+      expect(result.nextCursor).toBeNull();
+    });
+
+    it('passes search query q and cursor with skip: 1', async () => {
+      vi.mocked(db.product.findMany).mockResolvedValueOnce([]);
+
+      await listStoreProducts(storeId, {
+        q: 'oil',
+        cursor: 'p1',
+        limit: 20,
+      });
+
+      expect(db.product.findMany).toHaveBeenCalledWith({
+        where: {
+          storeId,
+          isArchived: false,
+          name: { contains: 'oil', mode: 'insensitive' },
+        },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        take: 20,
+        cursor: { id: 'p1' },
+        skip: 1,
+      });
+    });
+
+    it('returns nextCursor as the last item id when items count equals limit', async () => {
+      const mockProducts = Array.from({ length: 5 }, (_, i) => ({
+        id: `p-${i + 1}`,
+        name: `Product ${i + 1}`,
+        priceCents: 1000,
+        stock: 10,
+        lowStockThreshold: 5,
+      }));
+
+      vi.mocked(db.product.findMany).mockResolvedValueOnce(mockProducts as never);
+
+      const result = await listStoreProducts(storeId, { limit: 5 });
+
+      expect(result.items).toHaveLength(5);
+      expect(result.nextCursor).toBe('p-5');
     });
   });
 });

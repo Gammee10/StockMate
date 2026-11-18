@@ -29,6 +29,7 @@ import {
   type PaymentMethod,
   type SaleReceiptFeedback,
 } from '@/modules/sales/counter';
+import { fetchAllProducts } from '@/lib/fetch-all-products';
 
 export interface Product {
   id: string;
@@ -43,7 +44,7 @@ export interface Product {
 
 export default function CounterPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [storeName, setStoreName] = useState<string>("Dawit's Kiosk");
+  const [storeName] = useState<string>("Dawit's Kiosk");
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
@@ -65,15 +66,9 @@ export default function CounterPage() {
   const [, startTransition] = useTransition();
 
   const refetchProducts = () => {
-    fetch('/api/catalog/products')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.products) {
-          setProducts(data.products);
-          if (data.products[0]?.storeName) {
-            setStoreName(data.products[0].storeName);
-          }
-        }
+    fetchAllProducts()
+      .then((items) => {
+        setProducts(items);
       })
       .catch((err) => {
         console.error('Fetch error:', err);

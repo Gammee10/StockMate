@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Store-Scoped Catalog Listing & Elimination of Cross-Store Leak (Task 1.1)
+
+- **Guarded Catalog API (`GET /api/catalog/products`):**
+  - Secured endpoint with `userRoute` enforcing Invariant #3; rejects unauthenticated requests with 401 Unauthorized.
+  - Queries are strictly scoped to the authenticated merchant's `user.storeId`, preventing multi-tenant data leaks.
+- **Unified `listStoreProducts` Service Function:**
+  - Replaced legacy `getProductsCatalog` (unscoped) and `getStoreProducts` (which permitted `take: 200`) with `listStoreProducts`.
+  - Enforces bounded pagination with `take <= 100`, cursor paging (`cursor`, `skip: 1`), and optional case-insensitive search (`q`).
+  - Omitted `store` relation and removed `storeName` from `CatalogProductView` to eliminate cross-store leakage.
+- **Client Paging Helper (`src/lib/fetch-all-products.ts`):**
+  - Added safe, client-side pagination helper with a 10-page ceiling (1,000 items) to fetch entire store catalogs across cursor pages.
+  - Adopted across `/`, `/inventory`, and `InventoryManagementModal`.
+- **Architectural Documentation:**
+  - Published [ADR 0008: Store-Scoped Paginated Catalog Listing & Cross-Store Data Leak Elimination](docs/adr/0008-store-scoped-paginated-catalog-listing.md).
+
 ### Added - Rich Interactive Visualizations & Scalable Catalog UX (Slice 6.2)
 
 - **Scalable Product Catalog Architecture (`/analytics`):**

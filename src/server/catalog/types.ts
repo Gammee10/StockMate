@@ -22,5 +22,15 @@ export interface CatalogProductView {
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;
-  storeName?: string;
+}
+
+export interface ListStoreProductsOptions {
+  cursor?: string;
+  limit?: number;
+  q?: string;
+}
+
+export interface ListProductsResult {
+  items: CatalogProductView[];
+  nextCursor: string | null;
 }
