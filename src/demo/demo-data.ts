@@ -87,11 +87,7 @@ function createPrng(seed: number) {
 }
 
 type Archetype =
-  | 'FAST_SELLER'
-  | 'DEAD_STOCK'
-  | 'STOCKOUT_RECOVERED'
-  | 'LOW_STOCK_CURRENT'
-  | 'NORMAL';
+  'FAST_SELLER' | 'DEAD_STOCK' | 'STOCKOUT_RECOVERED' | 'LOW_STOCK_CURRENT' | 'NORMAL';
 
 interface ProductBlueprint {
   name: string;
@@ -153,7 +149,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Iodized Table Salt 1kg',
     priceCents: 3000,
-    costRatio: 0.70,
+    costRatio: 0.7,
     lowStockThreshold: 15,
     archetype: 'FAST_SELLER',
     initialStock: 70,
@@ -182,7 +178,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Barley Flour 1kg',
     priceCents: 9500,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 5,
     archetype: 'DEAD_STOCK',
     initialStock: 14,
@@ -200,7 +196,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Cardamom Whole 50g',
     priceCents: 12500,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 4,
     archetype: 'DEAD_STOCK',
     initialStock: 10,
@@ -209,7 +205,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Cloves Whole 50g',
     priceCents: 11000,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 4,
     archetype: 'DEAD_STOCK',
     initialStock: 10,
@@ -220,7 +216,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Chickpeas Split 1kg',
     priceCents: 16000,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 8,
     archetype: 'STOCKOUT_RECOVERED',
     initialStock: 14,
@@ -229,7 +225,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Yellow Split Peas 1kg',
     priceCents: 14000,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 8,
     archetype: 'STOCKOUT_RECOVERED',
     initialStock: 15,
@@ -314,7 +310,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Wheat Flour 2kg',
     priceCents: 18000,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 8,
     archetype: 'NORMAL',
     initialStock: 30,
@@ -404,7 +400,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Mitin Shiro Blend 500g',
     priceCents: 18000,
-    costRatio: 0.80,
+    costRatio: 0.8,
     lowStockThreshold: 8,
     archetype: 'NORMAL',
     initialStock: 25,
@@ -431,7 +427,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Adult Toothbrush Medium',
     priceCents: 3500,
-    costRatio: 0.70,
+    costRatio: 0.7,
     lowStockThreshold: 8,
     archetype: 'NORMAL',
     initialStock: 30,
@@ -458,7 +454,7 @@ const PRODUCT_BLUEPRINTS: ProductBlueprint[] = [
   {
     name: 'Matchboxes 10-Pack',
     priceCents: 2500,
-    costRatio: 0.70,
+    costRatio: 0.7,
     lowStockThreshold: 15,
     archetype: 'NORMAL',
     initialStock: 40,
@@ -687,7 +683,8 @@ export function generateDemoData(options?: DemoDataOptions): DemoDataResult {
 
       // Basket size: 1 to 4 items (weighted towards 1-2 items)
       const basketRoll = prng();
-      const basketSize = basketRoll < 0.5 ? 1 : basketRoll < 0.8 ? 2 : basketRoll < 0.95 ? 3 : 4;
+      const basketSize =
+        basketRoll < 0.5 ? 1 : basketRoll < 0.8 ? 2 : basketRoll < 0.95 ? 3 : 4;
 
       const basketItems: DemoSaleItem[] = [];
       const chosenProductIds = new Set<string>();
@@ -706,7 +703,7 @@ export function generateDemoData(options?: DemoDataOptions): DemoDataResult {
           candidatePool = fastSellerProducts;
         } else if (categoryRoll < 0.72) {
           candidatePool = normalProducts;
-        } else if (categoryRoll < 0.90) {
+        } else if (categoryRoll < 0.9) {
           candidatePool = lowStockProducts;
         } else {
           candidatePool = stockoutProducts;

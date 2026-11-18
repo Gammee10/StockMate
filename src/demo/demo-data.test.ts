@@ -149,15 +149,11 @@ describe('Realistic Demo Data Generator (Pure)', () => {
     }
 
     // Fast sellers: at least 4 products with substantial sales (e.g. >= 60 units in 30 days)
-    const fastSellers = products.filter(
-      (p) => (unitsSoldByProduct.get(p.id) ?? 0) >= 60
-    );
+    const fastSellers = products.filter((p) => (unitsSoldByProduct.get(p.id) ?? 0) >= 60);
     expect(fastSellers.length).toBeGreaterThanOrEqual(4);
 
     // Dead stock: at least 4 products with 0 sales
-    const deadStock = products.filter(
-      (p) => (unitsSoldByProduct.get(p.id) ?? 0) === 0
-    );
+    const deadStock = products.filter((p) => (unitsSoldByProduct.get(p.id) ?? 0) === 0);
     expect(deadStock.length).toBeGreaterThanOrEqual(4);
 
     // Low stock right now: at least 3 products with 0 < currentStock <= lowStockThreshold
@@ -199,9 +195,7 @@ describe('Realistic Demo Data Generator (Pure)', () => {
 
     const productsWith1To3DaysStockout = Array.from(
       outOfStockDurationsByProduct.entries()
-    ).filter(([_, durations]) =>
-      durations.some((d) => d >= 1.0 && d <= 3.5)
-    );
+    ).filter(([_, durations]) => durations.some((d) => d >= 1.0 && d <= 3.5));
 
     expect(productsWith1To3DaysStockout.length).toBeGreaterThanOrEqual(3);
   });
