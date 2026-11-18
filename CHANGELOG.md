@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Complete Stock Movement Tracking: Restock, Create, and Manual Edit (Task 1.5b)
+
+- **Initial Stock Movement (`src/server/catalog/service.ts`):**
+  - In `createStoreProduct`, wrapped product creation in `db.$transaction` and records an `INITIAL` stock movement when initial stock > 0 (`stockBefore: 0`, `stockAfter: stock`, `quantityDelta: stock`).
+- **Atomic Quick Restock Tracking (`src/server/catalog/service.ts`):**
+  - In `quickRestockProductAtomic`, transitioned to `tx.$queryRaw` with `UPDATE ... RETURNING stock` within `db.$transaction`.
+  - Records a `RESTOCK` stock movement (`quantityDelta: quantity`, `stockBefore: stockAfter - quantity`, `stockAfter`).
+- **Concurrent-Safe Manual Stock Edit Tracking (`src/server/catalog/service.ts`):**
+  - In `updateStoreProduct`, when `input.stock` is updated, locks the product row with `SELECT stock FROM products ... FOR UPDATE` within `db.$transaction` to prevent lost updates from concurrent sales.
+  - Computes exact delta and records an `ADJUSTMENT` movement only when delta is non-zero (`quantityDelta: delta`, `stockBefore: lockedStock`, `stockAfter: input.stock`).
+- **Complete Invariant Verification:**
+  - Guarantees `stockBefore + quantityDelta === stockAfter` across all 5 movement types in the system (`INITIAL`, `SALE`, `VOID_RESTORE`, `RESTOCK`, `ADJUSTMENT`).
+
 ### Added - Stock Movement Ledger: Schema, Checkout, and Void Tracking (Task 1.5a)
 
 - **Database Schema (`prisma/schema.prisma`):**
