@@ -133,14 +133,6 @@ describe('Checkout Use Case: executeCheckout', () => {
     });
 
     expect(result.cached).toBe(false);
-    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledTimes(2);
-    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledWith(
-      storeId,
-      'prod_1',
-      2,
-      expect.anything(),
-      'Cooking Oil 1L'
-    );
     expect(salesService.createSaleRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         storeId,
@@ -149,6 +141,23 @@ describe('Checkout Use Case: executeCheckout', () => {
         paymentMethod: 'CASH',
       }),
       expect.anything()
+    );
+    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledTimes(2);
+    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledWith(
+      storeId,
+      'prod_1',
+      2,
+      expect.anything(),
+      'Cooking Oil 1L',
+      'sale_new_1'
+    );
+    expect(catalogService.decrementProductStockAtomic).toHaveBeenCalledWith(
+      storeId,
+      'prod_2',
+      1,
+      expect.anything(),
+      'Soap Bar',
+      'sale_new_1'
     );
   });
 
@@ -230,6 +239,17 @@ describe('Checkout Use Case: executeCheckout', () => {
       const mockTx = {};
       return cb(mockTx as never);
     });
+
+    vi.mocked(salesService.createSaleRecord).mockResolvedValueOnce({
+      id: 'sale_insufficient_stock',
+      storeId,
+      idempotencyKey,
+      totalAmountCents: 50000,
+      paymentMethod: 'CASH',
+      status: 'COMPLETED',
+      createdAt: new Date(),
+      items: [],
+    } as never);
 
     vi.mocked(catalogService.decrementProductStockAtomic).mockRejectedValueOnce(
       new AppError('CONFLICT', 'Insufficient stock for product Cooking Oil 1L', {

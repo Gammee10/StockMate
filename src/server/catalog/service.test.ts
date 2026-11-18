@@ -5,6 +5,8 @@ import {
   quickRestockProductAtomic,
   archiveStoreProduct,
   decrementProductStockAtomic,
+  incrementProductStockAtomic,
+  recordStockMovement,
   listStoreProducts,
 } from './service';
 import { db } from '@/server/db';
@@ -286,20 +288,88 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     });
   });
 
-  describe('decrementProductStockAtomic', () => {
-    it('executes atomic SQL decrement inside transaction', async () => {
+  describe('recordStockMovement', () => {
+    it('creates a stockMovement row via tx.stockMovement.create', async () => {
       const mockTx = {
-        $executeRaw: vi.fn().mockResolvedValueOnce(1),
+        stockMovement: {
+          create: vi.fn().mockResolvedValueOnce({
+            id: 'mov_1',
+            storeId,
+            productId,
+            type: 'SALE',
+            quantityDelta: -2,
+            stockBefore: 10,
+            stockAfter: 8,
+            saleId: 'sale_1',
+            createdAt: new Date(),
+          }),
+        },
       };
 
-      await decrementProductStockAtomic(storeId, productId, 2, mockTx as never);
+      const result = await recordStockMovement(mockTx as never, {
+        storeId,
+        productId,
+        type: 'SALE',
+        quantityDelta: -2,
+        stockBefore: 10,
+        stockAfter: 8,
+        saleId: 'sale_1',
+      });
 
-      expect(mockTx.$executeRaw).toHaveBeenCalled();
+      expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'SALE',
+          quantityDelta: -2,
+          stockBefore: 10,
+          stockAfter: 8,
+          saleId: 'sale_1',
+        },
+      });
+      expect(result.id).toBe('mov_1');
+    });
+  });
+
+  describe('decrementProductStockAtomic', () => {
+    it('executes atomic SQL decrement with RETURNING stock and records SALE movement', async () => {
+      const mockTx = {
+        $queryRaw: vi.fn().mockResolvedValueOnce([{ stock: 8 }]),
+        stockMovement: {
+          create: vi.fn().mockResolvedValueOnce({ id: 'mov_sale_1' }),
+        },
+      };
+
+      const result = await decrementProductStockAtomic(
+        storeId,
+        productId,
+        2,
+        mockTx as never,
+        'Cooking Oil 1L',
+        'sale_123'
+      );
+
+      expect(mockTx.$queryRaw).toHaveBeenCalled();
+      expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'SALE',
+          quantityDelta: -2,
+          stockBefore: 10,
+          stockAfter: 8,
+          saleId: 'sale_123',
+        },
+      });
+      expect(result).toEqual({ stock: 8 });
     });
 
     it('formats human-readable error with product name when stock is insufficient', async () => {
       const mockTx = {
-        $executeRaw: vi.fn().mockResolvedValueOnce(0),
+        $queryRaw: vi.fn().mockResolvedValueOnce([]),
+        stockMovement: {
+          create: vi.fn(),
+        },
       };
 
       await expect(
@@ -311,16 +381,68 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
           'Cooking Oil 1L'
         )
       ).rejects.toThrow('Insufficient stock for "Cooking Oil 1L"');
+      expect(mockTx.stockMovement.create).not.toHaveBeenCalled();
     });
 
     it('falls back to product id when product name is not provided', async () => {
       const mockTx = {
-        $executeRaw: vi.fn().mockResolvedValueOnce(0),
+        $queryRaw: vi.fn().mockResolvedValueOnce([]),
+        stockMovement: {
+          create: vi.fn(),
+        },
       };
 
       await expect(
         decrementProductStockAtomic(storeId, productId, 5, mockTx as never)
       ).rejects.toThrow(`Insufficient stock for product id ${productId}`);
+      expect(mockTx.stockMovement.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('incrementProductStockAtomic', () => {
+    it('executes atomic SQL increment with RETURNING stock and records VOID_RESTORE movement', async () => {
+      const mockTx = {
+        $queryRaw: vi.fn().mockResolvedValueOnce([{ stock: 10 }]),
+        stockMovement: {
+          create: vi.fn().mockResolvedValueOnce({ id: 'mov_void_1' }),
+        },
+      };
+
+      const result = await incrementProductStockAtomic(
+        storeId,
+        productId,
+        2,
+        mockTx as never,
+        'sale_123'
+      );
+
+      expect(mockTx.$queryRaw).toHaveBeenCalled();
+      expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'VOID_RESTORE',
+          quantityDelta: 2,
+          stockBefore: 8,
+          stockAfter: 10,
+          saleId: 'sale_123',
+        },
+      });
+      expect(result).toEqual({ stock: 10 });
+    });
+
+    it('throws NOT_FOUND when atomic update matches 0 rows (invalid product or store)', async () => {
+      const mockTx = {
+        $queryRaw: vi.fn().mockResolvedValueOnce([]),
+        stockMovement: {
+          create: vi.fn(),
+        },
+      };
+
+      await expect(
+        incrementProductStockAtomic(storeId, productId, 2, mockTx as never, 'sale_123')
+      ).rejects.toThrow(`Product id ${productId} not found for store ${storeId}`);
+      expect(mockTx.stockMovement.create).not.toHaveBeenCalled();
     });
   });
 
