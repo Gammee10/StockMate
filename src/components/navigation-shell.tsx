@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   LogOut,
   Store,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +20,14 @@ import { cn } from '@/lib/utils';
 export interface NavItem {
   label: string;
   href: string;
-  icon: 'shopping-cart' | 'calculator' | 'package';
+  icon: 'shopping-cart' | 'calculator' | 'package' | 'trending-up';
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Counter', href: '/counter', icon: 'shopping-cart' },
   { label: 'Daily till', href: '/till', icon: 'calculator' },
   { label: 'Inventory', href: '/inventory', icon: 'package' },
+  { label: 'Analytics', href: '/analytics', icon: 'trending-up' },
 ];
 
 export function isNavActive(currentPath: string, targetHref: string): boolean {
@@ -95,7 +97,9 @@ export function NavigationShell({
                     ? ShoppingCart
                     : item.icon === 'calculator'
                       ? Calculator
-                      : Package;
+                      : item.icon === 'package'
+                        ? Package
+                        : TrendingUp;
 
                 return (
                   <Link
@@ -132,7 +136,7 @@ export function NavigationShell({
 
           {/* Mobile Navigation Tabs (Touch targets >= 44dp) */}
           <nav
-            className="bg-muted/50 grid grid-cols-3 gap-1 rounded-lg border border-border p-1 sm:hidden"
+            className="grid grid-cols-4 gap-1 rounded-lg border border-border bg-muted/50 p-1 sm:hidden"
             aria-label="Mobile Navigation Tabs"
           >
             {NAV_ITEMS.map((item) => {
@@ -142,7 +146,9 @@ export function NavigationShell({
                   ? ShoppingCart
                   : item.icon === 'calculator'
                     ? Calculator
-                    : Package;
+                    : item.icon === 'package'
+                      ? Package
+                      : TrendingUp;
 
               return (
                 <Link
