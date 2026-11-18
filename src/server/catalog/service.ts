@@ -82,6 +82,7 @@ export async function getProductsForCheckout(
  * Creates a new product for a specific store (AC 5.1).
  * Invariant #1: Prices are stored as integer cents.
  * Invariant #3: storeId is strictly derived from verified session token.
+ * Records INITIAL stock movement if initial stock > 0 (Task 1.5b).
  */
 export async function createStoreProduct(
   storeId: string,
@@ -89,141 +90,218 @@ export async function createStoreProduct(
 ): Promise<CatalogProductView> {
   const lowStockThreshold = input.lowStockThreshold ?? 5;
 
-  const product = await db.product.create({
-    data: {
-      storeId,
-      name: input.name,
-      priceCents: input.priceCents,
-      costCents: input.costCents ?? null,
-      stock: input.stock,
-      lowStockThreshold,
-      isArchived: false,
-    },
-  });
+  return db.$transaction(
+    async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          storeId,
+          name: input.name,
+          priceCents: input.priceCents,
+          costCents: input.costCents ?? null,
+          stock: input.stock,
+          lowStockThreshold,
+          isArchived: false,
+        },
+      });
 
-  return {
-    id: product.id,
-    name: product.name,
-    priceCents: product.priceCents,
-    priceEtb: (product.priceCents / 100).toFixed(2),
-    costCents: product.costCents ?? null,
-    stock: product.stock,
-    lowStockThreshold: product.lowStockThreshold,
-    isLowStock: product.stock <= product.lowStockThreshold,
-  };
+      if (input.stock > 0) {
+        await recordStockMovement(tx, {
+          storeId,
+          productId: product.id,
+          type: 'INITIAL',
+          quantityDelta: input.stock,
+          stockBefore: 0,
+          stockAfter: input.stock,
+        });
+      }
+
+      return {
+        id: product.id,
+        name: product.name,
+        priceCents: product.priceCents,
+        priceEtb: (product.priceCents / 100).toFixed(2),
+        costCents: product.costCents ?? null,
+        stock: product.stock,
+        lowStockThreshold: product.lowStockThreshold,
+        isLowStock: product.stock <= product.lowStockThreshold,
+      };
+    },
+    { maxWait: 10000, timeout: 20000 }
+  );
 }
 
 /**
  * Updates product details scoped by storeId (AC 5.2).
+ * Locks row with FOR UPDATE on stock changes and writes ADJUSTMENT movement (Task 1.5b).
  */
 export async function updateStoreProduct(
   storeId: string,
   productId: string,
   input: UpdateProductInput
 ): Promise<CatalogProductView> {
-  // backend-check-ignore unscoped-read: query is scoped by storeId and id
-  const existing = await db.product.findFirst({
-    where: {
-      id: productId,
-      storeId,
-      isArchived: false,
+  return db.$transaction(
+    async (tx) => {
+      let stockDelta: { before: number; after: number; delta: number } | null = null;
+
+      if (input.stock !== undefined) {
+        const rows = await tx.$queryRaw<Array<{ stock: number }>>`
+          SELECT stock FROM products
+          WHERE id = ${productId} AND store_id = ${storeId} AND is_archived = false
+          FOR UPDATE
+        `;
+
+        if (!rows || rows.length === 0) {
+          throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
+            fields: {
+              productId: ['Product does not exist in store inventory'],
+            },
+          });
+        }
+
+        const stockBefore = rows[0].stock;
+        const stockAfter = input.stock;
+        const delta = stockAfter - stockBefore;
+        if (delta !== 0) {
+          stockDelta = { before: stockBefore, after: stockAfter, delta };
+        }
+      } else {
+        // backend-check-ignore unscoped-read: query is scoped by storeId and id
+        const existing = await tx.product.findFirst({
+          where: {
+            id: productId,
+            storeId,
+            isArchived: false,
+          },
+        });
+
+        if (!existing) {
+          throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
+            fields: {
+              productId: ['Product does not exist in store inventory'],
+            },
+          });
+        }
+      }
+
+      const updateData: {
+        name?: string;
+        priceCents?: number;
+        costCents?: number | null;
+        stock?: number;
+        lowStockThreshold?: number;
+        isArchived?: boolean;
+      } = {};
+
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.priceCents !== undefined) updateData.priceCents = input.priceCents;
+      if (input.costCents !== undefined) updateData.costCents = input.costCents;
+      if (input.stock !== undefined) updateData.stock = input.stock;
+      if (input.lowStockThreshold !== undefined)
+        updateData.lowStockThreshold = input.lowStockThreshold;
+      if (input.isArchived !== undefined) updateData.isArchived = input.isArchived;
+
+      // backend-check-ignore unscoped-write: storeId ownership is strictly validated before mutating
+      const updated = await tx.product.update({
+        where: { id: productId },
+        data: updateData,
+      });
+
+      if (stockDelta) {
+        await recordStockMovement(tx, {
+          storeId,
+          productId,
+          type: 'ADJUSTMENT',
+          quantityDelta: stockDelta.delta,
+          stockBefore: stockDelta.before,
+          stockAfter: stockDelta.after,
+        });
+      }
+
+      return {
+        id: updated.id,
+        name: updated.name,
+        priceCents: updated.priceCents,
+        priceEtb: (updated.priceCents / 100).toFixed(2),
+        costCents: updated.costCents ?? null,
+        stock: updated.stock,
+        lowStockThreshold: updated.lowStockThreshold,
+        isLowStock: updated.stock <= updated.lowStockThreshold,
+      };
     },
-  });
-
-  if (!existing) {
-    throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
-      fields: {
-        productId: ['Product does not exist in store inventory'],
-      },
-    });
-  }
-
-  const updateData: {
-    name?: string;
-    priceCents?: number;
-    costCents?: number | null;
-    stock?: number;
-    lowStockThreshold?: number;
-    isArchived?: boolean;
-  } = {};
-
-  if (input.name !== undefined) updateData.name = input.name;
-  if (input.priceCents !== undefined) updateData.priceCents = input.priceCents;
-  if (input.costCents !== undefined) updateData.costCents = input.costCents;
-  if (input.stock !== undefined) updateData.stock = input.stock;
-  if (input.lowStockThreshold !== undefined)
-    updateData.lowStockThreshold = input.lowStockThreshold;
-  if (input.isArchived !== undefined) updateData.isArchived = input.isArchived;
-
-  // backend-check-ignore unscoped-write: storeId ownership is strictly validated before mutating
-  const updated = await db.product.update({
-    where: { id: productId },
-    data: updateData,
-  });
-
-  return {
-    id: updated.id,
-    name: updated.name,
-    priceCents: updated.priceCents,
-    priceEtb: (updated.priceCents / 100).toFixed(2),
-    costCents: updated.costCents ?? null,
-    stock: updated.stock,
-    lowStockThreshold: updated.lowStockThreshold,
-    isLowStock: updated.stock <= updated.lowStockThreshold,
-  };
+    { maxWait: 10000, timeout: 20000 }
+  );
 }
 
 /**
  * Quick restock product atomically (AC 5.3).
  * Enforces Invariant #5: Uses atomic SQL increment to prevent race conditions.
+ * Uses RETURNING stock and records RESTOCK stock movement (Task 1.5b).
  */
 export async function quickRestockProductAtomic(
   storeId: string,
   productId: string,
   quantity: number
 ): Promise<CatalogProductView> {
-  const count = await db.$executeRaw`
-    UPDATE products
-    SET stock = stock + ${quantity}, updated_at = NOW()
-    WHERE id = ${productId}
-      AND store_id = ${storeId}
-      AND is_archived = false
-  `;
+  return db.$transaction(
+    async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ stock: number }>>`
+        UPDATE products
+        SET stock = stock + ${quantity}, updated_at = NOW()
+        WHERE id = ${productId}
+          AND store_id = ${storeId}
+          AND is_archived = false
+        RETURNING stock
+      `;
 
-  if (count === 0) {
-    throw new AppError(
-      'NOT_FOUND',
-      `Product ${productId} not found for store ${storeId}`,
-      {
-        fields: {
-          productId: ['Product does not exist in store inventory or is archived'],
-        },
+      if (!rows || rows.length === 0) {
+        throw new AppError(
+          'NOT_FOUND',
+          `Product ${productId} not found for store ${storeId}`,
+          {
+            fields: {
+              productId: ['Product does not exist in store inventory or is archived'],
+            },
+          }
+        );
       }
-    );
-  }
 
-  // backend-check-ignore unscoped-read: query is scoped by storeId and id
-  const product = await db.product.findFirst({
-    where: {
-      id: productId,
-      storeId,
+      const stockAfter = rows[0].stock;
+      const stockBefore = stockAfter - quantity;
+
+      await recordStockMovement(tx, {
+        storeId,
+        productId,
+        type: 'RESTOCK',
+        quantityDelta: quantity,
+        stockBefore,
+        stockAfter,
+      });
+
+      // backend-check-ignore unscoped-read: query is scoped by storeId and id
+      const product = await tx.product.findFirst({
+        where: {
+          id: productId,
+          storeId,
+        },
+      });
+
+      if (!product) {
+        throw new AppError('NOT_FOUND', `Product ${productId} not found`);
+      }
+
+      return {
+        id: product.id,
+        name: product.name,
+        priceCents: product.priceCents,
+        priceEtb: (product.priceCents / 100).toFixed(2),
+        costCents: product.costCents ?? null,
+        stock: product.stock,
+        lowStockThreshold: product.lowStockThreshold,
+        isLowStock: product.stock <= product.lowStockThreshold,
+      };
     },
-  });
-
-  if (!product) {
-    throw new AppError('NOT_FOUND', `Product ${productId} not found`);
-  }
-
-  return {
-    id: product.id,
-    name: product.name,
-    priceCents: product.priceCents,
-    priceEtb: (product.priceCents / 100).toFixed(2),
-    costCents: product.costCents ?? null,
-    stock: product.stock,
-    lowStockThreshold: product.lowStockThreshold,
-    isLowStock: product.stock <= product.lowStockThreshold,
-  };
+    { maxWait: 10000, timeout: 20000 }
+  );
 }
 
 /**
