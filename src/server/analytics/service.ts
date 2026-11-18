@@ -234,6 +234,14 @@ export async function computeStockVelocityReport(
   const movementsByProductId = new Map<string, ZeroCrossingRow[]>();
 
   if (productIds.length > 0) {
+    interface MovementBatchItem {
+      id: string;
+      productId: string;
+      createdAt: Date;
+      stockBefore: number;
+      stockAfter: number;
+    }
+
     const MOVEMENT_BATCH_SIZE = 100;
     const MAX_MOVEMENT_PAGES = 20;
     let movementCursor: string | undefined = undefined;
@@ -242,13 +250,7 @@ export async function computeStockVelocityReport(
     while (movementPages < MAX_MOVEMENT_PAGES) {
       movementPages++;
       // backend-check-ignore n-plus-one: batched cursor pagination with take 100 up to ceiling of 20 pages
-      const movementBatch: Array<{
-        id: string;
-        productId: string;
-        createdAt: Date;
-        stockBefore: number;
-        stockAfter: number;
-      }> = await db.stockMovement.findMany({
+      const movementBatch: MovementBatchItem[] = await db.stockMovement.findMany({
         where: {
           storeId,
           productId: { in: productIds },

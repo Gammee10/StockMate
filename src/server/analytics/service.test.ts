@@ -394,7 +394,7 @@ describe('Stock Velocity Analytics Service', () => {
           unitPriceCents: 10000,
           _sum: { quantity: 14 },
         },
-      ]);
+      ] as never);
 
       vi.mocked(db.stockMovement.findMany).mockResolvedValueOnce([
         {

@@ -35,8 +35,7 @@ export function computeOutOfStockMs({
   let outMs = 0;
   // If the earliest event in the window started at stockBefore === 0,
   // it was out of stock from windowStart until that event.
-  let outSince: number | null =
-    rows[0].stockBefore === 0 ? windowStart.getTime() : null;
+  let outSince: number | null = rows[0].stockBefore === 0 ? windowStart.getTime() : null;
 
   for (const row of rows) {
     const rowTime = row.createdAt.getTime();
