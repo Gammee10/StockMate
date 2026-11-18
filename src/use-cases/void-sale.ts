@@ -46,7 +46,8 @@ export async function executeVoidSale(input: VoidSaleInput): Promise<SaleWithIte
           input.storeId,
           item.productId,
           item.quantity,
-          tx
+          tx,
+          sale.id
         );
       }
 

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Stock Movement Ledger: Schema, Checkout, and Void Tracking (Task 1.5a)
+
+- **Database Schema (`prisma/schema.prisma`):**
+  - Added enum `StockMovementType` (`INITIAL`, `SALE`, `VOID_RESTORE`, `RESTOCK`, `ADJUSTMENT`).
+  - Added `StockMovement` model with foreign key relations to `Store` and `Product`, signed `quantityDelta`, `stockBefore`, `stockAfter`, optional `saleId`, and indices on `[storeId, productId, createdAt]` and `[storeId, createdAt]`.
+  - Added back-relations to `Store` and `Product`.
+- **Catalog Stock Movement Recording (`src/server/catalog/service.ts`):**
+  - Added `recordStockMovement(tx, input)` to record audit entries in the same interactive transaction.
+  - Refactored `decrementProductStockAtomic` and `incrementProductStockAtomic` to use `tx.$queryRaw` with `RETURNING stock` to atomically capture `stockAfter` and compute `stockBefore`.
+  - Decrements now record a `SALE` movement with negative delta; restorations record a `VOID_RESTORE` movement with positive delta.
+- **Transactional Consistency in Checkout & Void (`src/use-cases/`):**
+  - In `executeCheckout`, the sale record is created first inside the interactive transaction, passing `sale.id` to each item's decrement. If decrement fails due to insufficient stock, the transaction rolls back cleanly.
+  - In `executeVoidSale`, `sale.id` is passed to `incrementProductStockAtomic` to associate void inventory restorations directly with the sale transaction.
+- **Architectural Documentation (`docs/adr/0009-stock-movement-ledger.md`):**
+  - Recorded ADR 0009 detailing the append-only stock movement ledger design and transactional execution sequence.
+
 ### Added - Scalable Multi-Batch Analytics & GroupBy Sales Aggregation (Task 1.4)
 
 - **Batched Catalog Loading (`src/server/analytics/service.ts`):**

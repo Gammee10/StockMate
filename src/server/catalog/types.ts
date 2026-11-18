@@ -1,4 +1,7 @@
 // src/server/catalog/types.ts
+export type StockMovementType =
+  'INITIAL' | 'SALE' | 'VOID_RESTORE' | 'RESTOCK' | 'ADJUSTMENT';
+
 export interface CreateProductInput {
   name: string;
   priceCents: number;
@@ -36,4 +39,14 @@ export interface ListStoreProductsOptions {
 export interface ListProductsResult {
   items: CatalogProductView[];
   nextCursor: string | null;
+}
+
+export interface RecordStockMovementInput {
+  storeId: string;
+  productId: string;
+  type: StockMovementType;
+  quantityDelta: number;
+  stockBefore: number;
+  stockAfter: number;
+  saleId?: string | null;
 }

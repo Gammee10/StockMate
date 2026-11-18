@@ -84,13 +84,15 @@ describe('Void Sale Use Case: executeVoidSale', () => {
       storeId,
       'prod_1',
       2,
-      expect.anything()
+      expect.anything(),
+      saleId
     );
     expect(catalogService.incrementProductStockAtomic).toHaveBeenCalledWith(
       storeId,
       'prod_2',
       1,
-      expect.anything()
+      expect.anything(),
+      saleId
     );
     expect(salesService.voidSaleRecord).toHaveBeenCalledWith(
       storeId,
