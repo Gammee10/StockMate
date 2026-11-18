@@ -37,6 +37,7 @@ model Product {
   store              Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name               String
   priceCents         Int        @map("price_cents")
+  costCents          Int?       @map("cost_price_cents")
   stock              Int        @default(0)
   lowStockThreshold  Int        @default(5) @map("low_stock_threshold")
   isArchived         Boolean    @default(false) @map("is_archived")
