@@ -1,18 +1,27 @@
 // src/app/api/catalog/products/route.ts
 import { NextResponse } from 'next/server';
-import { publicRoute, userRoute, created } from '@/server/api';
-import { getProductsCatalog, createStoreProduct } from '@/server/catalog/service';
-import { createProductSchema } from '@/server/catalog/validators';
+import { userRoute, created } from '@/server/api';
+import { listStoreProducts, createStoreProduct } from '@/server/catalog/service';
+import {
+  createProductSchema,
+  listProductsQuerySchema,
+} from '@/server/catalog/validators';
 
-export const GET = publicRoute({}, async () => {
-  const products = await getProductsCatalog(50);
+export const GET = userRoute(
+  {
+    query: listProductsQuerySchema,
+  },
+  async ({ query, user }) => {
+    const { items, nextCursor } = await listStoreProducts(user.storeId, query);
 
-  return NextResponse.json({
-    success: true,
-    count: products.length,
-    products,
-  });
-});
+    return NextResponse.json({
+      success: true,
+      count: items.length,
+      products: items,
+      nextCursor,
+    });
+  }
+);
 
 export const POST = userRoute(
   {

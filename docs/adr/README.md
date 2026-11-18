@@ -11,3 +11,4 @@ This directory records all significant architectural and technical decisions mad
 - [ADR 0005: Dual Cash & Digital Payment Tracking (Telebirr / CBE Birr)](0005-dual-cash-and-digital-payment-tracking.md) - Accepted
 - [ADR 0006: Daily Sales Ledger & End-of-Day Till Reconciliation](0006-daily-sales-ledger-and-eod-till-reconciliation.md) - Accepted
 - [ADR 0007: Product Catalog CRUD, Atomic 1-Tap Restock & Soft Archival](0007-catalog-crud-atomic-restock-soft-archival.md) - Accepted
+- [ADR 0008: Store-Scoped Paginated Catalog Listing & Cross-Store Data Leak Elimination](0008-store-scoped-paginated-catalog-listing.md) - Accepted

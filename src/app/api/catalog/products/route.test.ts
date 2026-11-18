@@ -39,7 +39,13 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
   });
 
   describe('GET /api/catalog/products', () => {
-    it('formats product money in ETB and calculates low stock status accurately', async () => {
+    it('rejects unauthenticated requests with 401 (Invariant #3)', async () => {
+      const req = new Request('http://localhost:3000/api/catalog/products');
+      const res = await GET(req);
+      expect(res.status).toBe(401);
+    });
+
+    it('returns store-scoped products with pagination metadata and no storeName', async () => {
       vi.mocked(db.product.findMany).mockResolvedValueOnce([
         {
           id: 'prod-1',
@@ -48,9 +54,8 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
           stock: 12,
           lowStockThreshold: 5,
           isArchived: false,
-          storeId: 'store-1',
+          storeId,
           updatedAt: new Date(),
-          store: { name: "Dawit's Kiosk" },
         },
         {
           id: 'prod-2',
@@ -59,35 +64,41 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
           stock: 3,
           lowStockThreshold: 5,
           isArchived: false,
-          storeId: 'store-1',
+          storeId,
           updatedAt: new Date(),
-          store: { name: "Dawit's Kiosk" },
         },
       ] as never);
 
-      const res = await GET();
+      const req = new Request('http://localhost:3000/api/catalog/products?limit=50', {
+        headers: { Cookie: validSessionCookie },
+      });
+      const res = await GET(req);
       expect(res.status).toBe(200);
 
       const json = await res.json();
       expect(json.success).toBe(true);
       expect(json.count).toBe(2);
+      expect(json.nextCursor).toBeNull();
 
-      expect(json.products[0]).toMatchObject({
+      expect(json.products[0]).toEqual({
+        id: 'prod-1',
         name: 'Cooking Oil 1L',
         priceCents: 25000,
         priceEtb: '250.00',
         stock: 12,
+        lowStockThreshold: 5,
         isLowStock: false,
-        storeName: "Dawit's Kiosk",
       });
+      expect(json.products[0]).not.toHaveProperty('storeName');
 
-      expect(json.products[1]).toMatchObject({
+      expect(json.products[1]).toEqual({
+        id: 'prod-2',
         name: 'Laundry Soap',
         priceCents: 4500,
         priceEtb: '45.00',
         stock: 3,
+        lowStockThreshold: 5,
         isLowStock: true,
-        storeName: "Dawit's Kiosk",
       });
     });
 
@@ -96,7 +107,10 @@ describe('Catalog Products API Route: /api/catalog/products', () => {
         new Error('Connection failure')
       );
 
-      const res = await GET();
+      const req = new Request('http://localhost:3000/api/catalog/products', {
+        headers: { Cookie: validSessionCookie },
+      });
+      const res = await GET(req);
       expect(res.status).toBe(500);
 
       const json = await res.json();

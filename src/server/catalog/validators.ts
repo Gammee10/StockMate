@@ -58,3 +58,10 @@ export const quickRestockSchema = z.object({
 export const productIdParamSchema = z.object({
   id: z.string().trim().min(1, 'Product ID is required').max(100, 'Product ID too long'),
 });
+
+export const listProductsQuerySchema = z.object({
+  cursor: z.string().trim().max(100, 'Cursor too long').optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(100),
+  q: z.string().trim().max(100, 'Search query too long').optional(),
+});
+export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toCents } from '@/lib/money';
+import { fetchAllProducts } from '@/lib/fetch-all-products';
 
 export interface ProductItem {
   id: string;
@@ -25,7 +26,6 @@ export interface ProductItem {
   stock: number;
   lowStockThreshold: number;
   isLowStock: boolean;
-  storeName?: string;
 }
 
 interface InventoryManagementModalProps {
@@ -61,14 +61,8 @@ export function InventoryManagementModal({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/catalog/products');
-      if (!res.ok) {
-        throw new Error('Failed to load catalog');
-      }
-      const json = await res.json();
-      if (json.products) {
-        setProducts(json.products);
-      }
+      const items = await fetchAllProducts();
+      setProducts(items);
     } catch {
       setError('Failed to load inventory. Please retry.');
     } finally {
