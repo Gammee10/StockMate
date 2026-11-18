@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Interactive Visual Analytics Charts (Slice 6.1)
+
+- **Interactive Visual Intelligence Card (`InteractiveCharts`):**
+  - **Demand Velocity Comparison Bars (`BarChart3`):** Ranked visual bar chart displaying top-selling products by sales velocity (`units/day`) and units sold, with proportional progress fills and semantic status tags.
+  - **Stockout Runway Depletion Visualizer (`Clock`):** Visual urgency countdown progress meters for products with runway $\le 14$ days, color-coded by urgency ($\le 2$ days destructive red, $\le 5$ days warning amber, $> 5$ days primary green).
+  - **Inventory Health Composition Ratio (`PieChart`):** Segmented distribution bar showing the proportion of products in `OUT_OF_STOCK`, `CRITICAL_LOW`, `LOW_STOCK`, `HEALTHY`, and `DEAD_STOCK`. Interactive cards filter the table below directly with 1 tap.
+  - **Interactive Product Quick-Insight Inspector:** Selecting/pinning any product highlights it across the workspace, displaying current stock, units sold, daily velocity, stock runway, revenue in ETB, recommended wholesale reorder quantity, and 1-tap copy button.
+  - **Zero External Dependencies:** Built with pure React 19, accessible ARIA roles, and standard semantic design tokens. Full mobile responsiveness with touch targets $\ge 44\text{ dp}$.
+
 ### Added - Stock & Sales Velocity Analytics and Wholesale Restock Sheet (Slice 6)
 
 - **Dedicated Analytics & Velocity Workspace (`/analytics`):**
