@@ -2,20 +2,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { BarChart3, Clock, PieChart, X, TrendingUp, Check, Copy } from 'lucide-react';
 import {
-  BarChart3,
-  Clock,
-  PieChart,
-  X,
-  TrendingUp,
-  Check,
-  Copy,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ProductVelocityMetrics, StockVelocityStatus } from '@/server/analytics/types';
+import type {
+  ProductVelocityMetrics,
+  StockVelocityStatus,
+} from '@/server/analytics/types';
 import {
   calculateVelocityBarWidth,
   calculateInventoryDistribution,
@@ -48,7 +49,10 @@ export function InteractiveCharts({
   const [copiedInsight, setCopiedInsight] = useState(false);
 
   // Top products by velocity
-  const topVelocityProducts = useMemo(() => getTopVelocityProducts(products, 6), [products]);
+  const topVelocityProducts = useMemo(
+    () => getTopVelocityProducts(products, 6),
+    [products]
+  );
 
   // Maximum velocity among products for percentage scaling
   const maxVelocity = useMemo(() => {
@@ -60,7 +64,10 @@ export function InteractiveCharts({
   const atRiskProducts = useMemo(() => getAtRiskRunwayProducts(products, 14), [products]);
 
   // Inventory distribution across 5 statuses
-  const distribution = useMemo(() => calculateInventoryDistribution(products), [products]);
+  const distribution = useMemo(
+    () => calculateInventoryDistribution(products),
+    [products]
+  );
 
   // Currently selected product for detailed inspection
   const selectedProduct = useMemo(
@@ -99,7 +106,8 @@ export function InteractiveCharts({
               Interactive visual intelligence
             </CardTitle>
             <CardDescription className="mt-1 text-xs text-muted-foreground">
-              Compare sales velocity, track stockout runways, and balance inventory capital.
+              Compare sales velocity, track stockout runways, and balance inventory
+              capital.
             </CardDescription>
           </div>
 
@@ -107,7 +115,7 @@ export function InteractiveCharts({
           <div
             role="tablist"
             aria-label="Analytics visual chart types"
-            className="flex items-center rounded-lg border border-border bg-muted/50 p-1"
+            className="bg-muted/50 flex items-center rounded-lg border border-border p-1"
           >
             <Button
               role="tab"
@@ -163,9 +171,12 @@ export function InteractiveCharts({
             <div className="mb-2 flex size-10 items-center justify-center rounded-lg border border-border bg-muted">
               <TrendingUp className="size-5 text-muted-foreground" />
             </div>
-            <h4 className="text-sm font-semibold text-foreground">No transaction data yet</h4>
+            <h4 className="text-sm font-semibold text-foreground">
+              No transaction data yet
+            </h4>
             <p className="mt-1 text-xs text-muted-foreground">
-              Record sales at the counter to populate interactive demand and stockout charts.
+              Record sales at the counter to populate interactive demand and stockout
+              charts.
             </p>
           </div>
         ) : (
@@ -181,7 +192,10 @@ export function InteractiveCharts({
                 <div className="space-y-3">
                   {topVelocityProducts.map((p) => {
                     const isSelected = selectedProductId === p.productId;
-                    const barWidth = calculateVelocityBarWidth(p.salesVelocityPerDay, maxVelocity);
+                    const barWidth = calculateVelocityBarWidth(
+                      p.salesVelocityPerDay,
+                      maxVelocity
+                    );
 
                     return (
                       <div
@@ -189,8 +203,8 @@ export function InteractiveCharts({
                         onClick={() => onSelectProduct(isSelected ? null : p.productId)}
                         className={`group relative cursor-pointer rounded-lg border p-3 transition-colors ${
                           isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border bg-card hover:bg-muted/40'
+                            ? 'bg-primary/5 border-primary'
+                            : 'hover:bg-muted/40 border-border bg-card'
                         }`}
                         style={{ touchAction: 'manipulation' }}
                       >
@@ -205,7 +219,7 @@ export function InteractiveCharts({
                             <span className="text-sm font-semibold tabular-nums text-foreground">
                               {p.salesVelocityPerDay}/day
                             </span>
-                            <span className="text-xs text-muted-foreground tabular-nums">
+                            <span className="text-xs tabular-nums text-muted-foreground">
                               ({p.unitsSold} sold in {windowDays}d)
                             </span>
                           </div>
@@ -250,7 +264,7 @@ export function InteractiveCharts({
                 </div>
 
                 {atRiskProducts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-muted/30 p-6 text-center">
+                  <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg border border-border p-6 text-center">
                     <Check className="mb-2 size-6 text-primary" />
                     <h4 className="text-sm font-semibold text-foreground">
                       No immediate stockout risks
@@ -266,7 +280,10 @@ export function InteractiveCharts({
                       const urgency = getRunwayUrgencyLevel(p.daysOfStockRemaining);
                       const maxRunway = 14;
                       const remaining = p.daysOfStockRemaining ?? 0;
-                      const barPercentage = Math.min(100, Math.max(5, (remaining / maxRunway) * 100));
+                      const barPercentage = Math.min(
+                        100,
+                        Math.max(5, (remaining / maxRunway) * 100)
+                      );
 
                       return (
                         <div
@@ -274,8 +291,8 @@ export function InteractiveCharts({
                           onClick={() => onSelectProduct(isSelected ? null : p.productId)}
                           className={`group cursor-pointer rounded-lg border p-3 transition-colors ${
                             isSelected
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border bg-card hover:bg-muted/40'
+                              ? 'bg-primary/5 border-primary'
+                              : 'hover:bg-muted/40 border-border bg-card'
                           }`}
                           style={{ touchAction: 'manipulation' }}
                         >
@@ -339,7 +356,9 @@ export function InteractiveCharts({
             {activeTab === 'distribution' && (
               <div className="space-y-5">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Catalog inventory composition ({distribution.totalCount} products)</span>
+                  <span>
+                    Catalog inventory composition ({distribution.totalCount} products)
+                  </span>
                   <span>Tap a category to filter</span>
                 </div>
 
@@ -387,18 +406,20 @@ export function InteractiveCharts({
                   {/* Out of Stock */}
                   <div
                     onClick={() => onFilterStatus?.('OUT_OF_STOCK')}
-                    className="flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/40"
+                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
                     style={{ touchAction: 'manipulation' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Out of stock</span>
+                      <span className="text-xs font-medium text-foreground">
+                        Out of stock
+                      </span>
                       <div className="size-2 rounded-full bg-destructive" />
                     </div>
                     <div className="mt-2">
                       <div className="text-lg font-semibold tabular-nums text-foreground">
                         {distribution.outOfStock.count}
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
+                      <div className="text-xs tabular-nums text-muted-foreground">
                         {distribution.outOfStock.percentage}% of catalog
                       </div>
                     </div>
@@ -407,18 +428,20 @@ export function InteractiveCharts({
                   {/* Critical Low */}
                   <div
                     onClick={() => onFilterStatus?.('CRITICAL_LOW')}
-                    className="flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/40"
+                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
                     style={{ touchAction: 'manipulation' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Critical (≤ 2d)</span>
-                      <div className="size-2 rounded-full bg-destructive/80" />
+                      <span className="text-xs font-medium text-foreground">
+                        Critical (≤ 2d)
+                      </span>
+                      <div className="bg-destructive/80 size-2 rounded-full" />
                     </div>
                     <div className="mt-2">
                       <div className="text-lg font-semibold tabular-nums text-foreground">
                         {distribution.criticalLow.count}
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
+                      <div className="text-xs tabular-nums text-muted-foreground">
                         {distribution.criticalLow.percentage}% of catalog
                       </div>
                     </div>
@@ -427,18 +450,20 @@ export function InteractiveCharts({
                   {/* Low Stock */}
                   <div
                     onClick={() => onFilterStatus?.('LOW_STOCK')}
-                    className="flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/40"
+                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
                     style={{ touchAction: 'manipulation' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Low stock (≤ 5d)</span>
+                      <span className="text-xs font-medium text-foreground">
+                        Low stock (≤ 5d)
+                      </span>
                       <div className="size-2 rounded-full bg-warning" />
                     </div>
                     <div className="mt-2">
                       <div className="text-lg font-semibold tabular-nums text-foreground">
                         {distribution.lowStock.count}
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
+                      <div className="text-xs tabular-nums text-muted-foreground">
                         {distribution.lowStock.percentage}% of catalog
                       </div>
                     </div>
@@ -447,7 +472,7 @@ export function InteractiveCharts({
                   {/* Healthy */}
                   <div
                     onClick={() => onFilterStatus?.('HEALTHY')}
-                    className="flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/40"
+                    className="hover:bg-muted/40 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors"
                     style={{ touchAction: 'manipulation' }}
                   >
                     <div className="flex items-center justify-between">
@@ -458,7 +483,7 @@ export function InteractiveCharts({
                       <div className="text-lg font-semibold tabular-nums text-foreground">
                         {distribution.healthy.count}
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
+                      <div className="text-xs tabular-nums text-muted-foreground">
                         {distribution.healthy.percentage}% of catalog
                       </div>
                     </div>
@@ -467,18 +492,20 @@ export function InteractiveCharts({
                   {/* Dead Stock */}
                   <div
                     onClick={() => onFilterStatus?.('DEAD_STOCK')}
-                    className="col-span-2 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/40 sm:col-span-1"
+                    className="hover:bg-muted/40 col-span-2 flex cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-3 transition-colors sm:col-span-1"
                     style={{ touchAction: 'manipulation' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Dead stock</span>
-                      <div className="size-2 rounded-full bg-muted-foreground/40" />
+                      <span className="text-xs font-medium text-foreground">
+                        Dead stock
+                      </span>
+                      <div className="bg-muted-foreground/40 size-2 rounded-full" />
                     </div>
                     <div className="mt-2">
                       <div className="text-lg font-semibold tabular-nums text-foreground">
                         {distribution.deadStock.count}
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">
+                      <div className="text-xs tabular-nums text-muted-foreground">
                         {distribution.deadStock.percentage}% of catalog
                       </div>
                     </div>
@@ -489,7 +516,7 @@ export function InteractiveCharts({
 
             {/* INTERACTIVE INSPECTOR CARD (WHEN A PRODUCT IS PINNED/SELECTED) */}
             {selectedProduct && (
-              <div className="relative rounded-lg border border-primary/30 bg-primary/5 p-4 transition-colors">
+              <div className="border-primary/30 bg-primary/5 relative rounded-lg border p-4 transition-colors">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -509,8 +536,8 @@ export function InteractiveCharts({
                       {getStatusBadge(selectedProduct.stockStatus)}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Price: {(selectedProduct.priceCents / 100).toFixed(2)} ETB &bull; Revenue:{' '}
-                      {(selectedProduct.revenueCents / 100).toFixed(2)} ETB
+                      Price: {(selectedProduct.priceCents / 100).toFixed(2)} ETB &bull;
+                      Revenue: {(selectedProduct.revenueCents / 100).toFixed(2)} ETB
                     </p>
                   </div>
 
@@ -547,7 +574,9 @@ export function InteractiveCharts({
                   </div>
 
                   <div className="rounded-md border border-border bg-card p-2">
-                    <div className="text-xs text-muted-foreground">Sold ({windowDays}d)</div>
+                    <div className="text-xs text-muted-foreground">
+                      Sold ({windowDays}d)
+                    </div>
                     <div className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
                       {selectedProduct.unitsSold} units
                     </div>

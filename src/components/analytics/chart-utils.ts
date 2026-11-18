@@ -1,13 +1,11 @@
 // src/components/analytics/chart-utils.ts
-import type { ProductVelocityMetrics, StockVelocityStatus } from '@/server/analytics/types';
+import type {
+  ProductVelocityMetrics,
+  StockVelocityStatus,
+} from '@/server/analytics/types';
 
 export type RunwayUrgencyLevel =
-  | 'out_of_stock'
-  | 'critical'
-  | 'warning'
-  | 'moderate'
-  | 'healthy'
-  | 'no_risk';
+  'out_of_stock' | 'critical' | 'warning' | 'moderate' | 'healthy' | 'no_risk';
 
 export interface StatusDistributionCategory {
   status: StockVelocityStatus;
@@ -42,7 +40,9 @@ export function calculateVelocityBarWidth(velocity: number, maxVelocity: number)
 /**
  * Categorizes stockout runway into urgency levels for visual progress meters and colors.
  */
-export function getRunwayUrgencyLevel(daysOfStockRemaining: number | null): RunwayUrgencyLevel {
+export function getRunwayUrgencyLevel(
+  daysOfStockRemaining: number | null
+): RunwayUrgencyLevel {
   if (daysOfStockRemaining === null) {
     return 'no_risk';
   }
@@ -81,7 +81,8 @@ export function calculateInventoryDistribution(
     countByStatus[p.stockStatus] = (countByStatus[p.stockStatus] || 0) + 1;
   }
 
-  const getPercentage = (count: number) => (total > 0 ? Math.round((count / total) * 100) : 0);
+  const getPercentage = (count: number) =>
+    total > 0 ? Math.round((count / total) * 100) : 0;
 
   return {
     totalCount: total,
