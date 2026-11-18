@@ -1,4 +1,5 @@
 // src/server/analytics/service.ts
+import 'server-only';
 import { db } from '@/server/db';
 import type {
   StockVelocityRange,
