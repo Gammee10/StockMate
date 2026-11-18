@@ -332,9 +332,9 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     it('throws NOT_FOUND when updating stock and product does not exist in store', async () => {
       mockTx.$queryRaw.mockResolvedValueOnce([]);
 
-      await expect(
-        updateStoreProduct(storeId, productId, { stock: 50 })
-      ).rejects.toThrow(AppError);
+      await expect(updateStoreProduct(storeId, productId, { stock: 50 })).rejects.toThrow(
+        AppError
+      );
       expect(mockStockMovement.create).not.toHaveBeenCalled();
     });
 
