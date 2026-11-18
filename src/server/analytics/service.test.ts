@@ -16,6 +16,9 @@ vi.mock('@/server/db', () => ({
     saleItem: {
       groupBy: vi.fn(),
     },
+    stockMovement: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -30,6 +33,7 @@ vi.mock('@/lib/logger', () => ({
 describe('Stock Velocity Analytics Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(db.stockMovement.findMany).mockResolvedValue([]);
   });
 
   describe('determineStockStatus', () => {
@@ -133,6 +137,27 @@ describe('Stock Velocity Analytics Service', () => {
       expect(metrics.recommendedReorderQty).toBe(8);
       expect(metrics.estimatedReorderCostCents).toBe(156000); // 8 * 19500
       expect(metrics.estimatedReorderCostEtb).toBe('1560.00');
+    });
+
+    it('calculates velocity using inStockDays instead of windowDays when out-of-stock periods exist (Task 1.6)', () => {
+      const product = {
+        id: 'prod_oil',
+        name: 'Cooking Oil 1L',
+        priceCents: 25000,
+        stock: 6,
+        lowStockThreshold: 5,
+      };
+
+      const saleItems = [{ quantity: 14, unitPriceCents: 25000 }];
+
+      // 7-day window, but in stock for only 3.5 days
+      const metrics = calculateProductVelocity(product, saleItems, 7, 7, 3.5);
+
+      expect(metrics.inStockDays).toBe(3.5);
+      expect(metrics.salesVelocityPerDay).toBe(4.0); // 14 / 3.5
+      expect(metrics.daysOfStockRemaining).toBe(1.5); // 6 / 4.0
+      expect(metrics.stockStatus).toBe('CRITICAL_LOW'); // runway 1.5 <= 2
+      expect(metrics.recommendedReorderQty).toBe(22); // ceil(4.0 * 7) - 6 = 28 - 6 = 22
     });
 
     it('handles product with zero sales gracefully', () => {
@@ -346,6 +371,59 @@ describe('Stock Velocity Analytics Service', () => {
         expect.stringContaining('1000'),
         expect.objectContaining({ storeId: 'store_large', count: 1000 })
       );
+    });
+
+    it('accounts for out-of-stock periods via stockMovement queries and computes elevated velocity (Task 1.6)', async () => {
+      const now = new Date();
+      const midPoint = new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000);
+
+      vi.mocked(db.product.findMany).mockResolvedValueOnce([
+        {
+          id: 'p_fast',
+          name: 'Fast Seller Out Early',
+          priceCents: 10000,
+          costCents: 7000,
+          stock: 0,
+          lowStockThreshold: 5,
+        },
+      ] as never);
+
+      vi.mocked(db.saleItem.groupBy).mockResolvedValueOnce([
+        {
+          productId: 'p_fast',
+          unitPriceCents: 10000,
+          _sum: { quantity: 14 },
+        },
+      ] as never);
+
+      vi.mocked(db.stockMovement.findMany).mockResolvedValueOnce([
+        {
+          id: 'mov_1',
+          productId: 'p_fast',
+          createdAt: midPoint,
+          stockBefore: 1,
+          stockAfter: 0,
+        },
+      ] as never);
+
+      const report = await computeStockVelocityReport('store_123', '7d');
+
+      expect(db.stockMovement.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            storeId: 'store_123',
+            productId: { in: ['p_fast'] },
+            OR: [{ stockAfter: 0 }, { stockBefore: 0 }],
+          }),
+        })
+      );
+
+      const fastProduct = report.products.find((p) => p.productId === 'p_fast')!;
+      expect(fastProduct).toBeDefined();
+      expect(fastProduct.unitsSold).toBe(14);
+      // In stock for 3.5 days of a 7-day window -> velocity is 14 / 3.5 = 4.0 (instead of 14 / 7 = 2.0)
+      expect(fastProduct.inStockDays).toBe(3.5);
+      expect(fastProduct.salesVelocityPerDay).toBe(4.0);
     });
   });
 });

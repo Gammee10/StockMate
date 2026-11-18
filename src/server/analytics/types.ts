@@ -21,6 +21,7 @@ export interface ProductVelocityMetrics {
   revenueCents: number;
   revenueEtb: string;
   salesVelocityPerDay: number;
+  inStockDays: number;
   daysOfStockRemaining: number | null;
   stockStatus: StockVelocityStatus;
   recommendedReorderQty: number;

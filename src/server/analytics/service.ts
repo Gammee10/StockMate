@@ -2,6 +2,7 @@
 import 'server-only';
 import { db } from '@/server/db';
 import { logger } from '@/lib/logger';
+import { computeOutOfStockMs, type ZeroCrossingRow } from './in-stock-days';
 import type {
   StockVelocityRange,
   StockVelocityStatus,
@@ -76,7 +77,8 @@ export function calculateProductVelocity(
   product: ProductInput,
   saleItems: SaleItemInput[],
   windowDays: number,
-  targetSupplyDays = 7
+  targetSupplyDays = 7,
+  inStockDays = windowDays
 ): ProductVelocityMetrics {
   const unitsSold = saleItems.reduce((sum, item) => sum + item.quantity, 0);
   const revenueCents = saleItems.reduce(
@@ -84,7 +86,8 @@ export function calculateProductVelocity(
     0
   );
 
-  const rawVelocity = windowDays > 0 ? unitsSold / windowDays : 0;
+  const effectiveDays = Math.max(inStockDays, 1);
+  const rawVelocity = effectiveDays > 0 ? unitsSold / effectiveDays : 0;
   const salesVelocityPerDay = Number(rawVelocity.toFixed(2));
 
   const daysOfStockRemaining =
@@ -124,6 +127,7 @@ export function calculateProductVelocity(
     revenueCents,
     revenueEtb: (revenueCents / 100).toFixed(2),
     salesVelocityPerDay,
+    inStockDays: Number(inStockDays.toFixed(1)),
     daysOfStockRemaining,
     stockStatus,
     recommendedReorderQty,
@@ -225,9 +229,84 @@ export async function computeStockVelocityReport(
     salesByProductId.set(group.productId, items);
   }
 
+  // 3. Fetch zero-crossing stock movements for in-stock days calculation (Task 1.6)
+  const productIds = allProducts.map((p) => p.id);
+  const movementsByProductId = new Map<string, ZeroCrossingRow[]>();
+
+  if (productIds.length > 0) {
+    interface MovementBatchItem {
+      id: string;
+      productId: string;
+      createdAt: Date;
+      stockBefore: number;
+      stockAfter: number;
+    }
+
+    const MOVEMENT_BATCH_SIZE = 100;
+    const MAX_MOVEMENT_PAGES = 20;
+    let movementCursor: string | undefined = undefined;
+    let movementPages = 0;
+
+    while (movementPages < MAX_MOVEMENT_PAGES) {
+      movementPages++;
+      // backend-check-ignore n-plus-one: batched cursor pagination with take 100 up to ceiling of 20 pages
+      const movementBatch: MovementBatchItem[] = await db.stockMovement.findMany({
+        where: {
+          storeId,
+          productId: { in: productIds },
+          createdAt: { gte: startDate },
+          OR: [{ stockAfter: 0 }, { stockBefore: 0 }],
+        },
+        orderBy: [{ id: 'asc' }],
+        take: MOVEMENT_BATCH_SIZE,
+        ...(movementCursor ? { cursor: { id: movementCursor }, skip: 1 } : {}),
+        select: {
+          id: true,
+          productId: true,
+          createdAt: true,
+          stockBefore: true,
+          stockAfter: true,
+        },
+      });
+
+      if (movementBatch.length === 0) break;
+
+      for (const m of movementBatch) {
+        const rows = movementsByProductId.get(m.productId) ?? [];
+        rows.push({
+          createdAt: m.createdAt,
+          stockBefore: m.stockBefore,
+          stockAfter: m.stockAfter,
+        });
+        movementsByProductId.set(m.productId, rows);
+      }
+
+      movementCursor = movementBatch[movementBatch.length - 1].id;
+      if (movementBatch.length < MOVEMENT_BATCH_SIZE) break;
+    }
+  }
+
   const productMetrics: ProductVelocityMetrics[] = allProducts.map((product) => {
     const saleItems = salesByProductId.get(product.id) ?? [];
-    return calculateProductVelocity(product, saleItems, windowDays, targetRunwayDays);
+    const rows = movementsByProductId.get(product.id) ?? [];
+    rows.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+    const outMs = computeOutOfStockMs({
+      windowStart: startDate,
+      now,
+      currentStock: product.stock,
+      rows,
+    });
+    const outDays = outMs / (24 * 60 * 60 * 1000);
+    const inStockDays = Math.max(0, windowDays - outDays);
+
+    return calculateProductVelocity(
+      product,
+      saleItems,
+      windowDays,
+      targetRunwayDays,
+      inStockDays
+    );
   });
 
   // Sort: prioritize urgency (OUT_OF_STOCK -> CRITICAL_LOW -> LOW_STOCK -> velocity descending)

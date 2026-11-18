@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Demand-Accurate Velocity Accounting for Out-of-Stock Days (Task 1.6)
+
+- **Pure Out-of-Stock Calculation (`src/server/analytics/in-stock-days.ts`):**
+  - Added `computeOutOfStockMs({ windowStart, now, currentStock, rows })` to accurately compute milliseconds a product was out of stock by analyzing zero-crossing `StockMovement` records (`stockBefore === 0` or `stockAfter === 0`).
+  - Automatically accounts for items created mid-window (`INITIAL` movement with `stockBefore: 0`) and multiple out-of-stock / restock cycles.
+- **Accurate Sales Velocity & Runway Projections (`src/server/analytics/service.ts`):**
+  - Replaced dividing by total calendar `windowDays` with `inStockDays = Math.max(0, windowDays - outMs / 86_400_000)` and `effectiveDays = Math.max(inStockDays, 1)`.
+  - Fast sellers that sold out during the window now report their true daily run rate rather than artificially deflated numbers.
+  - Added `inStockDays: number` (rounded to 1 decimal) to `ProductVelocityMetrics`.
+- **Zero-Crossing Movements Cursor Pagination (`src/server/analytics/service.ts`):**
+  - Paginated `db.stockMovement.findMany` with `where: { storeId, productId: { in: productIds }, OR: [{ stockAfter: 0 }, { stockBefore: 0 }] }` up to a safety ceiling of 20 pages (2,000 movements).
+- **Comprehensive Unit & Service Tests (`src/server/analytics/in-stock-days.test.ts` & `service.test.ts`):**
+  - Verified 7 distinct out-of-stock scenarios in pure algorithm unit tests.
+  - Verified in `computeStockVelocityReport` that a product out of stock for half the window shows double the sales velocity of the naive calendar calculation.
+
 ### Added - Complete Stock Movement Tracking: Restock, Create, and Manual Edit (Task 1.5b)
 
 - **Initial Stock Movement (`src/server/catalog/service.ts`):**
