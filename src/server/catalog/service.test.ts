@@ -12,15 +12,35 @@ import {
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
 
+const { mockProduct, mockStockMovement, mockTx } = vi.hoisted(() => {
+  const mockProduct = {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+  };
+
+  const mockStockMovement = {
+    create: vi.fn(),
+  };
+
+  const mockTx = {
+    product: mockProduct,
+    stockMovement: mockStockMovement,
+    $queryRaw: vi.fn(),
+    $executeRaw: vi.fn(),
+  };
+
+  return { mockProduct, mockStockMovement, mockTx };
+});
+
 vi.mock('@/server/db', () => ({
   db: {
-    product: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-    },
-    $executeRaw: vi.fn(),
+    product: mockProduct,
+    stockMovement: mockStockMovement,
+    $executeRaw: mockTx.$executeRaw,
+    $queryRaw: mockTx.$queryRaw,
+    $transaction: vi.fn(async (cb, _opts) => cb(mockTx)),
   },
 }));
 
@@ -76,6 +96,41 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         lowStockThreshold: 5,
         isLowStock: false,
       });
+
+      expect(mockStockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'INITIAL',
+          quantityDelta: 15,
+          stockBefore: 0,
+          stockAfter: 15,
+          saleId: null,
+        },
+      });
+    });
+
+    it('does not write INITIAL movement when initial stock is 0', async () => {
+      vi.mocked(mockProduct.create).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        name: 'Out of Stock Item',
+        priceCents: 1000,
+        costCents: null,
+        stock: 0,
+        lowStockThreshold: 5,
+        isArchived: false,
+        updatedAt: new Date(),
+      } as never);
+
+      await createStoreProduct(storeId, {
+        name: 'Out of Stock Item',
+        priceCents: 1000,
+        stock: 0,
+        lowStockThreshold: 5,
+      });
+
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
     });
 
     it('creates product with optional costCents and persists it', async () => {
@@ -176,6 +231,7 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       expect(result.name).toBe('Updated Sugar 1kg');
       expect(result.priceEtb).toBe('130.00');
       expect(result.costCents).toBeNull();
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
     });
 
     it('updates costCents when provided in input', async () => {
@@ -209,6 +265,77 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       });
 
       expect(result.costCents).toBe(11000);
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
+    });
+
+    it('updates stock with FOR UPDATE lock and records ADJUSTMENT movement when delta !== 0', async () => {
+      mockTx.$queryRaw.mockResolvedValueOnce([{ stock: 40 }]);
+
+      vi.mocked(db.product.update).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        name: 'Sugar 1kg',
+        priceCents: 13000,
+        costCents: null,
+        stock: 45,
+        lowStockThreshold: 5,
+        isArchived: false,
+        updatedAt: new Date(),
+      } as never);
+
+      const result = await updateStoreProduct(storeId, productId, {
+        stock: 45,
+      });
+
+      expect(mockTx.$queryRaw).toHaveBeenCalled();
+      expect(db.product.update).toHaveBeenCalledWith({
+        where: { id: productId },
+        data: { stock: 45 },
+      });
+      expect(mockStockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'ADJUSTMENT',
+          quantityDelta: 5,
+          stockBefore: 40,
+          stockAfter: 45,
+          saleId: null,
+        },
+      });
+      expect(result.stock).toBe(45);
+    });
+
+    it('does not record ADJUSTMENT movement when stock is updated with identical value (delta === 0)', async () => {
+      mockTx.$queryRaw.mockResolvedValueOnce([{ stock: 40 }]);
+
+      vi.mocked(db.product.update).mockResolvedValueOnce({
+        id: productId,
+        storeId,
+        name: 'Sugar 1kg',
+        priceCents: 13000,
+        costCents: null,
+        stock: 40,
+        lowStockThreshold: 5,
+        isArchived: false,
+        updatedAt: new Date(),
+      } as never);
+
+      await updateStoreProduct(storeId, productId, {
+        stock: 40,
+      });
+
+      expect(mockTx.$queryRaw).toHaveBeenCalled();
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
+    });
+
+    it('throws NOT_FOUND when updating stock and product does not exist in store', async () => {
+      mockTx.$queryRaw.mockResolvedValueOnce([]);
+
+      await expect(
+        updateStoreProduct(storeId, productId, { stock: 50 })
+      ).rejects.toThrow(AppError);
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
     });
 
     it('throws NOT_FOUND when product does not exist in store', async () => {
@@ -221,8 +348,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
   });
 
   describe('quickRestockProductAtomic', () => {
-    it('increments stock using atomic SQL update and returns refreshed product (Invariant #5)', async () => {
-      vi.mocked(db.$executeRaw).mockResolvedValueOnce(1); // 1 row updated
+    it('increments stock using atomic SQL RETURNING stock and records RESTOCK movement (Invariant #5)', async () => {
+      mockTx.$queryRaw.mockResolvedValueOnce([{ stock: 25 }]);
       vi.mocked(db.product.findFirst).mockResolvedValueOnce({
         id: productId,
         storeId,
@@ -236,7 +363,18 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
 
       const result = await quickRestockProductAtomic(storeId, productId, 10);
 
-      expect(db.$executeRaw).toHaveBeenCalled();
+      expect(mockTx.$queryRaw).toHaveBeenCalled();
+      expect(mockStockMovement.create).toHaveBeenCalledWith({
+        data: {
+          storeId,
+          productId,
+          type: 'RESTOCK',
+          quantityDelta: 10,
+          stockBefore: 15,
+          stockAfter: 25,
+          saleId: null,
+        },
+      });
       expect(result).toMatchObject({
         id: productId,
         stock: 25,
@@ -245,11 +383,12 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     });
 
     it('throws NOT_FOUND when atomic update matches 0 rows (invalid product or store)', async () => {
-      vi.mocked(db.$executeRaw).mockResolvedValueOnce(0); // 0 rows updated
+      mockTx.$queryRaw.mockResolvedValueOnce([]);
 
       await expect(quickRestockProductAtomic(storeId, productId, 10)).rejects.toThrow(
         AppError
       );
+      expect(mockStockMovement.create).not.toHaveBeenCalled();
     });
   });
 
