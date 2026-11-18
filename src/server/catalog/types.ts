@@ -1,5 +1,10 @@
 // src/server/catalog/types.ts
-import type { StockMovementType } from '@prisma/client';
+export type StockMovementType =
+  | 'INITIAL'
+  | 'SALE'
+  | 'VOID_RESTORE'
+  | 'RESTOCK'
+  | 'ADJUSTMENT';
 
 export interface CreateProductInput {
   name: string;

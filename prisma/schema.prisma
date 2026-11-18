@@ -113,5 +113,6 @@ model StockMovement {
 
   @@index([storeId, productId, createdAt])
   @@index([storeId, createdAt])
+  @@index([productId])
   @@map("stock_movements")
 }
