@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Realistic Demo Data Generator (Task 1.7a)
+
+- **Pure, Dependency-Free Generator (`src/demo/demo-data.ts`):**
+  - Added pure function `generateDemoData({ seed, now, storeId })` exporting plain TypeScript objects for products, sales, sale items, and stock movements.
+  - Written without `@/` path aliases or external dependencies so that the seed runner (`tsx prisma/seed.ts`) can import it safely via relative paths.
+  - Implemented an inline 32-bit `mulberry32` PRNG for guaranteed deterministic simulation.
+- **Realistic Commodity Catalog & Ethiopian Pricing:**
+  - Designed 40 generic retail/kiosk items (grains, flours, cooking oils, soaps, household necessities, spices) without brand names.
+  - Stored prices in integer cents (ETB) and cost prices calculated between 70% and 90% of selling price.
+- **30-Day Sales & Inventory Movement Simulation:**
+  - Simulates 30 days of sales transactions with basket sizes of 1 to 4 items.
+  - Realistic payment method distribution (~60% cash, ~40% digital).
+  - Higher transaction volume on weekends compared to weekdays.
+  - Complete `StockMovement` ledger tracking `INITIAL` setup, line-item `SALE` decrements, and weekly `RESTOCK` shipments.
+  - Guaranteed inventory invariants: non-negative stock at all times, delta conservation, and sale line totals matching transaction totals.
+- **Rich Dashboard Archetypes:**
+  - Generates at least 4 fast sellers (velocity >= 2 units/day).
+  - Generates at least 4 dead-stock items (0 sales over 30 days).
+  - Generates at least 3 items with realistic 1-to-3 day stockout episodes.
+  - Generates at least 3 items with low stock right now (`0 < stock <= lowStockThreshold`).
+- **Comprehensive Test Suite (`src/demo/demo-data.test.ts`):**
+  - Added 10 unit tests asserting determinism, non-negative stock, inventory conservation, pricing math, weekend weighting, payment split, and dashboard distribution invariants across multiple seeds.
+
 ### Added - Demand-Accurate Velocity Accounting for Out-of-Stock Days (Task 1.6)
 
 - **Pure Out-of-Stock Calculation (`src/server/analytics/in-stock-days.ts`):**
