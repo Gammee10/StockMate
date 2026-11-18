@@ -288,39 +288,26 @@ export default function AnalyticsPage() {
 
         {/* Interactive Visualization Charts */}
         <section aria-label="Interactive visual intelligence">
-          {loading ? (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-72" />
-                <div className="space-y-3 pt-2">
-                  <Skeleton className="h-14 w-full" />
-                  <Skeleton className="h-14 w-full" />
-                  <Skeleton className="h-14 w-full" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <InteractiveCharts
-              products={report?.products ?? []}
-              windowDays={report?.windowDays ?? 7}
-              selectedProductId={selectedProductId}
-              onSelectProduct={setSelectedProductId}
-              onFilterStatus={(status) => {
-                if (
-                  status === 'OUT_OF_STOCK' ||
-                  status === 'CRITICAL_LOW' ||
-                  status === 'LOW_STOCK'
-                ) {
-                  setFilterTab('restock');
-                } else if (status === 'DEAD_STOCK') {
-                  setFilterTab('dead');
-                } else {
-                  setFilterTab('all');
-                }
-              }}
-            />
-          )}
+          <InteractiveCharts
+            products={report?.products ?? []}
+            windowDays={report?.windowDays ?? 7}
+            loading={loading}
+            selectedProductId={selectedProductId}
+            onSelectProduct={setSelectedProductId}
+            onFilterStatus={(status) => {
+              if (
+                status === 'OUT_OF_STOCK' ||
+                status === 'CRITICAL_LOW' ||
+                status === 'LOW_STOCK'
+              ) {
+                setFilterTab('restock');
+              } else if (status === 'DEAD_STOCK') {
+                setFilterTab('dead');
+              } else {
+                setFilterTab('all');
+              }
+            }}
+          />
         </section>
 
         {/* Wholesale Restock Order Builder Card */}

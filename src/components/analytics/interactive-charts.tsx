@@ -6,17 +6,15 @@ import {
   BarChart3,
   Clock,
   PieChart,
-  AlertTriangle,
-  ArrowRight,
   X,
   TrendingUp,
-  Package,
   Check,
   Copy,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ProductVelocityMetrics, StockVelocityStatus } from '@/server/analytics/types';
 import {
   calculateVelocityBarWidth,
@@ -32,6 +30,7 @@ export type ChartViewTab = 'velocity' | 'runway' | 'distribution';
 interface InteractiveChartsProps {
   products: ProductVelocityMetrics[];
   windowDays: number;
+  loading?: boolean;
   selectedProductId: string | null;
   onSelectProduct: (productId: string | null) => void;
   onFilterStatus?: (status: StockVelocityStatus) => void;
@@ -40,6 +39,7 @@ interface InteractiveChartsProps {
 export function InteractiveCharts({
   products,
   windowDays,
+  loading = false,
   selectedProductId,
   onSelectProduct,
   onFilterStatus,
@@ -152,7 +152,13 @@ export function InteractiveCharts({
       </CardHeader>
 
       <CardContent className="space-y-6 pt-0">
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3 pt-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="mb-2 flex size-10 items-center justify-center rounded-lg border border-border bg-muted">
               <TrendingUp className="size-5 text-muted-foreground" />
