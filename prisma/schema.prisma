@@ -19,30 +19,32 @@ model User {
 }
 
 model Store {
-  id        String    @id @default(cuid())
-  name      String
-  userId    String    @map("user_id")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now()) @map("created_at")
-  products  Product[]
-  sales     Sale[]
+  id             String          @id @default(cuid())
+  name           String
+  userId         String          @map("user_id")
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  products       Product[]
+  sales          Sale[]
+  stockMovements StockMovement[]
 
   @@index([userId])
   @@map("stores")
 }
 
 model Product {
-  id                 String     @id @default(cuid())
-  storeId            String     @map("store_id")
-  store              Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id                 String          @id @default(cuid())
+  storeId            String          @map("store_id")
+  store              Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name               String
-  priceCents         Int        @map("price_cents")
-  costCents          Int?       @map("cost_price_cents")
-  stock              Int        @default(0)
-  lowStockThreshold  Int        @default(5) @map("low_stock_threshold")
-  isArchived         Boolean    @default(false) @map("is_archived")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
+  priceCents         Int             @map("price_cents")
+  costCents          Int?            @map("cost_price_cents")
+  stock              Int             @default(0)
+  lowStockThreshold  Int             @default(5) @map("low_stock_threshold")
+  isArchived         Boolean         @default(false) @map("is_archived")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
   saleItems          SaleItem[]
+  stockMovements     StockMovement[]
 
   @@index([storeId])
   @@map("products")
@@ -86,4 +88,30 @@ model SaleItem {
   @@index([saleId])
   @@index([productId])
   @@map("sale_items")
+}
+
+enum StockMovementType {
+  INITIAL
+  SALE
+  VOID_RESTORE
+  RESTOCK
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id            String            @id @default(cuid())
+  storeId       String            @map("store_id")
+  store         Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId     String            @map("product_id")
+  product       Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type          StockMovementType
+  quantityDelta Int               @map("quantity_delta")
+  stockBefore   Int               @map("stock_before")
+  stockAfter    Int               @map("stock_after")
+  saleId        String?           @map("sale_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  @@index([storeId, productId, createdAt])
+  @@index([storeId, createdAt])
+  @@map("stock_movements")
 }
