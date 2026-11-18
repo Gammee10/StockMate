@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Scalable Multi-Batch Analytics & GroupBy Sales Aggregation (Task 1.4)
+
+- **Batched Catalog Loading (`src/server/analytics/service.ts`):**
+  - Replaced the hard 100-product cap in `computeStockVelocityReport` with deterministic cursor-based batching (`take: 100`).
+  - Supports catalogs with 100–300+ products (up to a 1,000-product safety ceiling with logger warning).
+  - Eliminates silent dropping of products past the 100th record by name.
+- **Efficient GroupBy Sales Aggregation (`src/server/analytics/service.ts`):**
+  - Replaced N-nested sale item includes with a single database-level `db.saleItem.groupBy` query (`by: ['productId', 'unitPriceCents']`).
+  - Maps aggregated unit sales and revenue directly to each product without raw SQL or BigInt casting pitfalls.
+  - Retains all pure helper business logic (`calculateProductVelocity`, `determineStockStatus`, `calculateRecommendedOrder`).
+- **Comprehensive Scaling Tests (`src/server/analytics/service.test.ts`):**
+  - Added unit test simulating 250 products across 3 cursor batches (100, 100, 50), verifying complete representation in report products and summary totals.
+  - Added ceiling test for 1,000 products verifying graceful warning logging.
+
 ### Added - Product Cost Price & Accurate Restock Cost Analytics (Task 1.3)
 
 - **Database Schema (`prisma/schema.prisma`):**

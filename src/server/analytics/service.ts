@@ -1,6 +1,7 @@
 // src/server/analytics/service.ts
 import 'server-only';
 import { db } from '@/server/db';
+import { logger } from '@/lib/logger';
 import type {
   StockVelocityRange,
   StockVelocityStatus,
@@ -148,38 +149,86 @@ export async function computeStockVelocityReport(
     startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   }
 
-  // Bounded query scoped by tenant storeId (Invariant #3)
-  const products = await db.product.findMany({
-    where: {
+  // 1. Load active products in cursor batches (max 100 per query, hard ceiling 1,000)
+  const BATCH_SIZE = 100;
+  const MAX_PRODUCTS = 1000;
+  const allProducts: ProductInput[] = [];
+
+  let cursor: string | undefined = undefined;
+
+  while (allProducts.length < MAX_PRODUCTS) {
+    // backend-check-ignore n-plus-one: batched cursor pagination with take 100 up to hard ceiling of 1000 items
+    const batch: ProductInput[] = await db.product.findMany({
+      where: {
+        storeId,
+        isArchived: false,
+      },
+      orderBy: { id: 'asc' },
+      take: Math.min(BATCH_SIZE, MAX_PRODUCTS - allProducts.length),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      select: {
+        id: true,
+        name: true,
+        priceCents: true,
+        costCents: true,
+        stock: true,
+        lowStockThreshold: true,
+      },
+    });
+
+    if (batch.length === 0) {
+      break;
+    }
+
+    allProducts.push(...batch);
+    cursor = batch[batch.length - 1].id;
+
+    if (batch.length < BATCH_SIZE) {
+      break;
+    }
+  }
+
+  if (allProducts.length >= MAX_PRODUCTS) {
+    logger.warn('Stock velocity analytics reached product ceiling of 1000', {
       storeId,
-      isArchived: false,
-    },
-    take: 100,
-    include: {
-      saleItems: {
-        where: {
-          sale: {
-            storeId,
-            status: 'COMPLETED',
-            createdAt: {
-              gte: startDate,
-            },
-          },
-        },
-        select: {
-          quantity: true,
-          unitPriceCents: true,
+      count: allProducts.length,
+    });
+  }
+
+  // 2. Fetch aggregated sales per product in a single groupBy query
+  const saleItemGroups = await db.saleItem.groupBy({
+    by: ['productId', 'unitPriceCents'],
+    where: {
+      sale: {
+        storeId,
+        status: 'COMPLETED',
+        createdAt: {
+          gte: startDate,
         },
       },
     },
-    orderBy: {
-      name: 'asc',
+    _sum: {
+      quantity: true,
     },
   });
 
-  const productMetrics: ProductVelocityMetrics[] = products.map((product) =>
-    calculateProductVelocity(product, product.saleItems, windowDays, targetRunwayDays)
-  );
+  const salesByProductId = new Map<string, SaleItemInput[]>();
+  for (const group of saleItemGroups) {
+    const quantity = group._sum.quantity ?? 0;
+    if (quantity <= 0) continue;
+
+    const items = salesByProductId.get(group.productId) ?? [];
+    items.push({
+      quantity,
+      unitPriceCents: group.unitPriceCents,
+    });
+    salesByProductId.set(group.productId, items);
+  }
+
+  const productMetrics: ProductVelocityMetrics[] = allProducts.map((product) => {
+    const saleItems = salesByProductId.get(product.id) ?? [];
+    return calculateProductVelocity(product, saleItems, windowDays, targetRunwayDays);
+  });
 
   // Sort: prioritize urgency (OUT_OF_STOCK -> CRITICAL_LOW -> LOW_STOCK -> velocity descending)
   const statusPriority: Record<StockVelocityStatus, number> = {
