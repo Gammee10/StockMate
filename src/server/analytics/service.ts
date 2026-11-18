@@ -157,7 +157,8 @@ export async function computeStockVelocityReport(
   let cursor: string | undefined = undefined;
 
   while (allProducts.length < MAX_PRODUCTS) {
-    const batch = await db.product.findMany({
+    // backend-check-ignore n-plus-one: batched cursor pagination with take 100 up to hard ceiling of 1000 items
+    const batch: ProductInput[] = await db.product.findMany({
       where: {
         storeId,
         isArchived: false,
