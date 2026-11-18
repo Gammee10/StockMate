@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
                     {report.summary.totalEstimatedRestockCostEtb} ETB
                   </div>
                   {report.summary.itemsWithoutCost > 0 && (
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {report.summary.itemsWithoutCost}{' '}
                       {report.summary.itemsWithoutCost === 1
                         ? 'item has no cost price, so selling price is used'

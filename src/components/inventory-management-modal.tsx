@@ -370,7 +370,9 @@ export function InventoryManagementModal({
                     className="text-xs font-medium text-muted-foreground"
                   >
                     Cost price (ETB){' '}
-                    <span className="font-normal text-muted-foreground/70">(optional)</span>
+                    <span className="text-muted-foreground/70 font-normal">
+                      (optional)
+                    </span>
                   </label>
                   <Input
                     id="product-cost"

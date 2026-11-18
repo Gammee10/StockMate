@@ -593,7 +593,9 @@ export default function InventoryPage() {
                       className="text-xs font-medium text-foreground"
                     >
                       Cost price in ETB{' '}
-                      <span className="font-normal text-muted-foreground">(optional)</span>
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
                     </label>
                     <Input
                       id="product-cost"
