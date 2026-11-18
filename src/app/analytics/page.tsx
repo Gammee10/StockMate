@@ -26,6 +26,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
+import { InteractiveCharts } from '@/components/analytics/interactive-charts';
 import type {
   StockVelocityReport,
   StockVelocityRange,
@@ -38,6 +39,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<'all' | 'restock' | 'fast' | 'dead'>('all');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const fetchReport = useCallback(async () => {
@@ -284,6 +286,43 @@ export default function AnalyticsPage() {
           </dl>
         </section>
 
+        {/* Interactive Visualization Charts */}
+        <section aria-label="Interactive visual intelligence">
+          {loading ? (
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-72" />
+                <div className="space-y-3 pt-2">
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <InteractiveCharts
+              products={report?.products ?? []}
+              windowDays={report?.windowDays ?? 7}
+              selectedProductId={selectedProductId}
+              onSelectProduct={setSelectedProductId}
+              onFilterStatus={(status) => {
+                if (
+                  status === 'OUT_OF_STOCK' ||
+                  status === 'CRITICAL_LOW' ||
+                  status === 'LOW_STOCK'
+                ) {
+                  setFilterTab('restock');
+                } else if (status === 'DEAD_STOCK') {
+                  setFilterTab('dead');
+                } else {
+                  setFilterTab('all');
+                }
+              }}
+            />
+          )}
+        </section>
+
         {/* Wholesale Restock Order Builder Card */}
         {report && restockItems.length > 0 && (
           <section className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
@@ -444,7 +483,10 @@ export default function AnalyticsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((p) => (
-                    <TableRow key={p.productId}>
+                    <TableRow
+                      key={p.productId}
+                      className={p.productId === selectedProductId ? 'bg-primary/5' : undefined}
+                    >
                       {/* Product Name (Main Cell) */}
                       <TableCell className="font-medium text-foreground">
                         <div>{p.productName}</div>

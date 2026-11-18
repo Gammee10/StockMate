@@ -106,7 +106,7 @@ export function calculateInventoryDistribution(
       label: 'Low stock (≤ 5d)',
       count: countByStatus.LOW_STOCK,
       percentage: getPercentage(countByStatus.LOW_STOCK),
-      colorClass: 'bg-amber-500',
+      colorClass: 'bg-warning',
       badgeVariant: 'warning',
     },
     healthy: {
