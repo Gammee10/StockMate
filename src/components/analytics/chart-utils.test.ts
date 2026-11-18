@@ -7,6 +7,11 @@ import {
   formatRunwayLabel,
   getTopVelocityProducts,
   getAtRiskRunwayProducts,
+  calculateDonutSegments,
+  classifyProductQuadrant,
+  groupProductsByQuadrant,
+  paginateProducts,
+  sortProducts,
 } from './chart-utils';
 import type { ProductVelocityMetrics } from '@/server/analytics/types';
 
@@ -177,6 +182,95 @@ describe('Chart Utilities for Interactive Analytics', () => {
       const atRisk = getAtRiskRunwayProducts(sampleProducts, 14);
       // p3 has 0 days, p1 has 1.0 day, p2 has 4.0 days
       expect(atRisk.map((p) => p.productId)).toEqual(['p3', 'p1', 'p2']);
+    });
+  });
+
+  describe('calculateDonutSegments', () => {
+    it('computes svg stroke-dasharray and offsets for donut slices', () => {
+      const dist = calculateInventoryDistribution(sampleProducts);
+      const radius = 40;
+      const segments = calculateDonutSegments(dist, radius);
+
+      expect(segments).toHaveLength(5);
+      const totalCircumference = 2 * Math.PI * radius;
+      expect(segments[0].circumference).toBeCloseTo(totalCircumference, 1);
+      // Verify all segments have strokeDasharray string
+      for (const seg of segments) {
+        expect(seg.strokeDasharray).toBeDefined();
+        expect(typeof seg.strokeDashoffset).toBe('number');
+      }
+    });
+
+    it('handles empty catalog with zero-length segments without crashing', () => {
+      const dist = calculateInventoryDistribution([]);
+      const segments = calculateDonutSegments(dist, 40);
+      expect(segments).toHaveLength(5);
+      expect(segments.every((s) => s.percentage === 0)).toBe(true);
+    });
+  });
+
+  describe('classifyProductQuadrant', () => {
+    it('accurately classifies products into the 4 retail quadrants', () => {
+      // p1: 3.0/day (High velocity), 3 stock with 1.0d runway (Low stock) -> urgent_restock
+      expect(classifyProductQuadrant(sampleProducts[0])).toBe('urgent_restock');
+
+      // p4: 1.0/day (High velocity), 50 stock with 50d runway (High stock) -> star_performer
+      expect(classifyProductQuadrant(sampleProducts[3])).toBe('star_performer');
+
+      // p5: 0/day (Zero velocity), 12 stock (High stock) -> dead_capital
+      expect(classifyProductQuadrant(sampleProducts[4])).toBe('dead_capital');
+    });
+  });
+
+  describe('groupProductsByQuadrant', () => {
+    it('groups all products into the 4 strategic matrix quadrants', () => {
+      const grouped = groupProductsByQuadrant(sampleProducts);
+      expect(grouped.urgent_restock.products.length).toBeGreaterThanOrEqual(1);
+      expect(grouped.star_performer.products.length).toBeGreaterThanOrEqual(1);
+      expect(grouped.dead_capital.products.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('paginateProducts', () => {
+    it('slices products into pages correctly', () => {
+      const page1 = paginateProducts(sampleProducts, 1, 2);
+      expect(page1.items).toHaveLength(2);
+      expect(page1.currentPage).toBe(1);
+      expect(page1.totalPages).toBe(3);
+      expect(page1.totalItems).toBe(5);
+
+      const page3 = paginateProducts(sampleProducts, 3, 2);
+      expect(page3.items).toHaveLength(1);
+      expect(page3.currentPage).toBe(3);
+    });
+
+    it('clamps page number to valid bounds', () => {
+      const clamped = paginateProducts(sampleProducts, 999, 2);
+      expect(clamped.currentPage).toBe(3);
+    });
+  });
+
+  describe('sortProducts', () => {
+    it('sorts by velocity descending', () => {
+      const sorted = sortProducts(sampleProducts, 'velocity_desc');
+      expect(sorted[0].productId).toBe('p1'); // 3.0/day
+      expect(sorted[1].productId).toBe('p2'); // 2.0/day
+    });
+
+    it('sorts by runway ascending (most urgent first)', () => {
+      const sorted = sortProducts(sampleProducts, 'runway_asc');
+      expect(sorted[0].productId).toBe('p3'); // 0 days
+      expect(sorted[1].productId).toBe('p1'); // 1.0 day
+    });
+
+    it('sorts by revenue descending', () => {
+      const sorted = sortProducts(sampleProducts, 'revenue_desc');
+      expect(sorted[0].productId).toBe('p1'); // 5250.00 ETB
+    });
+
+    it('sorts by name ascending', () => {
+      const sorted = sortProducts(sampleProducts, 'name_asc');
+      expect(sorted[0].productName).toBe('Cooking Oil 1L');
     });
   });
 });
