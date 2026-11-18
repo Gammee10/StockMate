@@ -2,11 +2,11 @@
 export type StockVelocityRange = '7d' | '30d' | 'today';
 
 export type StockVelocityStatus =
-  | 'OUT_OF_STOCK'   // stock === 0
-  | 'CRITICAL_LOW'   // daysOfStockRemaining <= 2
-  | 'LOW_STOCK'      // stock <= threshold or daysOfStockRemaining <= 5
-  | 'HEALTHY'        // daysOfStockRemaining > 5
-  | 'DEAD_STOCK';    // unitsSold === 0 and stock > 0
+  | 'OUT_OF_STOCK' // stock === 0
+  | 'CRITICAL_LOW' // daysOfStockRemaining <= 2
+  | 'LOW_STOCK' // stock <= threshold or daysOfStockRemaining <= 5
+  | 'HEALTHY' // daysOfStockRemaining > 5
+  | 'DEAD_STOCK'; // unitsSold === 0 and stock > 0
 
 export interface ProductVelocityMetrics {
   productId: string;

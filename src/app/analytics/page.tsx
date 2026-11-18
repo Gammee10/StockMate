@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
           actions={
             <div className="flex items-center gap-2">
               {/* Time Range Selector */}
-              <div className="flex items-center rounded-lg border border-border bg-muted/50 p-0.5">
+              <div className="bg-muted/50 flex items-center rounded-lg border border-border p-0.5">
                 <Button
                   variant={range === 'today' ? 'secondary' : 'ghost'}
                   size="sm"
@@ -181,7 +181,7 @@ export default function AnalyticsPage() {
         {error && (
           <div
             role="alert"
-            className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+            className="border-destructive/30 bg-destructive/10 flex items-center justify-between rounded-lg border p-4 text-sm text-destructive"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 shrink-0" />
@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
               variant="ghost"
               size="sm"
               onClick={fetchReport}
-              className="h-7 text-xs text-destructive hover:bg-destructive/20"
+              className="hover:bg-destructive/20 h-7 text-xs text-destructive"
             >
               Retry
             </Button>
@@ -212,14 +212,16 @@ export default function AnalyticsPage() {
                 </dt>
                 <TrendingUp className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
                   `${report?.summary.fastMovingCount ?? 0} items`
                 )}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Selling &ge; 1 unit per day</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Selling &ge; 1 unit per day
+              </p>
             </div>
 
             {/* Card 2: Restock Urgent */}
@@ -230,32 +232,34 @@ export default function AnalyticsPage() {
                 </dt>
                 <AlertTriangle className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
                   `${(report?.summary.outOfStockCount ?? 0) + (report?.summary.criticalLowCount ?? 0) + (report?.summary.lowStockCount ?? 0)} items`
                 )}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Running out or under threshold</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Running out or under threshold
+              </p>
             </div>
 
             {/* Card 3: Dead Stock */}
             <div className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <dt className="text-sm font-medium text-muted-foreground">
-                  Dead stock
-                </dt>
+                <dt className="text-sm font-medium text-muted-foreground">Dead stock</dt>
                 <Package className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
                   `${report?.summary.deadStockCount ?? 0} items`
                 )}
               </dd>
-              <p className="mt-1 text-xs text-muted-foreground">Zero sales in observation window</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Zero sales in observation window
+              </p>
             </div>
 
             {/* Card 4: Total Revenue */}
@@ -266,7 +270,7 @@ export default function AnalyticsPage() {
                 </dt>
                 <DollarSign className="size-4 text-muted-foreground" />
               </div>
-              <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+              <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                 {loading ? (
                   <Skeleton className="h-8 w-24" />
                 ) : (
@@ -282,7 +286,7 @@ export default function AnalyticsPage() {
 
         {/* Wholesale Restock Order Builder Card */}
         {report && restockItems.length > 0 && (
-          <section className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+          <section className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -292,7 +296,8 @@ export default function AnalyticsPage() {
                   </h2>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Recommended order quantities to maintain 7-day sales buffer based on velocity.
+                  Recommended order quantities to maintain 7-day sales buffer based on
+                  velocity.
                 </p>
               </div>
 
@@ -329,7 +334,7 @@ export default function AnalyticsPage() {
               {restockItems.slice(0, 6).map((item) => (
                 <div
                   key={item.productId}
-                  className="rounded-lg border border-border bg-muted/30 p-3 space-y-1 text-xs"
+                  className="bg-muted/30 space-y-1 rounded-lg border border-border p-3 text-xs"
                 >
                   <div className="flex items-center justify-between font-medium text-foreground">
                     <span className="truncate">{item.productName}</span>
@@ -412,7 +417,8 @@ export default function AnalyticsPage() {
                   No products in this category
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  As transactions are recorded at the counter, velocity metrics will populate here.
+                  As transactions are recorded at the counter, velocity metrics will
+                  populate here.
                 </p>
               </div>
             ) : (
@@ -420,10 +426,18 @@ export default function AnalyticsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
-                    <TableHead className="hidden sm:table-cell text-right">Current stock</TableHead>
-                    <TableHead className="hidden sm:table-cell text-right">Units sold</TableHead>
-                    <TableHead className="hidden sm:table-cell text-right">Velocity</TableHead>
-                    <TableHead className="hidden sm:table-cell text-right">Runway</TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">
+                      Current stock
+                    </TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">
+                      Units sold
+                    </TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">
+                      Velocity
+                    </TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">
+                      Runway
+                    </TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Recommended order</TableHead>
                   </TableRow>
@@ -434,8 +448,10 @@ export default function AnalyticsPage() {
                       {/* Product Name (Main Cell) */}
                       <TableCell className="font-medium text-foreground">
                         <div>{p.productName}</div>
-                        <div className="text-muted-foreground sm:hidden flex flex-wrap items-center gap-1.5 mt-0.5 text-xs">
-                          <span className="font-medium text-foreground">{p.salesVelocityPerDay}/day</span>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
+                          <span className="font-medium text-foreground">
+                            {p.salesVelocityPerDay}/day
+                          </span>
                           <span>&bull;</span>
                           <span>Stock: {p.currentStock}</span>
                           <span>&bull;</span>
@@ -448,22 +464,22 @@ export default function AnalyticsPage() {
                       </TableCell>
 
                       {/* Stock Level (Desktop) */}
-                      <TableCell className="hidden sm:table-cell text-right tabular-nums text-foreground">
+                      <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
                         {p.currentStock}
                       </TableCell>
 
                       {/* Units Sold (Desktop) */}
-                      <TableCell className="hidden sm:table-cell text-right tabular-nums text-foreground">
+                      <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
                         {p.unitsSold}
                       </TableCell>
 
                       {/* Sales Velocity (Desktop) */}
-                      <TableCell className="hidden sm:table-cell text-right tabular-nums font-semibold text-foreground">
+                      <TableCell className="hidden text-right font-semibold tabular-nums text-foreground sm:table-cell">
                         {p.salesVelocityPerDay}/day
                       </TableCell>
 
                       {/* Stock Runway (Desktop) */}
-                      <TableCell className="hidden sm:table-cell text-right tabular-nums">
+                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
                         {p.daysOfStockRemaining !== null ? (
                           <span
                             className={

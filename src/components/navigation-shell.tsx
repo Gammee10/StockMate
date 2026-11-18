@@ -136,7 +136,7 @@ export function NavigationShell({
 
           {/* Mobile Navigation Tabs (Touch targets >= 44dp) */}
           <nav
-            className="grid grid-cols-4 gap-1 rounded-lg border border-border bg-muted/50 p-1 sm:hidden"
+            className="bg-muted/50 grid grid-cols-4 gap-1 rounded-lg border border-border p-1 sm:hidden"
             aria-label="Mobile Navigation Tabs"
           >
             {NAV_ITEMS.map((item) => {

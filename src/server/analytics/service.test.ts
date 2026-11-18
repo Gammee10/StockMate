@@ -138,7 +138,9 @@ describe('Stock Velocity Analytics Service', () => {
         },
       ];
 
-      (db.product.findMany as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockProducts);
+      (db.product.findMany as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+        mockProducts
+      );
 
       const report = await computeStockVelocityReport('store_123', '7d');
 

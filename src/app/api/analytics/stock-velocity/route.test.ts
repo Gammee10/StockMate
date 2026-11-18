@@ -51,27 +51,36 @@ describe('Analytics API Route: GET /api/analytics/stock-velocity', () => {
       products: [],
     };
 
-    (analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      mockReport
-    );
+    (
+      analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>
+    ).mockResolvedValueOnce(mockReport);
 
-    const req = new Request('http://localhost:3000/api/analytics/stock-velocity?range=7d', {
-      method: 'GET',
-      headers: {
-        Cookie: validSessionCookie,
-      },
-    });
+    const req = new Request(
+      'http://localhost:3000/api/analytics/stock-velocity?range=7d',
+      {
+        method: 'GET',
+        headers: {
+          Cookie: validSessionCookie,
+        },
+      }
+    );
 
     const res = await GET(req);
     expect(res.status).toBe(200);
 
     const json = await res.json();
     expect(json.data).toEqual(mockReport);
-    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(storeId, '7d', 7);
+    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(
+      storeId,
+      '7d',
+      7
+    );
   });
 
   it('defaults range to 7d and targetRunwayDays to 7 when query params are omitted', async () => {
-    (analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    (
+      analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>
+    ).mockResolvedValueOnce({
       range: '7d',
       products: [],
     });
@@ -85,11 +94,17 @@ describe('Analytics API Route: GET /api/analytics/stock-velocity', () => {
 
     const res = await GET(req);
     expect(res.status).toBe(200);
-    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(storeId, '7d', 7);
+    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(
+      storeId,
+      '7d',
+      7
+    );
   });
 
   it('passes custom targetRunwayDays parameter when provided', async () => {
-    (analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    (
+      analyticsService.computeStockVelocityReport as ReturnType<typeof vi.fn>
+    ).mockResolvedValueOnce({
       range: '30d',
       products: [],
     });
@@ -106,6 +121,10 @@ describe('Analytics API Route: GET /api/analytics/stock-velocity', () => {
 
     const res = await GET(req);
     expect(res.status).toBe(200);
-    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(storeId, '30d', 14);
+    expect(analyticsService.computeStockVelocityReport).toHaveBeenCalledWith(
+      storeId,
+      '30d',
+      14
+    );
   });
 });

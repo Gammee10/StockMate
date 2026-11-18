@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Stock & Sales Velocity Analytics and Wholesale Restock Sheet (Slice 6)
+
+- **Dedicated Analytics & Velocity Workspace (`/analytics`):**
+  - **KPI Summary Cards:** Instant visibility into window sales revenue, units sold, fast-moving products count, restock-needed alerts, and dead stock count.
+  - **Time Range Selector:** Seamless toggle between `Today` (1-day intraday snapshot), `7 days` (standard weekly velocity), and `30 days` (monthly run-rate).
+  - **Wholesale Restock Order Sheet:** Actionable ordering sheet calculating exact recommended order quantities based on daily run rate and configurable target runway days (default 7 days).
+  - **1-Tap "Copy Restock List":** Generates clean, merchant-ready plain text order lists formatted with item names, current stock, and recommended reorder quantities for effortless copy-pasting into Telegram or SMS wholesale suppliers (e.g., Mercato distributors).
+  - **Filterable Stock Velocity Breakdown Table:** Searchable, status-segmented table (`All`, `Needs Restock`, `Fast Moving`, `Dead Stock`) showing product units sold, daily velocity (`units/day`), stock runway days, semantic status badges, and recommended order units.
+  - **Mobile-First Responsive Layout:** Collapses secondary columns (`hidden sm:table-cell`) to guarantee $\le 3$ columns on mobile devices, displaying velocity and stock runway under the product title.
+- **Stock Velocity Analytics Engine (`src/server/analytics/`):**
+  - **Daily Velocity Calculation:** Calculates daily consumption rate `unitsSold / windowDays` rounded to 1 decimal place.
+  - **Stockout Runway Calculation:** Computes days of stock remaining (`currentStock / dailyVelocity`) or `null` for zero sales.
+  - **Stock Status Classification:** Automated status tagging into `OUT_OF_STOCK` (0 stock), `CRITICAL_LOW` ($\le 2$ days runway), `LOW_STOCK` ($\le 5$ days runway or $\le$ threshold), `DEAD_STOCK` (0 units sold with positive stock), and `HEALTHY`.
+  - **Intelligent Restock Recommendation:** Calculates `max(0, ceil(dailyVelocity * targetRunwayDays) - currentStock)` to prevent over-ordering while avoiding stockouts.
+  - **Dead Capital Detection:** Flags dormant inventory tying up merchant working capital on shelves.
+- **Tenant-Scoped API Route (`GET /api/analytics/stock-velocity`):**
+  - Strictly derives `storeId` from verified session tokens (**Invariant #3**).
+  - Strictly aggregates `COMPLETED` sales, excluding voided transactions (**Invariant #6**).
+  - Bounded queries (`take: 100`) to guarantee high-performance responses.
+  - Query parameter validation with Zod (`range`: `today`, `7d`, `30d`; `targetRunwayDays`: integer between 1 and 90).
+- **Global Navigation Shell Integration:**
+  - Added `Analytics` tab with `TrendingUp` icon to desktop navbar and mobile segmented control bar.
+
 ### Added - Multi-Page Route Architecture & Global Navigation Shell (Slice 5.3)
 
 - **Dedicated Multi-Page Route Architecture:**

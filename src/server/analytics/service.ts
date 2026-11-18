@@ -190,10 +190,7 @@ export async function computeStockVelocityReport(
     return b.salesVelocityPerDay - a.salesVelocityPerDay;
   });
 
-  const totalRevenueCents = productMetrics.reduce(
-    (sum, p) => sum + p.revenueCents,
-    0
-  );
+  const totalRevenueCents = productMetrics.reduce((sum, p) => sum + p.revenueCents, 0);
   const totalUnitsSold = productMetrics.reduce((sum, p) => sum + p.unitsSold, 0);
   const totalEstimatedRestockCostCents = productMetrics.reduce(
     (sum, p) => sum + p.estimatedReorderCostCents,
@@ -206,8 +203,10 @@ export async function computeStockVelocityReport(
     totalUnitsSold,
     fastMovingCount: productMetrics.filter((p) => p.salesVelocityPerDay >= 1.0).length,
     lowStockCount: productMetrics.filter((p) => p.stockStatus === 'LOW_STOCK').length,
-    criticalLowCount: productMetrics.filter((p) => p.stockStatus === 'CRITICAL_LOW').length,
-    outOfStockCount: productMetrics.filter((p) => p.stockStatus === 'OUT_OF_STOCK').length,
+    criticalLowCount: productMetrics.filter((p) => p.stockStatus === 'CRITICAL_LOW')
+      .length,
+    outOfStockCount: productMetrics.filter((p) => p.stockStatus === 'OUT_OF_STOCK')
+      .length,
     deadStockCount: productMetrics.filter((p) => p.stockStatus === 'DEAD_STOCK').length,
     totalEstimatedRestockCostCents,
     totalEstimatedRestockCostEtb: (totalEstimatedRestockCostCents / 100).toFixed(2),
