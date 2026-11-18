@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Rich Interactive Visualizations & Scalable Catalog UX (Slice 6.2)
+
+- **Scalable Product Catalog Architecture (`/analytics`):**
+  - **Instant Search Bar:** Live substring search filtering products by name with 1-tap clear button.
+  - **Multi-Status Filter Pills & Active Filter Tags:** Filter products across high-level tabs (`All`, `Needs Restock`, `Fast Moving`, `Dead Stock`), Donut status slices, and Matrix quadrants, with dismissible active filter badges.
+  - **5-Way Responsive Sorting:** Sort by `Fastest velocity`, `Shortest runway (urgent)`, `Lowest stock`, `Highest revenue`, and `Name (A–Z)`.
+  - **Accessible Pagination Bar:** Windows catalog into 10-item slices (`paginateProducts`) with compact "Page X of Y" controls and "Showing A–B of N products" count, preventing lag on large catalogs and eliminating vertical scrolling fatigue.
+- **Interactive SVG Donut Chart (`InteractiveDonutChart`):**
+  - High-precision SVG donut chart with animated stroke-dash segments and dynamic center readout displaying total catalog SKUs or hovered/selected category breakdown.
+  - 1-tap legend cards that filter the catalog below directly to the selected health status.
+- **2×2 Retail Strategy Matrix (`VelocityMatrix`):**
+  - Strategic 4-quadrant business intelligence classifying store inventory:
+    - *Urgent Restock:* High velocity + low stock (imminent stockout risk).
+    - *Star Performers:* High velocity + healthy stock (core cash generators).
+    - *Slow Movers:* Low velocity + low stock (order in minimum wholesale packs).
+    - *Dead Capital Traps:* Low/zero velocity + high stock (tied-up working capital).
+  - Summarizes on-hand unit volume and 30-day revenue in ETB per quadrant with 1-tap catalog filtering.
+- **Dual-Column Demand vs Supply Bar Chart (`DemandSupplyChart`):**
+  - Comparative vertical bar chart directly contrasting `Units Sold` (Demand) against `Current Stock` (Supply) for top-selling items.
+  - Automatic Stock Deficit Risk indicator when demand outstrips remaining stock.
+
 ### Added - Interactive Visual Analytics Charts (Slice 6.1)
 
 - **Interactive Visual Intelligence Card (`InteractiveCharts`):**

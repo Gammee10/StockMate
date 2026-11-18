@@ -25,6 +25,45 @@ export interface InventoryDistribution {
   deadStock: StatusDistributionCategory;
 }
 
+export interface DonutSegment {
+  status: StockVelocityStatus;
+  label: string;
+  count: number;
+  percentage: number;
+  colorClass: string;
+  svgColor: string;
+  circumference: number;
+  strokeDasharray: string;
+  strokeDashoffset: number;
+}
+
+export type ProductQuadrant =
+  'urgent_restock' | 'star_performer' | 'slow_mover' | 'dead_capital';
+
+export interface QuadrantData {
+  quadrant: ProductQuadrant;
+  title: string;
+  subtitle: string;
+  badgeVariant: 'destructive' | 'warning' | 'success' | 'secondary';
+  actionPrompt: string;
+  products: ProductVelocityMetrics[];
+  totalStockUnits: number;
+  totalRevenueCents: number;
+}
+
+export type ProductSortKey =
+  'velocity_desc' | 'runway_asc' | 'stock_asc' | 'revenue_desc' | 'name_asc';
+
+export type ProductSortOption = ProductSortKey;
+
+export interface PaginationResult<T> {
+  items: T[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+
 /**
  * Calculates responsive width percentage for horizontal velocity bars.
  * Ensures a minimum of 5% for visible non-zero values so even small sales are visible.
@@ -170,4 +209,182 @@ export function getAtRiskRunwayProducts(
   return products
     .filter((p) => p.daysOfStockRemaining !== null && p.daysOfStockRemaining <= maxDays)
     .sort((a, b) => (a.daysOfStockRemaining ?? 0) - (b.daysOfStockRemaining ?? 0));
+}
+
+/**
+ * Calculates SVG stroke-dasharray and stroke-dashoffset parameters for an interactive Donut chart.
+ */
+export function calculateDonutSegments(
+  distribution: InventoryDistribution,
+  radius = 40
+): DonutSegment[] {
+  const circumference = 2 * Math.PI * radius;
+  const categories: StatusDistributionCategory[] = [
+    distribution.outOfStock,
+    distribution.criticalLow,
+    distribution.lowStock,
+    distribution.healthy,
+    distribution.deadStock,
+  ];
+
+  const svgColors: Record<StockVelocityStatus, string> = {
+    OUT_OF_STOCK: 'hsl(var(--destructive))',
+    CRITICAL_LOW: 'hsl(var(--destructive) / 0.8)',
+    LOW_STOCK: 'hsl(var(--warning))',
+    HEALTHY: 'hsl(var(--primary))',
+    DEAD_STOCK: 'hsl(var(--muted-foreground) / 0.4)',
+  };
+
+  let accumulatedPercentage = 0;
+
+  return categories.map((cat) => {
+    const strokeDashoffset = -((accumulatedPercentage / 100) * circumference);
+    const dashLength = (cat.percentage / 100) * circumference;
+    const strokeDasharray = `${dashLength} ${circumference - dashLength}`;
+    accumulatedPercentage += cat.percentage;
+
+    return {
+      status: cat.status,
+      label: cat.label,
+      count: cat.count,
+      percentage: cat.percentage,
+      colorClass: cat.colorClass,
+      svgColor: svgColors[cat.status],
+      circumference,
+      strokeDasharray,
+      strokeDashoffset,
+    };
+  });
+}
+
+/**
+ * Classifies a product into one of the 4 retail inventory matrix quadrants.
+ */
+export function classifyProductQuadrant(
+  product: ProductVelocityMetrics
+): ProductQuadrant {
+  const isHighVelocity = product.salesVelocityPerDay >= 1.0;
+  const isLowStock =
+    product.currentStock <= product.lowStockThreshold ||
+    (product.daysOfStockRemaining !== null && product.daysOfStockRemaining <= 5);
+
+  if (isHighVelocity && isLowStock) {
+    return 'urgent_restock';
+  }
+  if (isHighVelocity && !isLowStock) {
+    return 'star_performer';
+  }
+  if (!isHighVelocity && !isLowStock) {
+    return 'dead_capital';
+  }
+  return 'slow_mover';
+}
+
+/**
+ * Groups products into 4 strategic retail quadrants for high-level business intelligence.
+ */
+export function groupProductsByQuadrant(
+  products: ProductVelocityMetrics[]
+): Record<ProductQuadrant, QuadrantData> {
+  const grouped: Record<ProductQuadrant, QuadrantData> = {
+    urgent_restock: {
+      quadrant: 'urgent_restock',
+      title: 'Urgent Restock',
+      subtitle: 'High demand, stockout imminent within 5 days',
+      badgeVariant: 'destructive',
+      actionPrompt: 'Order now from wholesale importer to prevent lost revenue',
+      products: [],
+      totalStockUnits: 0,
+      totalRevenueCents: 0,
+    },
+    star_performer: {
+      quadrant: 'star_performer',
+      title: 'Star Performers',
+      subtitle: 'High demand, healthy stock runway',
+      badgeVariant: 'success',
+      actionPrompt: 'Core cash flow drivers, maintain reliable supply buffer',
+      products: [],
+      totalStockUnits: 0,
+      totalRevenueCents: 0,
+    },
+    slow_mover: {
+      quadrant: 'slow_mover',
+      title: 'Slow Movers',
+      subtitle: 'Low demand, low inventory footprint',
+      badgeVariant: 'secondary',
+      actionPrompt: 'Reorder only in small minimum wholesale packs',
+      products: [],
+      totalStockUnits: 0,
+      totalRevenueCents: 0,
+    },
+    dead_capital: {
+      quadrant: 'dead_capital',
+      title: 'Dead Capital Traps',
+      subtitle: 'Low/zero demand, high shelf inventory',
+      badgeVariant: 'warning',
+      actionPrompt: 'Capital tied up on shelves. Run bundle clearance discounts',
+      products: [],
+      totalStockUnits: 0,
+      totalRevenueCents: 0,
+    },
+  };
+
+  for (const p of products) {
+    const q = classifyProductQuadrant(p);
+    grouped[q].products.push(p);
+    grouped[q].totalStockUnits += p.currentStock;
+    grouped[q].totalRevenueCents += p.revenueCents;
+  }
+
+  return grouped;
+}
+
+/**
+ * Sorts products by chosen business metric.
+ */
+export function sortProducts(
+  products: ProductVelocityMetrics[],
+  sortBy: ProductSortKey
+): ProductVelocityMetrics[] {
+  const copy = [...products];
+
+  switch (sortBy) {
+    case 'velocity_desc':
+      return copy.sort((a, b) => b.salesVelocityPerDay - a.salesVelocityPerDay);
+    case 'runway_asc':
+      return copy.sort((a, b) => {
+        const rA = a.daysOfStockRemaining ?? 999999;
+        const rB = b.daysOfStockRemaining ?? 999999;
+        return rA - rB;
+      });
+    case 'stock_asc':
+      return copy.sort((a, b) => a.currentStock - b.currentStock);
+    case 'revenue_desc':
+      return copy.sort((a, b) => b.revenueCents - a.revenueCents);
+    case 'name_asc':
+      return copy.sort((a, b) => a.productName.localeCompare(b.productName));
+  }
+}
+
+/**
+ * Paginate an array of items for scalable, low-memory touch rendering.
+ */
+export function paginateProducts<T>(
+  items: T[],
+  page: number,
+  pageSize = 10
+): PaginationResult<T> {
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const pageItems = items.slice(startIndex, startIndex + pageSize);
+
+  return {
+    items: pageItems,
+    totalItems,
+    totalPages,
+    currentPage,
+    pageSize,
+  };
 }

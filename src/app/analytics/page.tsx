@@ -12,11 +12,16 @@ import {
   FileText,
   DollarSign,
   ShoppingCart,
+  Search,
+  ArrowUpDown,
+  X,
 } from 'lucide-react';
 import { NavigationShell } from '@/components/navigation-shell';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -27,11 +32,20 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { InteractiveCharts } from '@/components/analytics/interactive-charts';
+import {
+  sortProducts,
+  paginateProducts,
+  classifyProductQuadrant,
+  type ProductSortOption,
+  type ProductQuadrant,
+} from '@/components/analytics/chart-utils';
 import type {
   StockVelocityReport,
   StockVelocityRange,
   ProductVelocityMetrics,
+  StockVelocityStatus,
 } from '@/server/analytics/types';
+import { formatMoney } from '@/lib/money';
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState<StockVelocityRange>('7d');
@@ -41,6 +55,14 @@ export default function AnalyticsPage() {
   const [filterTab, setFilterTab] = useState<'all' | 'restock' | 'fast' | 'dead'>('all');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Scalable Catalog UX: Search, Sorting, Chart Filtering & Pagination
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<ProductSortOption>('velocity_desc');
+  const [selectedStatus, setSelectedStatus] = useState<StockVelocityStatus | null>(null);
+  const [selectedQuadrant, setSelectedQuadrant] = useState<ProductQuadrant | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const fetchReport = useCallback(async () => {
     setLoading(true);
@@ -63,7 +85,12 @@ export default function AnalyticsPage() {
     fetchReport();
   }, [fetchReport]);
 
-  // Restock items
+  // Reset pagination to page 1 whenever any filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterTab, selectedStatus, selectedQuadrant, sortBy]);
+
+  // Restock items list for wholesale sheet
   const restockItems = useMemo(() => {
     if (!report) return [];
     return report.products.filter(
@@ -75,20 +102,70 @@ export default function AnalyticsPage() {
     );
   }, [report]);
 
-  // Filtered products list
-  const filteredProducts = useMemo(() => {
-    if (!report) return [];
-    switch (filterTab) {
-      case 'restock':
-        return restockItems;
-      case 'fast':
-        return report.products.filter((p) => p.salesVelocityPerDay >= 1.0);
-      case 'dead':
-        return report.products.filter((p) => p.stockStatus === 'DEAD_STOCK');
-      default:
-        return report.products;
+  // Scalable Filter, Sort, and Pagination Pipeline
+  const { allFiltered, paginated } = useMemo(() => {
+    if (!report) {
+      return {
+        allFiltered: [],
+        paginated: {
+          items: [] as ProductVelocityMetrics[],
+          totalItems: 0,
+          totalPages: 1,
+          currentPage: 1,
+          pageSize: PAGE_SIZE,
+        },
+      };
     }
-  }, [report, filterTab, restockItems]);
+
+    let list = report.products;
+
+    // 1. Text Search Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((p) => p.productName.toLowerCase().includes(q));
+    }
+
+    // 2. High-level Filter Tabs
+    if (filterTab === 'restock') {
+      list = list.filter(
+        (p) =>
+          p.recommendedReorderQty > 0 ||
+          p.stockStatus === 'OUT_OF_STOCK' ||
+          p.stockStatus === 'CRITICAL_LOW' ||
+          p.stockStatus === 'LOW_STOCK'
+      );
+    } else if (filterTab === 'fast') {
+      list = list.filter((p) => p.salesVelocityPerDay >= 1.0);
+    } else if (filterTab === 'dead') {
+      list = list.filter((p) => p.stockStatus === 'DEAD_STOCK');
+    }
+
+    // 3. Status Filter (from Donut Chart slice selection)
+    if (selectedStatus) {
+      list = list.filter((p) => p.stockStatus === selectedStatus);
+    }
+
+    // 4. Quadrant Filter (from 2x2 Strategy Matrix quadrant selection)
+    if (selectedQuadrant) {
+      list = list.filter((p) => classifyProductQuadrant(p) === selectedQuadrant);
+    }
+
+    // 5. Sort Products
+    const sorted = sortProducts(list, sortBy);
+
+    // 6. Paginate (10 items per page)
+    const paged = paginateProducts(sorted, currentPage, PAGE_SIZE);
+
+    return { allFiltered: sorted, paginated: paged };
+  }, [
+    report,
+    searchQuery,
+    filterTab,
+    selectedStatus,
+    selectedQuadrant,
+    sortBy,
+    currentPage,
+  ]);
 
   // Copy Restock Order list to clipboard for SMS / Telegram to wholesaler
   const handleCopyRestockList = async () => {
@@ -122,7 +199,7 @@ export default function AnalyticsPage() {
       case 'LOW_STOCK':
         return <Badge variant="warning">Low stock</Badge>;
       case 'DEAD_STOCK':
-        return <Badge variant="secondary">Dead stock (0 sales)</Badge>;
+        return <Badge variant="secondary">Dead stock</Badge>;
       case 'HEALTHY':
         return <Badge variant="success">Healthy stock</Badge>;
     }
@@ -286,7 +363,7 @@ export default function AnalyticsPage() {
           </dl>
         </section>
 
-        {/* Interactive Visualization Charts */}
+        {/* Interactive Visualization Charts (Donut, Matrix, Demand/Supply, Velocity) */}
         <section aria-label="Interactive visual intelligence">
           <InteractiveCharts
             products={report?.products ?? []}
@@ -294,18 +371,13 @@ export default function AnalyticsPage() {
             loading={loading}
             selectedProductId={selectedProductId}
             onSelectProduct={setSelectedProductId}
+            selectedStatus={selectedStatus}
             onFilterStatus={(status) => {
-              if (
-                status === 'OUT_OF_STOCK' ||
-                status === 'CRITICAL_LOW' ||
-                status === 'LOW_STOCK'
-              ) {
-                setFilterTab('restock');
-              } else if (status === 'DEAD_STOCK') {
-                setFilterTab('dead');
-              } else {
-                setFilterTab('all');
-              }
+              setSelectedStatus((prev) => (prev === status ? null : status));
+            }}
+            selectedQuadrant={selectedQuadrant}
+            onSelectQuadrant={(quadrant) => {
+              setSelectedQuadrant((prev) => (prev === quadrant ? null : quadrant));
             }}
           />
         </section>
@@ -322,8 +394,7 @@ export default function AnalyticsPage() {
                   </h2>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Recommended order quantities to maintain 7-day sales buffer based on
-                  velocity.
+                  Recommended order quantities to maintain sales buffer based on velocity.
                 </p>
               </div>
 
@@ -370,7 +441,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span>Current: {item.currentStock} units</span>
-                    <span>{item.estimatedReorderCostEtb} ETB</span>
+                    <span>{formatMoney(item.estimatedReorderCostCents)}</span>
                   </div>
                 </div>
               ))}
@@ -378,15 +449,16 @@ export default function AnalyticsPage() {
           </section>
         )}
 
-        {/* Filter Tabs & Velocity Breakdown Table */}
+        {/* Scalable Product Catalog Section */}
         <section className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-semibold text-foreground">
-                Product sales velocity breakdown
+                Product sales velocity catalog
               </h2>
               <p className="text-xs text-muted-foreground">
-                Sell-through velocity, runway estimation, and stock status categorization.
+                Showing {allFiltered.length} of {report?.products.length ?? 0} products.
+                Paginated in 10-item slices.
               </p>
             </div>
 
@@ -427,6 +499,98 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
+          {/* Search Bar & Sorting Controls */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search products by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 text-xs"
+              />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-1 top-1 size-7 p-0 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ArrowUpDown className="size-3.5" />
+                <span>Sort:</span>
+              </div>
+              <div className="w-48">
+                <Select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as ProductSortOption)}
+                >
+                  <option value="velocity_desc">Fastest velocity</option>
+                  <option value="runway_asc">Shortest runway (urgent)</option>
+                  <option value="stock_asc">Lowest stock</option>
+                  <option value="revenue_desc">Highest revenue</option>
+                  <option value="name_asc">Name (A–Z)</option>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Chart Filter Badges */}
+          {(selectedStatus || selectedQuadrant || searchQuery) && (
+            <div className="bg-muted/40 flex flex-wrap items-center gap-2 rounded-lg border border-border p-2 text-xs">
+              <span className="text-muted-foreground">Active filters:</span>
+              {selectedStatus && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {selectedStatus}
+                  <X
+                    className="size-3 cursor-pointer"
+                    onClick={() => setSelectedStatus(null)}
+                  />
+                </Badge>
+              )}
+              {selectedQuadrant && (
+                <Badge variant="secondary" className="gap-1">
+                  Matrix: {selectedQuadrant.replace('_', ' ')}
+                  <X
+                    className="size-3 cursor-pointer"
+                    onClick={() => setSelectedQuadrant(null)}
+                  />
+                </Badge>
+              )}
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  &quot;{searchQuery}&quot;
+                  <X
+                    className="size-3 cursor-pointer"
+                    onClick={() => setSearchQuery('')}
+                  />
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setSelectedStatus(null);
+                  setSelectedQuadrant(null);
+                  setSearchQuery('');
+                  setFilterTab('all');
+                }}
+              >
+                Reset filters
+              </Button>
+            </div>
+          )}
+
+          {/* Catalog Table */}
           <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
             {loading ? (
               <div className="space-y-3 p-4">
@@ -434,117 +598,197 @@ export default function AnalyticsPage() {
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : paginated.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 text-center">
                 <div className="mb-2 flex size-10 items-center justify-center rounded-lg border border-border bg-muted">
                   <ShoppingCart className="size-5 text-muted-foreground" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">
-                  No products in this category
+                  No products found
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  As transactions are recorded at the counter, velocity metrics will
-                  populate here.
+                  {searchQuery || selectedStatus || selectedQuadrant
+                    ? 'No products match the selected filters. Try resetting your search.'
+                    : 'As transactions are recorded at the counter, velocity metrics will populate here.'}
                 </p>
+                {(searchQuery || selectedStatus || selectedQuadrant) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedStatus(null);
+                      setSelectedQuadrant(null);
+                      setFilterTab('all');
+                    }}
+                    className="mt-3 text-xs"
+                  >
+                    Clear all filters
+                  </Button>
+                )}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
-                      Current stock
-                    </TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
-                      Units sold
-                    </TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
-                      Velocity
-                    </TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
-                      Runway
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Recommended order</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map((p) => (
-                    <TableRow
-                      key={p.productId}
-                      className={
-                        p.productId === selectedProductId ? 'bg-primary/5' : undefined
-                      }
-                    >
-                      {/* Product Name (Main Cell) */}
-                      <TableCell className="font-medium text-foreground">
-                        <div>{p.productName}</div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
-                          <span className="font-medium text-foreground">
-                            {p.salesVelocityPerDay}/day
-                          </span>
-                          <span>&bull;</span>
-                          <span>Stock: {p.currentStock}</span>
-                          <span>&bull;</span>
-                          <span>
-                            {p.daysOfStockRemaining !== null
-                              ? `${p.daysOfStockRemaining}d runway`
-                              : 'No runway'}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      {/* Stock Level (Desktop) */}
-                      <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
-                        {p.currentStock}
-                      </TableCell>
-
-                      {/* Units Sold (Desktop) */}
-                      <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
-                        {p.unitsSold}
-                      </TableCell>
-
-                      {/* Sales Velocity (Desktop) */}
-                      <TableCell className="hidden text-right font-semibold tabular-nums text-foreground sm:table-cell">
-                        {p.salesVelocityPerDay}/day
-                      </TableCell>
-
-                      {/* Stock Runway (Desktop) */}
-                      <TableCell className="hidden text-right tabular-nums sm:table-cell">
-                        {p.daysOfStockRemaining !== null ? (
-                          <span
-                            className={
-                              p.daysOfStockRemaining <= 2
-                                ? 'font-semibold text-destructive'
-                                : p.daysOfStockRemaining <= 5
-                                  ? 'font-medium text-warning'
-                                  : 'text-foreground'
-                            }
-                          >
-                            {p.daysOfStockRemaining} days
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-
-                      {/* Stock Status Badge */}
-                      <TableCell>{getStatusBadge(p.stockStatus)}</TableCell>
-
-                      {/* Recommended Order */}
-                      <TableCell className="text-right font-semibold tabular-nums text-foreground">
-                        {p.recommendedReorderQty > 0 ? (
-                          <span className="text-primary">
-                            +{p.recommendedReorderQty} units
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">0</span>
-                        )}
-                      </TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">
+                        Current stock
+                      </TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">
+                        Units sold
+                      </TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">
+                        Velocity
+                      </TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">
+                        Runway
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Recommended order</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginated.items.map((p) => {
+                      const isSelected = p.productId === selectedProductId;
+
+                      return (
+                        <TableRow
+                          key={p.productId}
+                          onClick={() =>
+                            setSelectedProductId(isSelected ? null : p.productId)
+                          }
+                          className={`cursor-pointer transition-colors ${
+                            isSelected ? 'bg-primary/5' : undefined
+                          }`}
+                          style={{ touchAction: 'manipulation' }}
+                        >
+                          {/* Product Name (Main Cell) */}
+                          <TableCell className="font-medium text-foreground">
+                            <div>{p.productName}</div>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
+                              <span className="font-medium text-foreground">
+                                {p.salesVelocityPerDay}/day
+                              </span>
+                              <span>&bull;</span>
+                              <span>Stock: {p.currentStock}</span>
+                              <span>&bull;</span>
+                              <span>
+                                {p.daysOfStockRemaining !== null
+                                  ? `${p.daysOfStockRemaining}d runway`
+                                  : 'No runway'}
+                              </span>
+                            </div>
+                          </TableCell>
+
+                          {/* Stock Level (Desktop) */}
+                          <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
+                            {p.currentStock}
+                          </TableCell>
+
+                          {/* Units Sold (Desktop) */}
+                          <TableCell className="hidden text-right tabular-nums text-foreground sm:table-cell">
+                            {p.unitsSold}
+                          </TableCell>
+
+                          {/* Sales Velocity (Desktop) */}
+                          <TableCell className="hidden text-right font-semibold tabular-nums text-foreground sm:table-cell">
+                            {p.salesVelocityPerDay}/day
+                          </TableCell>
+
+                          {/* Stock Runway (Desktop) */}
+                          <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                            {p.daysOfStockRemaining !== null ? (
+                              <span
+                                className={
+                                  p.daysOfStockRemaining <= 2
+                                    ? 'font-semibold text-destructive'
+                                    : p.daysOfStockRemaining <= 5
+                                      ? 'font-medium text-warning'
+                                      : 'text-foreground'
+                                }
+                              >
+                                {p.daysOfStockRemaining} days
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+
+                          {/* Stock Status Badge */}
+                          <TableCell>{getStatusBadge(p.stockStatus)}</TableCell>
+
+                          {/* Recommended Order */}
+                          <TableCell className="text-right font-semibold tabular-nums text-foreground">
+                            {p.recommendedReorderQty > 0 ? (
+                              <span className="text-primary">
+                                +{p.recommendedReorderQty} units
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+
+                {/* Scalable Pagination Controls Bar */}
+                {paginated.totalPages > 1 && (
+                  <div className="flex flex-col gap-2 border-t border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Showing{' '}
+                      <span className="font-semibold text-foreground">
+                        {(paginated.currentPage - 1) * paginated.pageSize + 1}
+                      </span>
+                      –
+                      <span className="font-semibold text-foreground">
+                        {Math.min(
+                          paginated.currentPage * paginated.pageSize,
+                          paginated.totalItems
+                        )}
+                      </span>{' '}
+                      of{' '}
+                      <span className="font-semibold text-foreground">
+                        {paginated.totalItems}
+                      </span>{' '}
+                      products
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage <= 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className="h-8 text-xs font-medium"
+                        style={{ touchAction: 'manipulation' }}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        Page {paginated.currentPage} of {paginated.totalPages}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage >= paginated.totalPages}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(paginated.totalPages, p + 1))
+                        }
+                        className="h-8 text-xs font-medium"
+                        style={{ touchAction: 'manipulation' }}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>
