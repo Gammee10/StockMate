@@ -1,6 +1,6 @@
 // src/server/catalog/service.ts
 import 'server-only';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, StockMovement } from '@prisma/client';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
 import type {
@@ -9,6 +9,7 @@ import type {
   CatalogProductView,
   ListStoreProductsOptions,
   ListProductsResult,
+  RecordStockMovementInput,
 } from './types';
 
 type DbOrTx = typeof db | Prisma.TransactionClient;
@@ -264,8 +265,30 @@ export async function archiveStoreProduct(
 }
 
 /**
+ * Records an append-only stock movement entry (Task 1.5a).
+ * Catalog module owns inventory mutations and history records.
+ */
+export async function recordStockMovement(
+  tx: Prisma.TransactionClient,
+  input: RecordStockMovementInput
+): Promise<StockMovement> {
+  return tx.stockMovement.create({
+    data: {
+      storeId: input.storeId,
+      productId: input.productId,
+      type: input.type,
+      quantityDelta: input.quantityDelta,
+      stockBefore: input.stockBefore,
+      stockAfter: input.stockAfter,
+      saleId: input.saleId ?? null,
+    },
+  });
+}
+
+/**
  * Enforces Invariant #5: Atomic Conditional Stock Decrement.
  * Uses atomic SQL conditional guard (WHERE stock >= quantity) inside transaction.
+ * Uses RETURNING stock to compute delta and record SALE stock movement.
  * If zero rows were updated, stock was insufficient or product was missing.
  */
 export async function decrementProductStockAtomic(
@@ -273,18 +296,20 @@ export async function decrementProductStockAtomic(
   productId: string,
   quantity: number,
   tx: Prisma.TransactionClient,
-  productName?: string
-): Promise<void> {
-  const count = await tx.$executeRaw`
+  productName?: string,
+  saleId?: string
+): Promise<{ stock: number }> {
+  const rows = await tx.$queryRaw<Array<{ stock: number }>>`
     UPDATE products
     SET stock = stock - ${quantity}, updated_at = NOW()
     WHERE id = ${productId}
       AND store_id = ${storeId}
       AND is_archived = false
       AND stock >= ${quantity}
+    RETURNING stock
   `;
 
-  if (count === 0) {
+  if (!rows || rows.length === 0) {
     const itemLabel = productName ? `"${productName}"` : `product id ${productId}`;
     throw new AppError('CONFLICT', `Insufficient stock for ${itemLabel}`, {
       fields: {
@@ -292,26 +317,44 @@ export async function decrementProductStockAtomic(
       },
     });
   }
+
+  const stockAfter = rows[0].stock;
+  const stockBefore = stockAfter + quantity;
+
+  await recordStockMovement(tx, {
+    storeId,
+    productId,
+    type: 'SALE',
+    quantityDelta: -quantity,
+    stockBefore,
+    stockAfter,
+    saleId,
+  });
+
+  return { stock: stockAfter };
 }
 
 /**
  * Enforces Invariant #5: Atomic Stock Restoration on Void.
  * Atomically increments product stock by the voided quantity inside transaction.
+ * Uses RETURNING stock to compute delta and record VOID_RESTORE stock movement.
  */
 export async function incrementProductStockAtomic(
   storeId: string,
   productId: string,
   quantity: number,
-  tx: Prisma.TransactionClient
-): Promise<void> {
-  const count = await tx.$executeRaw`
+  tx: Prisma.TransactionClient,
+  saleId?: string
+): Promise<{ stock: number }> {
+  const rows = await tx.$queryRaw<Array<{ stock: number }>>`
     UPDATE products
     SET stock = stock + ${quantity}, updated_at = NOW()
     WHERE id = ${productId}
       AND store_id = ${storeId}
+    RETURNING stock
   `;
 
-  if (count === 0) {
+  if (!rows || rows.length === 0) {
     throw new AppError(
       'NOT_FOUND',
       `Product id ${productId} not found for store ${storeId}`,
@@ -322,4 +365,19 @@ export async function incrementProductStockAtomic(
       }
     );
   }
+
+  const stockAfter = rows[0].stock;
+  const stockBefore = stockAfter - quantity;
+
+  await recordStockMovement(tx, {
+    storeId,
+    productId,
+    type: 'VOID_RESTORE',
+    quantityDelta: quantity,
+    stockBefore,
+    stockAfter,
+    saleId,
+  });
+
+  return { stock: stockAfter };
 }

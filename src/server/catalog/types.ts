@@ -1,4 +1,6 @@
 // src/server/catalog/types.ts
+import type { StockMovementType } from '@prisma/client';
+
 export interface CreateProductInput {
   name: string;
   priceCents: number;
@@ -36,4 +38,14 @@ export interface ListStoreProductsOptions {
 export interface ListProductsResult {
   items: CatalogProductView[];
   nextCursor: string | null;
+}
+
+export interface RecordStockMovementInput {
+  storeId: string;
+  productId: string;
+  type: StockMovementType;
+  quantityDelta: number;
+  stockBefore: number;
+  stockAfter: number;
+  saleId?: string | null;
 }

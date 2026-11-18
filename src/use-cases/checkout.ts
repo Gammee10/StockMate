@@ -54,20 +54,8 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
   try {
     const sale = await db.$transaction(
       async (tx) => {
-        // 4a. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
-        for (const item of items) {
-          const product = productMap.get(item.productId);
-          await decrementProductStockAtomic(
-            storeId,
-            item.productId,
-            item.quantity,
-            tx,
-            product?.name
-          );
-        }
-
-        // 4b. Create sale & sale items
-        return await createSaleRecord(
+        // 4a. Create sale & sale items first to obtain sale.id for stock movement ledger (Task 1.5a)
+        const createdSale = await createSaleRecord(
           {
             storeId,
             idempotencyKey,
@@ -77,6 +65,21 @@ export async function executeCheckout(input: CheckoutInput): Promise<CheckoutRes
           },
           tx
         );
+
+        // 4b. Atomically decrement stock for each line item (UPDATE ... WHERE stock >= quantity)
+        for (const item of items) {
+          const product = productMap.get(item.productId);
+          await decrementProductStockAtomic(
+            storeId,
+            item.productId,
+            item.quantity,
+            tx,
+            product?.name,
+            createdSale.id
+          );
+        }
+
+        return createdSale;
       },
       {
         maxWait: 10000,
