@@ -136,7 +136,9 @@ describe('Seed Script Safety Guard & Scoped Deletions', () => {
           delete: vi.fn(),
         },
         store: {
-          create: vi.fn().mockResolvedValue({ id: 'str_demo_123', name: "Dawit's Kiosk" }),
+          create: vi
+            .fn()
+            .mockResolvedValue({ id: 'str_demo_123', name: "Dawit's Kiosk" }),
           deleteMany: vi.fn(),
         },
         product: {
