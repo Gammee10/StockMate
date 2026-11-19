@@ -8,6 +8,7 @@ interface LogEntry {
 }
 
 const SENSITIVE_KEYS = new Set([
+  'phone',
   'password',
   'pin',
   'pinhash',

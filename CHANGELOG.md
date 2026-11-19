@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security - Stop Logging Phone Numbers (Task 2.3)
+
+- **Sanitize Phone Numbers in Structured Logger (`src/lib/logger.ts`):**
+  - Added `'phone'` to `SENSITIVE_KEYS` set in `src/lib/logger.ts`.
+  - Context objects containing `phone` (case-insensitive) are now automatically redacted to `'[REDACTED]'` across all logging levels (`info`, `warn`, `error`, `debug`), both at the root level and within nested structures/arrays.
+  - Prevents cleartext phone numbers from leaking into application logs (such as failed authentication attempts in `src/app/api/auth/login/route.ts`).
+- **Comprehensive Unit Testing (`src/lib/logger.test.ts`):**
+  - Added unit test asserting root and nested phone numbers are redacted regardless of key casing.
+  - Updated production JSON serialization tests to expect redacted phone metadata.
+
 ### Added - Database-Backed Login Lockout & Anti-Enumeration (Task 2.2)
 
 - **Database-Stored Lockout Columns (`prisma/schema.prisma`):**

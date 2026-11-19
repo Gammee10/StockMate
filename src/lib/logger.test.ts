@@ -26,7 +26,7 @@ describe('Structured Logger', () => {
 
       const result = sanitizeContext(input) as Record<string, unknown>;
 
-      expect(result.phone).toBe('+251911000000');
+      expect(result.phone).toBe('[REDACTED]');
       expect(result.safeMetadata).toBe('public_value');
       expect(result.PIN).toBe('[REDACTED]');
       expect(result.password).toBe('[REDACTED]');
@@ -35,6 +35,30 @@ describe('Structured Logger', () => {
       expect(result.secret).toBe('[REDACTED]');
       expect(result.authorization).toBe('[REDACTED]');
       expect(result.cookie).toBe('[REDACTED]');
+    });
+
+    it('redacts phone numbers at root and nested levels regardless of casing', () => {
+      const input = {
+        phone: '+251911000000',
+        user: {
+          phone: '+251911000000',
+          contact: {
+            Phone: '+251922000000',
+          },
+        },
+      };
+
+      const result = sanitizeContext(input) as Record<string, unknown>;
+
+      expect(result).toEqual({
+        phone: '[REDACTED]',
+        user: {
+          phone: '[REDACTED]',
+          contact: {
+            Phone: '[REDACTED]',
+          },
+        },
+      });
     });
 
     it('recursively redacts nested objects and arrays', () => {
@@ -86,7 +110,7 @@ describe('Structured Logger', () => {
 
       expect(loggedJson.level).toBe('info');
       expect(loggedJson.message).toBe('User login successful');
-      expect(loggedJson.context.phone).toBe('+251911000000');
+      expect(loggedJson.context.phone).toBe('[REDACTED]');
       expect(loggedJson.context.pin).toBe('[REDACTED]');
       expect(loggedJson.timestamp).toBeDefined();
     });
