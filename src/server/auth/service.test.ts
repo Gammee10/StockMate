@@ -1,19 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authenticatePhonePin } from './service';
+import { authenticatePhonePin, getStoreDetails } from './service';
 import { AppError } from '@/lib/errors';
 import * as pinModule from '@/modules/auth/pin';
 
-const { mockUser } = vi.hoisted(() => {
+const { mockUser, mockStore } = vi.hoisted(() => {
   const mockUser = {
     findUnique: vi.fn(),
     update: vi.fn(),
   };
-  return { mockUser };
+  const mockStore = {
+    findUnique: vi.fn(),
+  };
+  return { mockUser, mockStore };
 });
 
 vi.mock('@/server/db', () => ({
   db: {
     user: mockUser,
+    store: mockStore,
   },
 }));
 
@@ -177,5 +181,22 @@ describe('Auth Service: authenticatePhonePin (Task 2.2 Database Lockout)', () =>
     // Dummy bcrypt verifyPin was called once with constant hash
     expect(pinModule.verifyPin).toHaveBeenCalledTimes(1);
     expect(pinModule.verifyPin).toHaveBeenCalledWith('9999', expect.any(String));
+  });
+
+  describe('getStoreDetails', () => {
+    it('queries store strictly scoped by storeId as id', async () => {
+      mockStore.findUnique.mockResolvedValueOnce({
+        id: 'store_123',
+        name: 'Test Store',
+      });
+
+      const store = await getStoreDetails('store_123');
+
+      expect(mockStore.findUnique).toHaveBeenCalledWith({
+        where: { id: 'store_123' },
+        select: { id: true, name: true },
+      });
+      expect(store).toEqual({ id: 'store_123', name: 'Test Store' });
+    });
   });
 });
