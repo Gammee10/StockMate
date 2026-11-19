@@ -12,8 +12,9 @@ Configure these environment variables in your Vercel Project Settings (**Setting
 | :------------- | :------------------ | :------------------------------------------------------------------------------------- |
 | `DATABASE_URL` | Production, Preview | Supavisor pooled connection string (`port 6543`, `?pgbouncer=true&connection_limit=1`) |
 | `DIRECT_URL`   | Production, Preview | Supabase direct session connection string (`port 5432`)                                |
-| `JWT_SECRET`   | Production, Preview | 32+ character cryptographically secure secret string for auth tokens                   |
-| `NODE_ENV`     | Production          | Set to `production`                                                                    |
+| `JWT_SECRET`      | Production, Preview   | 32+ character cryptographically secure secret string for auth tokens                   |
+| `NODE_ENV`        | Production            | Set to `production`                                                                    |
+| `ALLOW_DEMO_SEED` | Production (optional) | Set to `'true'` to permit running `prisma/seed.ts` in production environments          |
 
 ---
 
@@ -29,10 +30,19 @@ npx prisma db push
 npx prisma generate
 ```
 
-> **Note:** If seeding initial data in a fresh database:
+> **Note: Seeding Initial / Demo Data:**
+>
+> The seed script populates a realistic 40-product catalog, 30 days of sales transactions, and matching stock movement ledgers for the demo account (`phone: +251911000000`, `pin: 1234`).
+>
+> - **Production Safety Guard:** When `NODE_ENV=production`, the seed script automatically aborts unless `ALLOW_DEMO_SEED=true` is explicitly provided.
+> - **Store-Isolated Deletions:** The seed script strictly cleans up **only** previous data belonging to the demo user (`+251911000000`). It never performs global table wipes and never modifies or deletes any other merchant's data.
 >
 > ```bash
+> # In development:
 > npx tsx prisma/seed.ts
+>
+> # In production (with explicit guard variable):
+> ALLOW_DEMO_SEED=true npx tsx prisma/seed.ts
 > ```
 
 ---

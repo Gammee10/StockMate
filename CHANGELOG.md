@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Guarded Demo Seed Script & Scoped Data Reset (Task 1.7b)
+
+- **Production Safety Guard (`prisma/seed.ts`):**
+  - Added strict environment verification: when `NODE_ENV === 'production'`, the script aborts immediately unless `ALLOW_DEMO_SEED=true` is explicitly provided.
+- **Store-Isolated Deletions (`prisma/seed.ts`):**
+  - Replaced dangerous global `deleteMany()` calls with strictly scoped deletions targeting only the demo user (`+251911000000`) and their stores.
+  - Deletes movements, sale items, sales, products, stores, and user in correct relational dependency order.
+  - Never touches or modifies data belonging to any other merchant or store.
+- **Batched Demo Data Generation (`prisma/seed.ts`):**
+  - Integrates `generateDemoData` via relative import (`../src/demo/demo-data`).
+  - Batch inserts 40 demo products, ~480 sales, ~760 sale items, and ~870 stock movements using `createMany` with a chunk size of 100.
+- **Deployment Documentation (`docs/runbooks/DEPLOYMENT.md`):**
+  - Documented `ALLOW_DEMO_SEED` environment variable and production seeding instructions.
+- **Comprehensive Unit Testing (`src/demo/seed-safety.test.ts`):**
+  - Added unit tests verifying production guard triggers, strictly scoped deletions by demo phone/store ID, and batched `createMany` insertions.
+
 ### Added - Realistic Demo Data Generator (Task 1.7a)
 
 - **Pure, Dependency-Free Generator (`src/demo/demo-data.ts`):**
