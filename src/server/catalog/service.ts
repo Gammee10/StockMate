@@ -200,11 +200,32 @@ export async function updateStoreProduct(
         updateData.lowStockThreshold = input.lowStockThreshold;
       if (input.isArchived !== undefined) updateData.isArchived = input.isArchived;
 
-      // backend-check-ignore unscoped-write: storeId ownership is strictly validated before mutating
-      const updated = await tx.product.update({
-        where: { id: productId },
+      // backend-check-ignore unscoped-write: updateMany is strictly scoped by id and storeId
+      const updateResult = await tx.product.updateMany({
+        where: { id: productId, storeId },
         data: updateData,
       });
+
+      if (updateResult.count === 0) {
+        throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
+          fields: {
+            productId: ['Product does not exist in store inventory'],
+          },
+        });
+      }
+
+      // backend-check-ignore unscoped-read: query is scoped by storeId and id
+      const updated = await tx.product.findFirst({
+        where: { id: productId, storeId },
+      });
+
+      if (!updated) {
+        throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
+          fields: {
+            productId: ['Product does not exist in store inventory'],
+          },
+        });
+      }
 
       if (stockDelta) {
         await recordStockMovement(tx, {
@@ -329,16 +350,28 @@ export async function archiveStoreProduct(
     });
   }
 
-  // backend-check-ignore unscoped-write: storeId ownership is strictly validated before mutating
-  const updated = await db.product.update({
-    where: { id: productId },
+  // backend-check-ignore unscoped-write: updateMany is strictly scoped by id, storeId, and isArchived
+  const updateResult = await db.product.updateMany({
+    where: {
+      id: productId,
+      storeId,
+      isArchived: false,
+    },
     data: { isArchived: true },
   });
 
+  if (updateResult.count === 0) {
+    throw new AppError('NOT_FOUND', `Product ${productId} not found in store`, {
+      fields: {
+        productId: ['Product does not exist in store inventory'],
+      },
+    });
+  }
+
   return {
-    id: updated.id,
-    name: updated.name,
-    isArchived: updated.isArchived,
+    id: existing.id,
+    name: existing.name,
+    isArchived: true,
   };
 }
 

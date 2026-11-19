@@ -8,6 +8,7 @@ import {
   incrementProductStockAtomic,
   recordStockMovement,
   listStoreProducts,
+  getProductsForCheckout,
 } from './service';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
@@ -18,6 +19,7 @@ const { mockProduct, mockStockMovement, mockTx } = vi.hoisted(() => {
     findFirst: vi.fn(),
     findMany: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   };
 
   const mockStockMovement = {
@@ -200,7 +202,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         isArchived: false,
       } as never);
 
-      vi.mocked(db.product.update).mockResolvedValueOnce({
+      mockProduct.updateMany.mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.product.findFirst).mockResolvedValueOnce({
         id: productId,
         storeId,
         name: 'Updated Sugar 1kg',
@@ -220,8 +223,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         where: { id: productId, storeId, isArchived: false },
       });
 
-      expect(db.product.update).toHaveBeenCalledWith({
-        where: { id: productId },
+      expect(mockProduct.updateMany).toHaveBeenCalledWith({
+        where: { id: productId, storeId },
         data: {
           name: 'Updated Sugar 1kg',
           priceCents: 13000,
@@ -241,7 +244,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         isArchived: false,
       } as never);
 
-      vi.mocked(db.product.update).mockResolvedValueOnce({
+      mockProduct.updateMany.mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.product.findFirst).mockResolvedValueOnce({
         id: productId,
         storeId,
         name: 'Updated Sugar 1kg',
@@ -257,8 +261,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         costCents: 11000,
       });
 
-      expect(db.product.update).toHaveBeenCalledWith({
-        where: { id: productId },
+      expect(mockProduct.updateMany).toHaveBeenCalledWith({
+        where: { id: productId, storeId },
         data: {
           costCents: 11000,
         },
@@ -271,7 +275,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     it('updates stock with FOR UPDATE lock and records ADJUSTMENT movement when delta !== 0', async () => {
       mockTx.$queryRaw.mockResolvedValueOnce([{ stock: 40 }]);
 
-      vi.mocked(db.product.update).mockResolvedValueOnce({
+      mockProduct.updateMany.mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.product.findFirst).mockResolvedValueOnce({
         id: productId,
         storeId,
         name: 'Sugar 1kg',
@@ -288,8 +293,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       });
 
       expect(mockTx.$queryRaw).toHaveBeenCalled();
-      expect(db.product.update).toHaveBeenCalledWith({
-        where: { id: productId },
+      expect(mockProduct.updateMany).toHaveBeenCalledWith({
+        where: { id: productId, storeId },
         data: { stock: 45 },
       });
       expect(mockStockMovement.create).toHaveBeenCalledWith({
@@ -309,7 +314,8 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
     it('does not record ADJUSTMENT movement when stock is updated with identical value (delta === 0)', async () => {
       mockTx.$queryRaw.mockResolvedValueOnce([{ stock: 40 }]);
 
-      vi.mocked(db.product.update).mockResolvedValueOnce({
+      mockProduct.updateMany.mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.product.findFirst).mockResolvedValueOnce({
         id: productId,
         storeId,
         name: 'Sugar 1kg',
@@ -400,21 +406,15 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
         isArchived: false,
       } as never);
 
-      vi.mocked(db.product.update).mockResolvedValueOnce({
-        id: productId,
-        storeId,
-        name: 'Discontinued Snack',
-        priceCents: 2000,
-        stock: 0,
-        lowStockThreshold: 5,
-        isArchived: true,
-        updatedAt: new Date(),
-      } as never);
+      mockProduct.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await archiveStoreProduct(storeId, productId);
 
-      expect(db.product.update).toHaveBeenCalledWith({
-        where: { id: productId },
+      expect(db.product.findFirst).toHaveBeenCalledWith({
+        where: { id: productId, storeId, isArchived: false },
+      });
+      expect(mockProduct.updateMany).toHaveBeenCalledWith({
+        where: { id: productId, storeId, isArchived: false },
         data: { isArchived: true },
       });
       expect(result.isArchived).toBe(true);
@@ -424,6 +424,42 @@ describe('Catalog Service: CRUD, Restock & Archival', () => {
       vi.mocked(db.product.findFirst).mockResolvedValueOnce(null);
 
       await expect(archiveStoreProduct(storeId, productId)).rejects.toThrow(AppError);
+    });
+  });
+
+  describe('getProductsForCheckout', () => {
+    it('queries products strictly scoped by storeId and active status', async () => {
+      const mockCheckoutProducts = [
+        {
+          id: 'prod_1',
+          name: 'Sugar 1kg',
+          priceCents: 12000,
+          stock: 50,
+          isArchived: false,
+          storeId,
+        },
+      ];
+      mockProduct.findMany.mockResolvedValueOnce(mockCheckoutProducts);
+
+      const result = await getProductsForCheckout(storeId, ['prod_1'], db as never);
+
+      expect(mockProduct.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ['prod_1'] },
+          storeId,
+          isArchived: false,
+        },
+        take: 50,
+        select: {
+          id: true,
+          name: true,
+          priceCents: true,
+          stock: true,
+          isArchived: true,
+          storeId: true,
+        },
+      });
+      expect(result).toEqual(mockCheckoutProducts);
     });
   });
 

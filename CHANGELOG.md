@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security - Store Isolation Audit & Hardening (Task 2.4)
+
+- **Comprehensive Store Isolation on Model Mutations (`src/server/catalog/service.ts`):**
+  - Refactored `updateStoreProduct` from `tx.product.update` to `tx.product.updateMany({ where: { id: productId, storeId } })` followed by scoped `findFirst`, ensuring that updates strictly filter by `storeId`.
+  - Refactored `archiveStoreProduct` from `db.product.update` to `db.product.updateMany({ where: { id: productId, storeId, isArchived: false } })`, ensuring soft-archival cannot touch other stores' products.
+  - Eliminated unscoped write exemptions in the catalog service.
+- **Refactor `/api/auth/me` to Standard `userRoute` Helper (`src/app/api/auth/me/route.ts`):**
+  - Replaced bare `GET` function with standard `userRoute({}, ...)` wrapper.
+  - Removed hard-coded fallback name `"Dawit's Kiosk"`, returning real store metadata or `null` if the store is not found.
+  - Preserved the existing response shape for authenticated users.
+- **Strict Scope Unit Testing Across All Exported Services:**
+  - `src/server/catalog/service.test.ts`: Added tests verifying `where.storeId` on `getProductsForCheckout`, `updateStoreProduct`, and `archiveStoreProduct`.
+  - `src/modules/sales/service.test.ts`: Added unit tests verifying `where.storeId` or compound keys across `findSaleByIdempotencyKey`, `findSaleById`, `getTodaySalesSummary`, `getTodayRecentSales`, and `createSaleRecord`.
+  - `src/server/auth/service.test.ts`: Added unit test verifying `where.id` (storeId) on `getStoreDetails`.
+  - `src/app/api/auth/me/route.test.ts`: Added unit tests verifying `userRoute` authentication and `store: null` behavior without fallback naming.
+
 ### Security - Stop Logging Phone Numbers (Task 2.3)
 
 - **Sanitize Phone Numbers in Structured Logger (`src/lib/logger.ts`):**
