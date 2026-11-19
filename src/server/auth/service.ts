@@ -1,9 +1,38 @@
 // src/server/auth/service.ts
 import 'server-only';
 import { db } from '@/server/db';
+import { env } from '@/server/env';
 import { AppError, notFound } from '@/lib/errors';
 import { normalizePhoneNumber, verifyPin } from '@/modules/auth/pin';
 import { createSessionToken } from '@/modules/auth/session';
+
+// Constant bcrypt hash of a 4-digit PIN ('0000') used for constant-time comparison on unknown phones
+const DUMMY_PIN_HASH = '$2b$10$xkBzxmrnMPpkbetZ5qo45eKQlN5Oy4U94JatE/gGjFnBh06P60hAy';
+
+async function recordLoginFailure(userId: string, nextFailures: number, now: Date) {
+  const isLockout = nextFailures >= 5;
+  await db.user.update({
+    where: { id: userId },
+    data: isLockout
+      ? {
+          failedLoginCount: 0,
+          lockedUntil: new Date(now.getTime() + 15 * 60 * 1000),
+        }
+      : {
+          failedLoginCount: { increment: 1 },
+        },
+  });
+}
+
+async function resetLoginLockout(userId: string) {
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginCount: 0,
+      lockedUntil: null,
+    },
+  });
+}
 
 export async function authenticatePhonePin(phone: string, pin: string) {
   let normalizedPhone = phone;
@@ -18,13 +47,43 @@ export async function authenticatePhonePin(phone: string, pin: string) {
     include: { stores: { select: { id: true, name: true } } },
   });
 
-  if (!user || user.stores.length === 0) {
+  // If user does not exist, execute dummy bcrypt verification to prevent timing-based phone enumeration
+  if (!user) {
+    await verifyPin(pin, DUMMY_PIN_HASH);
     throw new AppError('UNAUTHORIZED', 'Invalid phone number or PIN');
   }
 
+  // Check if phone matches the demo bypass phone
+  const isDemo = Boolean(
+    env.DEMO_LOGIN_PHONE && normalizedPhone === env.DEMO_LOGIN_PHONE
+  );
+
+  const now = new Date();
+
+  // If not demo, verify active lockout window
+  if (!isDemo && user.lockedUntil && user.lockedUntil > now) {
+    const secondsLeft = Math.ceil((user.lockedUntil.getTime() - now.getTime()) / 1000);
+    throw new AppError('RATE_LIMITED', 'Too many attempts. Try again later.', {
+      retryAfter: secondsLeft,
+    });
+  }
+
   const isValidPin = await verifyPin(pin, user.pinHash);
+
   if (!isValidPin) {
+    if (!isDemo) {
+      await recordLoginFailure(user.id, user.failedLoginCount + 1, now);
+    }
     throw new AppError('UNAUTHORIZED', 'Invalid phone number or PIN');
+  }
+
+  if (user.stores.length === 0) {
+    throw new AppError('UNAUTHORIZED', 'Invalid phone number or PIN');
+  }
+
+  // On successful login, clear lockout counter and lock window if previously set
+  if (!isDemo && (user.failedLoginCount > 0 || user.lockedUntil !== null)) {
+    await resetLoginLockout(user.id);
   }
 
   const primaryStore = user.stores[0];

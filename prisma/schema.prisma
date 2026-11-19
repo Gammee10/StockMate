@@ -9,11 +9,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  pinHash   String   @map("pin_hash")
-  createdAt DateTime @default(now()) @map("created_at")
-  stores    Store[]
+  id               String    @id @default(cuid())
+  phone            String    @unique
+  pinHash          String    @map("pin_hash")
+  failedLoginCount Int       @default(0) @map("failed_login_count")
+  lockedUntil      DateTime? @map("locked_until")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  stores           Store[]
 
   @@map("users")
 }

@@ -11,6 +11,7 @@ const schema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters long'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   TRUST_PROXY_HEADER: z.string().optional(),
+  DEMO_LOGIN_PHONE: z.string().optional(),
 });
 
 type Env = z.infer<typeof schema>;
