@@ -2,6 +2,7 @@
 import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { db } from '@/server/db';
+import { AppError } from '@/lib/errors';
 import type { PaymentMethod, SaleWithItems, TodaySalesSummary } from './types';
 
 type DbOrTx = typeof db | Prisma.TransactionClient;
@@ -46,25 +47,33 @@ export async function findSaleById(
   return sale as SaleWithItems | null;
 }
 
-// backend-check-ignore unscoped-write: storeId ownership is strictly validated before voiding in executeVoidSale
+// backend-check-ignore unscoped-write: updateMany is strictly scoped by id, storeId, and status: 'COMPLETED'
 export async function voidSaleRecord(
   storeId: string,
   saleId: string,
   client: DbOrTx = db
 ): Promise<SaleWithItems> {
-  const sale = await client.sale.update({
+  const result = await client.sale.updateMany({
     where: {
       id: saleId,
+      storeId,
+      status: 'COMPLETED',
     },
     data: {
       status: 'VOIDED',
     },
-    include: {
-      items: true,
-    },
   });
 
-  return sale as SaleWithItems;
+  if (result.count === 0) {
+    throw new AppError('CONFLICT', 'Sale is already voided');
+  }
+
+  const updatedSale = await findSaleById(storeId, saleId, client);
+  if (!updatedSale) {
+    throw new AppError('NOT_FOUND', 'Sale not found or does not belong to this store');
+  }
+
+  return updatedSale;
 }
 
 export async function getTodaySalesSummary(

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Double-Void Race Condition (Task 2.1)
+
+- **Atomic Status Transition Guard (`src/modules/sales/service.ts`):**
+  - Updated `voidSaleRecord` to perform an atomic conditional update:
+    `tx.sale.updateMany({ where: { id: saleId, storeId, status: 'COMPLETED' }, data: { status: 'VOIDED' } })`.
+  - If `count === 0`, throws `AppError('CONFLICT', 'Sale is already voided')`.
+  - Reads back the voided record via `findSaleById` and removed the unscoped `update where id` and its `backend-check-ignore` comment.
+- **Inverted Execution Order in Void Workflow (`src/use-cases/void-sale.ts`):**
+  - Inside the interactive database transaction, `voidSaleRecord` is now called **first** before any stock restoration occurs.
+  - Concurrent requests or rapid retries that pass the pre-check outside the transaction fail immediately inside the transaction, preventing inventory from ever being restored multiple times.
+- **Comprehensive Unit Testing (`src/modules/sales/service.test.ts` & `src/use-cases/void-sale.test.ts`):**
+  - Added unit tests verifying atomic conditional update, `CONFLICT` error handling, and asserting that product inventory restoration is never called if a concurrent race flips status first.
+
+
 ### Added - Reorder Simulation Test (Task 1.8)
 
 - **Deterministic Monte Carlo Simulation (`src/server/analytics/reorder-simulation.test.ts`):**

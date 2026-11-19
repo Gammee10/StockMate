@@ -40,6 +40,11 @@ export async function executeVoidSale(input: VoidSaleInput): Promise<SaleWithIte
 
   return db.$transaction(
     async (tx) => {
+      // First, atomically mark the sale as VOIDED (conditional on COMPLETED status).
+      // If already voided by a concurrent request, voidSaleRecord throws CONFLICT here,
+      // preventing any double-restoration of inventory.
+      const voidedSale = await voidSaleRecord(input.storeId, input.saleId, tx);
+
       // Invariant #5: Atomically restore stock for every item in the sale
       for (const item of sale.items) {
         await incrementProductStockAtomic(
@@ -51,8 +56,7 @@ export async function executeVoidSale(input: VoidSaleInput): Promise<SaleWithIte
         );
       }
 
-      // Mark the sale as VOIDED
-      return voidSaleRecord(input.storeId, input.saleId, tx);
+      return voidedSale;
     },
     { maxWait: 10000, timeout: 20000 }
   );
