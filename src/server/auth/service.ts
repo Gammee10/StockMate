@@ -9,6 +9,31 @@ import { createSessionToken } from '@/modules/auth/session';
 // Constant bcrypt hash of a 4-digit PIN ('0000') used for constant-time comparison on unknown phones
 const DUMMY_PIN_HASH = '$2b$10$xkBzxmrnMPpkbetZ5qo45eKQlN5Oy4U94JatE/gGjFnBh06P60hAy';
 
+async function recordLoginFailure(userId: string, nextFailures: number, now: Date) {
+  const isLockout = nextFailures >= 5;
+  await db.user.update({
+    where: { id: userId },
+    data: isLockout
+      ? {
+          failedLoginCount: 0,
+          lockedUntil: new Date(now.getTime() + 15 * 60 * 1000),
+        }
+      : {
+          failedLoginCount: { increment: 1 },
+        },
+  });
+}
+
+async function resetLoginLockout(userId: string) {
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginCount: 0,
+      lockedUntil: null,
+    },
+  });
+}
+
 export async function authenticatePhonePin(phone: string, pin: string) {
   let normalizedPhone = phone;
   try {
@@ -47,24 +72,7 @@ export async function authenticatePhonePin(phone: string, pin: string) {
 
   if (!isValidPin) {
     if (!isDemo) {
-      const nextFailures = user.failedLoginCount + 1;
-      if (nextFailures >= 5) {
-        // Lock for 15 minutes and reset counter
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            failedLoginCount: 0,
-            lockedUntil: new Date(now.getTime() + 15 * 60 * 1000),
-          },
-        });
-      } else {
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            failedLoginCount: { increment: 1 },
-          },
-        });
-      }
+      await recordLoginFailure(user.id, user.failedLoginCount + 1, now);
     }
     throw new AppError('UNAUTHORIZED', 'Invalid phone number or PIN');
   }
@@ -75,13 +83,7 @@ export async function authenticatePhonePin(phone: string, pin: string) {
 
   // On successful login, clear lockout counter and lock window if previously set
   if (!isDemo && (user.failedLoginCount > 0 || user.lockedUntil !== null)) {
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginCount: 0,
-        lockedUntil: null,
-      },
-    });
+    await resetLoginLockout(user.id);
   }
 
   const primaryStore = user.stores[0];

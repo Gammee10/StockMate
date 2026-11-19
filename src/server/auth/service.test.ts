@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { authenticatePhonePin } from './service';
-import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
 import * as pinModule from '@/modules/auth/pin';
-import * as sessionModule from '@/modules/auth/session';
 
 const { mockUser } = vi.hoisted(() => {
   const mockUser = {
