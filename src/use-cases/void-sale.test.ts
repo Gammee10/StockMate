@@ -101,6 +101,48 @@ describe('Void Sale Use Case: executeVoidSale', () => {
     );
   });
 
+  it('prevents double-void race condition: if concurrent void already flipped status, stock is NOT restored', async () => {
+    const freshCreatedAt = new Date(Date.now() - 5 * 60 * 1000);
+    const existingSale = {
+      id: saleId,
+      storeId,
+      idempotencyKey: 'idemp_race',
+      totalAmountCents: 5000,
+      paymentMethod: 'CASH',
+      status: 'COMPLETED',
+      createdAt: freshCreatedAt,
+      items: [
+        {
+          id: 'item_1',
+          saleId,
+          productId: 'prod_1',
+          quantity: 2,
+          unitPriceCents: 2500,
+        },
+      ],
+    };
+
+    // Pre-check outside transaction succeeds (status was COMPLETED when read)
+    vi.mocked(salesService.findSaleById).mockResolvedValueOnce(existingSale as never);
+
+    vi.mocked(db.$transaction).mockImplementationOnce(async (cb) => {
+      const mockTx = {};
+      return cb(mockTx as never);
+    });
+
+    // In the transaction, voidSaleRecord detects race (count === 0) and throws CONFLICT
+    vi.mocked(salesService.voidSaleRecord).mockRejectedValueOnce(
+      new AppError('CONFLICT', 'Sale is already voided')
+    );
+
+    await expect(executeVoidSale({ storeId, saleId })).rejects.toThrowError(
+      new AppError('CONFLICT', 'Sale is already voided')
+    );
+
+    // CRITICAL: Stock restoration must NOT have been called because status update failed first!
+    expect(catalogService.incrementProductStockAtomic).not.toHaveBeenCalled();
+  });
+
   it('rejects voiding if sale was completed more than 15 minutes ago (AC 4.3)', async () => {
     const expiredCreatedAt = new Date(Date.now() - 16 * 60 * 1000); // 16 minutes ago
     const existingSale = {
