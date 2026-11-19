@@ -149,7 +149,13 @@ describe('Seed Script Safety Guard & Scoped Deletions', () => {
       });
 
       // Verify NO unscoped deleteMany() was ever called (all have where conditions)
-      for (const model of ['stockMovement', 'saleItem', 'sale', 'product', 'store']) {
+      for (const model of [
+        'stockMovement',
+        'saleItem',
+        'sale',
+        'product',
+        'store',
+      ] as const) {
         const calls = mockPrisma[model].deleteMany.mock.calls;
         for (const call of calls) {
           expect(call[0]).toBeDefined();
