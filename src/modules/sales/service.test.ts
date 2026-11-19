@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { voidSaleRecord, findSaleById } from './service';
+import { voidSaleRecord } from './service';
 import { db } from '@/server/db';
 import { AppError } from '@/lib/errors';
 

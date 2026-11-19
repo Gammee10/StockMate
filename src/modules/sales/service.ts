@@ -47,6 +47,7 @@ export async function findSaleById(
   return sale as SaleWithItems | null;
 }
 
+// backend-check-ignore unscoped-write: updateMany is strictly scoped by id, storeId, and status: 'COMPLETED'
 export async function voidSaleRecord(
   storeId: string,
   saleId: string,
