@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Database-Backed Login Lockout & Anti-Enumeration (Task 2.2)
+
+- **Database-Stored Lockout Columns (`prisma/schema.prisma`):**
+  - Added `failedLoginCount Int @default(0) @map("failed_login_count")` and `lockedUntil DateTime? @map("locked_until")` to the `User` model.
+- **Persistent Lockout & Rate-Limit Handling (`src/server/auth/service.ts`):**
+  - Reject authentication during active lock window with `AppError('RATE_LIMITED')` (HTTP 429) and `retryAfter` duration before checking hashes.
+  - Automatically increment `failedLoginCount` on wrong PIN entries, locking the account for 15 minutes upon reaching 5 consecutive failures.
+  - Reset failed counters on successful login.
+- **Constant-Time Verification Against Phone Enumeration (`src/server/auth/service.ts`):**
+  - Executed dummy bcrypt verification against a constant hash for unknown phone numbers to eliminate timing side-channels.
+- **Demo Account Bypass (`DEMO_LOGIN_PHONE`):**
+  - Added optional `DEMO_LOGIN_PHONE` env var in `src/config/env.ts`, `src/server/env.ts`, `.env.example`, and deployment runbooks to exempt public demo users from persistent lockout while preserving in-memory rate limiting.
+- **Architectural Documentation (`docs/adr/0002-phone-pin-authentication.md`):**
+  - Updated ADR 0002 documenting the database-backed lockout, 5-failure threshold, and anti-enumeration protections.
+
+
 ### Fixed - Double-Void Race Condition (Task 2.1)
 
 - **Atomic Status Transition Guard (`src/modules/sales/service.ts`):**

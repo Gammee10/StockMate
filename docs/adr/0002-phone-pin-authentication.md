@@ -26,3 +26,13 @@ Adopt **Alternative 1: Phone Number + 4-Digit PIN**.
 
 - Requires secure password/PIN hashing on the backend.
 - Simple, real security model that demonstrates sound engineering craft for portfolio review.
+
+---
+
+## Update: Database-Backed Lockout & Anti-Enumeration (Task 2.2)
+
+- **Database-Stored Lockout:** Added `failedLoginCount` (default 0) and `lockedUntil` (nullable DateTime) to the `User` model to persist failed attempts across distributed serverless lambda instances.
+- **5-Failure Threshold & 15-Minute Window:** After 5 consecutive failed PIN attempts, `lockedUntil` is set to `now + 15 minutes` and `failedLoginCount` is reset to 0. Login attempts during an active lockout return `AppError('RATE_LIMITED')` (HTTP 429) with `retryAfter` in seconds without running the bcrypt check.
+- **Constant-Time Verification Against User Enumeration:** When an unregistered phone number attempts authentication, a dummy bcrypt comparison is executed against a constant hash to maintain uniform response latency and prevent user enumeration timing attacks.
+- **Demo Account Bypass:** An optional `DEMO_LOGIN_PHONE` environment variable exempts public demo accounts from database lockout while retaining in-memory IP rate limiting.
+- **Reset on Success:** A successful login clears `failedLoginCount` to 0 and clears `lockedUntil`.

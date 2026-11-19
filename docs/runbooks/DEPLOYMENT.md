@@ -15,6 +15,7 @@ Configure these environment variables in your Vercel Project Settings (**Setting
 | `JWT_SECRET`      | Production, Preview   | 32+ character cryptographically secure secret string for auth tokens                   |
 | `NODE_ENV`        | Production            | Set to `production`                                                                    |
 | `ALLOW_DEMO_SEED` | Production (optional) | Set to `'true'` to permit running `prisma/seed.ts` in production environments          |
+| `DEMO_LOGIN_PHONE` | Production, Preview (optional) | Phone number (e.g. `+251911000000`) exempt from persistent DB login lockout |
 
 ---
 
