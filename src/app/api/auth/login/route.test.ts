@@ -7,6 +7,7 @@ vi.mock('@/lib/db', () => ({
   db: {
     user: {
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -31,6 +32,8 @@ describe('Auth API: POST /api/auth/login', () => {
       id: 'user_1',
       phone: normalizedPhone,
       pinHash,
+      failedLoginCount: 0,
+      lockedUntil: null,
       createdAt: new Date(),
       stores: [
         {
@@ -73,6 +76,8 @@ describe('Auth API: POST /api/auth/login', () => {
       id: 'user_1',
       phone: normalizedPhone,
       pinHash,
+      failedLoginCount: 0,
+      lockedUntil: null,
       createdAt: new Date(),
       stores: [
         { id: 'store_1', name: "Dawit's Kiosk", userId: 'user_1', createdAt: new Date() },
