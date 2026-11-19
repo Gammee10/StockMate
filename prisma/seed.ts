@@ -119,7 +119,7 @@ export async function seedDemoData(
 
   // Batch insert sales (omitting nested items relation)
   console.info(`Inserting ${demoData.sales.length} demo sales...`);
-  const salesWithoutItems = demoData.sales.map(({ items, ...sale }) => sale);
+  const salesWithoutItems = demoData.sales.map(({ items: _items, ...sale }) => sale);
   for (const batch of chunk(salesWithoutItems, 100)) {
     await prisma.sale.createMany({ data: batch });
   }

@@ -4,9 +4,37 @@ import {
   cleanDemoData,
   seedDemoData,
   DEMO_PHONE,
-  DEMO_PIN,
 } from '../../prisma/seed';
 import type { PrismaClient } from '@prisma/client';
+
+type MockFn = ReturnType<typeof vi.fn>;
+interface MockPrismaClient {
+  user: {
+    findUnique: MockFn;
+    create: MockFn;
+    delete: MockFn;
+  };
+  store: {
+    create: MockFn;
+    deleteMany: MockFn;
+  };
+  product: {
+    createMany: MockFn;
+    deleteMany: MockFn;
+  };
+  sale: {
+    createMany: MockFn;
+    deleteMany: MockFn;
+  };
+  saleItem: {
+    createMany: MockFn;
+    deleteMany: MockFn;
+  };
+  stockMovement: {
+    createMany: MockFn;
+    deleteMany: MockFn;
+  };
+}
 
 describe('Seed Script Safety Guard & Scoped Deletions', () => {
   describe('checkProductionSeedGuard', () => {
@@ -34,27 +62,33 @@ describe('Seed Script Safety Guard & Scoped Deletions', () => {
   });
 
   describe('cleanDemoData (Scoped Deletion)', () => {
-    let mockPrisma: any;
+    let mockPrisma: MockPrismaClient;
 
     beforeEach(() => {
       mockPrisma = {
         user: {
           findUnique: vi.fn(),
+          create: vi.fn(),
           delete: vi.fn(),
         },
         store: {
+          create: vi.fn(),
           deleteMany: vi.fn(),
         },
         product: {
+          createMany: vi.fn(),
           deleteMany: vi.fn(),
         },
         sale: {
+          createMany: vi.fn(),
           deleteMany: vi.fn(),
         },
         saleItem: {
+          createMany: vi.fn(),
           deleteMany: vi.fn(),
         },
         stockMovement: {
+          createMany: vi.fn(),
           deleteMany: vi.fn(),
         },
       };
@@ -126,7 +160,7 @@ describe('Seed Script Safety Guard & Scoped Deletions', () => {
   });
 
   describe('seedDemoData (Batched Insertion & Generator Integration)', () => {
-    let mockPrisma: any;
+    let mockPrisma: MockPrismaClient;
 
     beforeEach(() => {
       mockPrisma = {
