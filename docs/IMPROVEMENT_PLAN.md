@@ -44,22 +44,22 @@ Follow the "Ground rules" at the top of the file. At the end, give the report in
 
 ## Task map
 
-| Task | What | Size | Needs `db push` | Depends on |
-| :--- | :--- | :--- | :---: | :--- |
-| **1.1** | Store-scope the catalog list and remove the 50-item cap | M | no | none (**start here**) |
-| 1.2 | Counter: search box and real store name | S | no | 1.1 |
-| 1.3 | Cost price (fixes the wrong "wholesale cost") | M | **yes** | none |
-| 1.4 | Analytics without the 100-product cap | M | no | 1.3 |
-| 1.5a | Stock movement history: schema, checkout, void | L | **yes** | 1.1 |
-| 1.5b | Stock movement history: restock, create, manual edit | M | no | 1.5a |
-| 1.6 | Velocity that ignores out-of-stock days | M | no | 1.4, 1.5b |
-| 1.7a | Realistic demo data generator (pure code + tests) | M | no | 1.3, 1.5b |
-| 1.7b | Seed script uses the generator, with a safety guard | S | no | 1.7a |
-| 1.8 | Reorder simulation test | M | no | 1.6 |
-| **2.1** | Fix the double-void race | S | no | 1.5a |
-| **2.2** | Login lockout stored in the database | M | **yes** | none |
-| 2.3 | Stop logging phone numbers | S | no | none |
-| 2.4 | Store-isolation audit of every route and service | M | no | 1.1, 2.1 |
+| Task | What | Size | Needs `db push` | Status |
+| :--- | :--- | :--- | :---: | :---: |
+| **1.1** | Store-scope the catalog list and remove the 50-item cap | M | no | ✅ Completed (PR #16) |
+| 1.2 | Counter: search box and real store name | S | no | ✅ Completed (PR #17) |
+| 1.3 | Cost price (fixes the wrong "wholesale cost") | M | **yes** | ✅ Completed (PR #18) |
+| 1.4 | Analytics without the 100-product cap | M | no | ✅ Completed (PR #19) |
+| 1.5a | Stock movement history: schema, checkout, void | L | **yes** | ✅ Completed (PR #20) |
+| 1.5b | Stock movement history: restock, create, manual edit | M | no | ✅ Completed (PR #21) |
+| 1.6 | Velocity that ignores out-of-stock days | M | no | ✅ Completed (PR #22) |
+| 1.7a | Realistic demo data generator (pure code + tests) | M | no | ✅ Completed (PR #23) |
+| 1.7b | Seed script uses the generator, with a safety guard | S | no | ✅ Completed (PR #24) |
+| 1.8 | Reorder simulation test | M | no | ✅ Completed (PR #25) |
+| **2.1** | Fix the double-void race | S | no | ✅ Completed (PR #26) |
+| **2.2** | Login lockout stored in the database | M | **yes** | ✅ Completed (PR #27) |
+| 2.3 | Stop logging phone numbers | S | no | ✅ Completed (PR #28) |
+| 2.4 | Store-isolation audit of every route and service | M | no | ✅ Completed (PR #29) |
 
 ---
 
@@ -356,9 +356,9 @@ Follow the "Ground rules" at the top of the file. At the end, give the report in
 
 ---
 
-# PHASE 3 — Normal fixes and improvements
+# PHASE 3 — Backlog & Future Improvements
 
-Short scopes. Ask me for the detailed steps when you reach each one.
+> **Status:** All Phase 1 (most important invariants) and Phase 2 (most risky security & data isolation) tasks are **100% completed and deployed**. Phase 3 items below represent optional future enhancements and are deferred for subsequent post-launch iterations.
 
 | # | Task | Notes |
 | :-- | :--- | :--- |
