@@ -26,7 +26,7 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 - **Database:** PostgreSQL on [Supabase](https://supabase.com/)
 - **ORM:** [Prisma](https://www.prisma.io/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide Icons](https://lucide.dev/)
-- **Testing:** [Vitest](https://vitest.dev/) (Unit/Integration) + [Playwright](https://playwright.dev/) (E2E)
+- **Testing:** [Vitest](https://vitest.dev/) (Unit, Integration & Simulation)
 
 ---
 
@@ -42,7 +42,7 @@ StockMate eliminates lost sales and stockouts for retail shopkeepers handling hi
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/StockMate.git
+git clone https://github.com/Gammee10/StockMate.git
 cd StockMate
 
 # 2. Install dependencies
@@ -55,7 +55,10 @@ cp .env.example .env.local
 # 4. Push database schema
 npx prisma db push
 
-# 5. Start development server
+# 5. Populate realistic demo dataset (optional)
+npm run db:seed
+
+# 6. Start development server
 npm run dev
 ```
 

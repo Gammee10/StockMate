@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deployment & Production Readiness
+
+- **Standardized CI Quality Gates (`.github/workflows/ci.yml`):**
+  - Integrated `backend:check` (architecture & invariant verification) and `ui:check` (UI token polish & touch-target ergonomics) directly into GitHub Actions CI pipeline, aligning automated checks with local verification gates.
+- **Repository & Configuration Sanitization:**
+  - Corrected repository clone URLs and test runner claims in `README.md`.
+  - Added `npm run db:seed` script in `package.json` and documented execution commands for local and production-guarded seeding.
+  - Hardened `.env.example` and `docs/runbooks/DEPLOYMENT.md` pooler connection guidance to prevent Prisma P2028 interactive transaction timeouts.
+- **Completion of Phase 1 and Phase 2 Invariants:**
+  - Successfully validated and merged all 14 core improvement tasks across atomic stock decrement, void race conditions, database lockout, out-of-stock-aware velocity analytics, and multi-tenant store isolation.
+
 ### Security - Store Isolation Audit & Hardening (Task 2.4)
 
 - **Comprehensive Store Isolation on Model Mutations (`src/server/catalog/service.ts`):**
