@@ -6,7 +6,7 @@ import { Calculator, RefreshCw, RotateCcw, ShoppingCart } from 'lucide-react';
 import { NavigationShell } from '@/components/navigation-shell';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -173,11 +173,9 @@ export function TillWorkspace({
                 <RefreshCw className="size-3.5" aria-hidden="true" />
                 <span>Refresh</span>
               </Button>
-              <Link href="/counter">
-                <Button size="sm">
-                  <ShoppingCart className="size-3.5" aria-hidden="true" />
-                  <span>Counter</span>
-                </Button>
+              <Link href="/counter" className={buttonVariants({ size: 'sm' })}>
+                <ShoppingCart className="size-3.5" aria-hidden="true" />
+                <span>Counter</span>
               </Link>
             </div>
           }
@@ -386,8 +384,8 @@ export function TillWorkspace({
                         title="No sales recorded yet today"
                         description="Completed counter checkouts appear here for daily reconciliation and 15-minute voids."
                         action={
-                          <Link href="/counter">
-                            <Button>Go to Counter</Button>
+                          <Link href="/counter" className={buttonVariants()}>
+                            Go to Counter
                           </Link>
                         }
                       />

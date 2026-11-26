@@ -21,7 +21,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           disabled={disabled}
           aria-invalid={isInvalid || undefined}
           className={cn(
-            'flex h-10 w-full appearance-none rounded-md border bg-card py-2 pl-3 pr-9 text-sm text-foreground transition-colors',
+            'block h-10 w-full appearance-none truncate rounded-md border bg-card py-2 pl-3 pr-9 text-sm text-foreground transition-colors',
             'hover:border-border-strong',
             'focus-visible:border-primary',
             'disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60',

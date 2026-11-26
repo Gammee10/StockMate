@@ -264,26 +264,26 @@ export function InventoryWorkspace({
 
         {/* Aggregate KPI Strip */}
         <dl className="grid grid-cols-3 gap-3">
-          <Card className="p-4">
+          <Card className="flex flex-col justify-between p-4">
             <dt className="text-xs font-medium text-muted-foreground">Active products</dt>
-            <dd className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground sm:text-2xl">
+            <dd className="mt-2 font-mono text-lg font-semibold tabular-nums text-foreground sm:text-2xl">
               {products.length}
             </dd>
           </Card>
-          <Card className="p-4">
+          <Card className="flex flex-col justify-between p-4">
             <dt className="text-xs font-medium text-muted-foreground">Low / out</dt>
             <dd
               className={cn(
-                'mt-1 font-mono text-lg font-semibold tabular-nums sm:text-2xl',
+                'mt-2 font-mono text-lg font-semibold tabular-nums sm:text-2xl',
                 lowStockCount > 0 ? 'text-warning' : 'text-foreground'
               )}
             >
               {lowStockCount}
             </dd>
           </Card>
-          <Card className="p-4">
+          <Card className="flex flex-col justify-between p-4">
             <dt className="text-xs font-medium text-muted-foreground">Total units</dt>
-            <dd className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground sm:text-2xl">
+            <dd className="mt-2 font-mono text-lg font-semibold tabular-nums text-foreground sm:text-2xl">
               {totalUnits.toLocaleString('en-US')}
             </dd>
           </Card>

@@ -29,6 +29,27 @@ const SIZE_CLASSES = {
 export type ButtonVariant = keyof typeof VARIANT_CLASSES;
 export type ButtonSize = keyof typeof SIZE_CLASSES;
 
+/**
+ * Generates StockMate button classes for buttons and action-styled navigation links.
+ */
+export function buttonVariants({
+  variant = 'default',
+  size = 'default',
+  className,
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+} = {}) {
+  return cn(
+    'pressable inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors',
+    'disabled:pointer-events-none disabled:opacity-55',
+    VARIANT_CLASSES[variant],
+    SIZE_CLASSES[size],
+    className
+  );
+}
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -63,13 +84,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={isDisabled}
         aria-busy={loading || undefined}
-        className={cn(
-          'pressable inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors',
-          'disabled:pointer-events-none disabled:opacity-45',
-          VARIANT_CLASSES[variant],
-          SIZE_CLASSES[size],
-          className
-        )}
+        className={buttonVariants({ variant, size, className })}
         {...props}
       >
         {loading ? (

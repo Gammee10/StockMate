@@ -1,4 +1,10 @@
-export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './button';
+export {
+  Button,
+  buttonVariants,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from './button';
 export { Input, type InputProps } from './input';
 export { Textarea, type TextareaProps } from './textarea';
 export { Select, type SelectProps } from './select';

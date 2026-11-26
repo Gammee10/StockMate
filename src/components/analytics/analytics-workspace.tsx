@@ -6,7 +6,7 @@ import { ClipboardCopy, Package, RefreshCw, Search, TrendingUp, X } from 'lucide
 import { NavigationShell } from '@/components/navigation-shell';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -401,8 +401,8 @@ export function AnalyticsWorkspace({
                 title="No active products to analyze"
                 description="Add catalog products in Inventory and record counter sales to unlock velocity intelligence."
                 action={
-                  <Link href="/inventory">
-                    <Button>Go to Inventory</Button>
+                  <Link href="/inventory" className={buttonVariants()}>
+                    Go to Inventory
                   </Link>
                 }
               />
@@ -412,8 +412,8 @@ export function AnalyticsWorkspace({
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <Card className="lg:col-span-2">
                     <CardHeader className="border-b border-border">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="min-w-0">
                           <CardTitle>Catalog intelligence</CardTitle>
                           <CardDescription>
                             Click a status segment or quadrant to filter the SKU breakdown
@@ -424,7 +424,7 @@ export function AnalyticsWorkspace({
                         <div
                           role="tablist"
                           aria-label="Analytics view"
-                          className="inline-flex flex-wrap gap-1 rounded-lg border border-border bg-muted p-1"
+                          className="grid shrink-0 grid-cols-2 gap-1 rounded-lg border border-border bg-muted p-1 sm:inline-flex sm:flex-nowrap"
                         >
                           {CHART_TABS.map((tab) => (
                             <Button
@@ -819,7 +819,7 @@ export function AnalyticsWorkspace({
                           />
                         </div>
 
-                        <div className="w-full sm:w-44">
+                        <div className="w-full sm:w-52">
                           <Select
                             aria-label="Sort products"
                             value={sortBy}

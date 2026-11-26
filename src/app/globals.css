@@ -20,7 +20,7 @@
   --secondary-foreground: 20 20 19;
   --muted: 236 234 227; /* #ECEAE3 */
   --muted-foreground: 89 87 80; /* #595750 */
-  --subtle-foreground: 134 131 122; /* #86837A */
+  --subtle-foreground: 110 107 99; /* #6E6B63 (WCAG AA compliant over card/canvas) */
   --accent: 236 234 227;
   --accent-foreground: 20 20 19;
 
@@ -169,6 +169,10 @@
   :focus-visible {
     outline: 2px solid rgb(var(--ring));
     outline-offset: 2px;
+  }
+
+  select.appearance-none::picker-icon {
+    display: none;
   }
 }
 

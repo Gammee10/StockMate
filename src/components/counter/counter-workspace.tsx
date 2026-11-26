@@ -22,7 +22,7 @@ import {
 import { NavigationShell } from '@/components/navigation-shell';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -325,7 +325,7 @@ export function CounterWorkspace({
                     aria-label="Refresh product catalog"
                   >
                     <RefreshCw className="size-3.5" aria-hidden="true" />
-                    <span className="hidden sm:inline">Refresh</span>
+                    <span>Refresh</span>
                   </Button>
 
                   <Button
@@ -488,8 +488,8 @@ export function CounterWorkspace({
                 title="No active products in catalog"
                 description="Add products in Inventory to start ringing up sales on the counter."
                 action={
-                  <Link href="/inventory">
-                    <Button>Go to Inventory</Button>
+                  <Link href="/inventory" className={buttonVariants()}>
+                    Go to Inventory
                   </Link>
                 }
               />
@@ -526,7 +526,7 @@ export function CounterWorkspace({
                     <div
                       key={product.id}
                       className={cn(
-                        'flex min-h-32 flex-col justify-between overflow-hidden rounded-xl border transition-colors',
+                        'flex h-full min-h-36 flex-col justify-between overflow-hidden rounded-xl border transition-colors',
                         outOfStock
                           ? 'border-border bg-muted/70 opacity-60'
                           : inCart
