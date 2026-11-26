@@ -6,6 +6,7 @@ import type {
   CreateProductFormInput,
   CreateProductInput,
   FetchAllProductsOptions,
+  UpdateProductInput,
 } from '@/types/catalog';
 import { throwApiError } from './client';
 
@@ -123,6 +124,24 @@ export async function createCatalogProduct(
 
   if (!res.ok) {
     return throwApiError(res, 'Failed to create product');
+  }
+
+  const json = (await res.json()) as { data: CatalogProductView };
+  return json.data;
+}
+
+export async function updateCatalogProduct(
+  productId: string,
+  input: UpdateProductInput
+): Promise<CatalogProductView> {
+  const res = await fetch(`/api/catalog/products/${productId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    return throwApiError(res, 'Failed to update product');
   }
 
   const json = (await res.json()) as { data: CatalogProductView };

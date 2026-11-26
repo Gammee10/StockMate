@@ -1,72 +1,56 @@
-'use client';
+import type { Metadata } from 'next';
+import { InventoryWorkspace } from '@/components/inventory/inventory-workspace';
+import { requirePageUser } from '@/server/auth';
+import { getStoreDetails } from '@/server/auth/service';
+import { listStoreProducts } from '@/server/catalog/service';
+import type { ProductItem } from '@/types/catalog';
 
-import Link from 'next/link';
-import { Package } from 'lucide-react';
-import { NavigationShell } from '@/components/navigation-shell';
-import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+export const dynamic = 'force-dynamic';
 
-export default function InventoryPage() {
+export const metadata: Metadata = {
+  title: 'Inventory',
+};
+
+async function loadAllInventoryProducts(storeId: string): Promise<ProductItem[]> {
+  const collected: ProductItem[] = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 10; page++) {
+    const result = await listStoreProducts(storeId, { limit: 100, cursor });
+    collected.push(...result.items);
+    if (!result.nextCursor) break;
+    cursor = result.nextCursor;
+  }
+
+  return collected;
+}
+
+export default async function InventoryPage() {
+  const user = await requirePageUser();
+
+  let storeName: string | undefined;
+  let products: ProductItem[] = [];
+  let initialError: string | null = null;
+
+  try {
+    const [store, items] = await Promise.all([
+      getStoreDetails(user.storeId),
+      loadAllInventoryProducts(user.storeId),
+    ]);
+    if (store?.name) {
+      storeName = store.name;
+    }
+    products = items;
+  } catch (err) {
+    void err;
+    initialError = 'Failed to load inventory. Check connection and retry.';
+  }
+
   return (
-    <NavigationShell>
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <PageHeader
-          title="Inventory"
-          description="Active store catalog, low-stock filters, quick restock, and archival."
-          badge={<Badge variant="outline">Catalog</Badge>}
-          actions={
-            <Link href="/counter">
-              <Button variant="outline" size="sm">
-                Back to counter
-              </Button>
-            </Link>
-          }
-        />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Store products</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-xl border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="hidden text-right sm:table-cell">
-                      Price
-                    </TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="text-right">Restock</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={4} className="p-4">
-                      <EmptyState
-                        icon={Package}
-                        title="Inventory shell is wired"
-                        description="Product search, creation modal, +5/+10 restock, and soft archival will connect here next."
-                      />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </NavigationShell>
+    <InventoryWorkspace
+      initialStoreName={storeName}
+      initialProducts={products}
+      initialError={initialError}
+    />
   );
 }
