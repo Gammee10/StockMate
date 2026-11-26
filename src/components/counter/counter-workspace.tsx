@@ -43,7 +43,7 @@ type QuickFilter = 'all' | 'incart' | 'low';
 
 export interface CounterWorkspaceProps {
   initialProducts: Product[];
-  initialStoreName: string;
+  initialStoreName?: string;
   initialSalesCount: number;
   initialError?: string | null;
 }

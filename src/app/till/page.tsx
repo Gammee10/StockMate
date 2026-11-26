@@ -1,73 +1,52 @@
-'use client';
+import type { Metadata } from 'next';
+import { TillWorkspace } from '@/components/till/till-workspace';
+import { requirePageUser } from '@/server/auth';
+import { getStoreDetails } from '@/server/auth/service';
+import type { RecentSaleRecord, TodaySalesSummary } from '@/types/sales';
+import { getTodayLedgerUseCase } from '@/use-cases/get-today-ledger';
 
-import Link from 'next/link';
-import { Calculator } from 'lucide-react';
-import { NavigationShell } from '@/components/navigation-shell';
-import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
+export const dynamic = 'force-dynamic';
 
-const SUMMARY_CARDS = [
-  { label: 'Gross sales', note: 'EAT day total' },
-  { label: 'Cash sales', note: 'Cash drawer receipts' },
-  { label: 'Digital sales', note: 'Telebirr and bank' },
-  { label: 'Voided sales', note: 'Reversed within 15m' },
-] as const;
+export const metadata: Metadata = {
+  title: 'Daily till',
+};
 
-export default function TillPage() {
+export default async function TillPage() {
+  const user = await requirePageUser();
+
+  let storeName: string | undefined;
+  let summary: TodaySalesSummary | null = null;
+  let recentSales: RecentSaleRecord[] = [];
+  let initialError: string | null = null;
+
+  try {
+    const [store, ledger] = await Promise.all([
+      getStoreDetails(user.storeId),
+      getTodayLedgerUseCase({ storeId: user.storeId }),
+    ]);
+
+    if (store?.name) {
+      storeName = store.name;
+    }
+    summary = ledger.summary;
+    recentSales = ledger.recentSales.map((sale) => ({
+      ...sale,
+      createdAt:
+        typeof sale.createdAt === 'string'
+          ? sale.createdAt
+          : sale.createdAt.toISOString(),
+    }));
+  } catch (err) {
+    void err;
+    initialError = 'Failed to load daily till ledger. Check connection and retry.';
+  }
+
   return (
-    <NavigationShell>
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <PageHeader
-          title="Daily till"
-          description="Today's EAT shift revenue summary and 15-minute sale voiding."
-          badge={<Badge variant="outline">EAT timezone</Badge>}
-          actions={
-            <Link href="/counter">
-              <Button variant="outline" size="sm">
-                Back to counter
-              </Button>
-            </Link>
-          }
-        />
-
-        <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {SUMMARY_CARDS.map((item) => (
-            <Card key={item.label} className="p-4">
-              <dt className="text-xs font-medium text-muted-foreground">{item.label}</dt>
-              <dd className="mt-2">
-                <Skeleton className="h-6 w-28" />
-              </dd>
-              <dd className="mt-1 text-xs text-subtle-foreground">{item.note}</dd>
-            </Card>
-          ))}
-        </dl>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent transactions</CardTitle>
-            <CardDescription>
-              Completed sales remain voidable for 15 minutes from creation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={Calculator}
-              title="Daily till ledger shell is wired"
-              description="Live EAT sales summary and 15-minute void actions will connect here next."
-            />
-          </CardContent>
-        </Card>
-      </div>
-    </NavigationShell>
+    <TillWorkspace
+      initialStoreName={storeName}
+      initialSummary={summary}
+      initialRecentSales={recentSales}
+      initialError={initialError}
+    />
   );
 }

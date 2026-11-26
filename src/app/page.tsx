@@ -29,7 +29,7 @@ async function loadAllActiveProducts(storeId: string): Promise<Product[]> {
 export default async function CounterPage() {
   const user = await requirePageUser();
 
-  let storeName = 'Your store';
+  let storeName: string | undefined;
   let products: Product[] = [];
   let salesCount = 0;
   let initialError: string | null = null;
