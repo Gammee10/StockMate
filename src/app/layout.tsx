@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -35,13 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${jetBrainsMono.variable}`}>
       <body className="min-h-screen bg-background font-sans text-sm text-foreground antialiased">
-        {children}
-        <div
-          id="toast-container"
-          aria-live="polite"
-          aria-atomic="true"
-          className="pointer-events-none fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-2"
-        />
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );
