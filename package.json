@@ -15,7 +15,11 @@
     "ui:check": "node .agents/skills/ui-polish/scripts/check-ui.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"*.{js,mjs,ts}\"",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -10,7 +10,7 @@ Configure these environment variables in your Vercel Project Settings (**Setting
 
 | Variable Name  | Environment         | Description                                                                            |
 | :------------- | :------------------ | :------------------------------------------------------------------------------------- |
-| `DATABASE_URL` | Production, Preview | Supavisor pooled connection string (`port 6543`, `?pgbouncer=true&connection_limit=1`) |
+| `DATABASE_URL` | Production, Preview | Supavisor pooled connection string (`port 6543`, `?pgbouncer=true`) |
 | `DIRECT_URL`   | Production, Preview | Supabase direct session connection string (`port 5432`)                                |
 | `JWT_SECRET`      | Production, Preview   | 32+ character cryptographically secure secret string for auth tokens                   |
 | `NODE_ENV`        | Production            | Set to `production`                                                                    |
