@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import { useEffect, useState, useTransition, useMemo } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import {
   ShoppingCart,
   AlertTriangle,
@@ -24,77 +24,38 @@ import { NavigationShell } from '@/components/navigation-shell';
 import { CartReviewModal } from '@/components/cart-review-modal';
 import { CheckoutFeedbackModal } from '@/components/checkout-feedback-modal';
 import {
-  buildCheckoutPayload,
-  formatSaleReceiptFeedback,
   decrementCartQuantity,
   removeCartItem,
   incrementCartQuantity,
   filterProductsByName,
-  type PaymentMethod,
-  type SaleReceiptFeedback,
 } from '@/modules/sales/counter';
-import { fetchAllProducts } from '@/lib/fetch-all-products';
+import { useCatalog, useCheckout, useStoreName } from '@/hooks';
+import type { Product } from '@/types/catalog';
+import type {
+  CheckoutFeedbackModalState,
+  PaymentMethod,
+  SaleReceiptFeedback,
+} from '@/types/sales';
 
-export interface Product {
-  id: string;
-  name: string;
-  priceCents: number;
-  priceEtb: string;
-  stock: number;
-  lowStockThreshold: number;
-  isLowStock: boolean;
-}
+export type { Product };
 
 export default function CounterPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [storeName, setStoreName] = useState<string>('Your store');
+  const { products, setProducts, loading } = useCatalog();
+  const storeName = useStoreName('Your store');
+  const { isCheckingOut, executeCheckout } = useCheckout();
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isCartReviewOpen, setIsCartReviewOpen] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState<SaleReceiptFeedback | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [feedbackModal, setFeedbackModal] = useState<{
-    isOpen: boolean;
-    type: 'success' | 'error';
-    feedback?: SaleReceiptFeedback | null;
-    errorMessage?: string | null;
-  }>({
+  const [feedbackModal, setFeedbackModal] = useState<CheckoutFeedbackModalState>({
     isOpen: false,
     type: 'success',
     feedback: null,
     errorMessage: null,
   });
   const [, startTransition] = useTransition();
-
-  const refetchProducts = () => {
-    fetchAllProducts()
-      .then((items) => {
-        setProducts(items);
-      })
-      .catch((err) => {
-        console.error('Fetch error:', err);
-      });
-  };
-
-  // Load active catalog and real store name from auth session (Task 1.2)
-  useEffect(() => {
-    refetchProducts();
-    setLoading(false);
-
-    fetch('/api/auth/me')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.store?.name) {
-          setStoreName(data.store.name);
-        }
-      })
-      .catch(() => {
-        // Fallback remains "Your store"
-      });
-  }, []);
 
   // Filtered products by search query
   const displayedProducts = useMemo(
@@ -139,51 +100,40 @@ export default function CounterPage() {
 
   // 1-Tap Checkout Handler (AC 2.1 - AC 2.5, AC 3.1 - AC 3.4)
   const handleCheckout = async () => {
-    const payload = buildCheckoutPayload(cart, paymentMethod);
-
-    if (payload.items.length === 0 || isCheckingOut) return;
-
-    setIsCheckingOut(true);
     setErrorMessage(null);
 
-    // Invariant #4: Generate client-side UUID for Idempotency-Key
-    const idempotencyKey = crypto.randomUUID();
+    await executeCheckout({
+      cart,
+      paymentMethod,
+      products,
+      onSuccess: (feedback) => {
+        setSaleSuccess(feedback);
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          feedback,
+          errorMessage: null,
+        });
 
-    try {
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.status === 401) {
-        window.location.href = '/login';
-        return;
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const rawMsg =
-          errorData.error?.message ||
-          (response.status === 409
-            ? 'Insufficient stock for one or more items.'
-            : 'Checkout failed. Please try again.');
-
-        // Client-side fallback to ensure any "Insufficient stock for product id <id>" is converted to product name if present
-        let displayMsg = rawMsg;
-        const idMatch = rawMsg.match(
-          /Insufficient stock for product id ([a-zA-Z0-9_-]+)/
+        // Update in-memory stock for responsive inventory display
+        setProducts((prev) =>
+          prev.map((p) => {
+            const bought = cart[p.id] || 0;
+            if (bought === 0) return p;
+            const nextStock = Math.max(0, p.stock - bought);
+            return {
+              ...p,
+              stock: nextStock,
+              isLowStock: nextStock <= p.lowStockThreshold,
+            };
+          })
         );
-        if (idMatch && idMatch[1]) {
-          const matchedProd = products.find((p) => p.id === idMatch[1]);
-          if (matchedProd) {
-            displayMsg = `Insufficient stock for "${matchedProd.name}".`;
-          }
-        }
 
+        // Reset cart and default back to CASH immediately (< 500ms) (AC 3.2)
+        setCart({});
+        setPaymentMethod('CASH');
+      },
+      onError: (displayMsg) => {
         setErrorMessage(displayMsg);
         setFeedbackModal({
           isOpen: true,
@@ -191,61 +141,8 @@ export default function CounterPage() {
           feedback: null,
           errorMessage: displayMsg,
         });
-        setIsCheckingOut(false);
-        return;
-      }
-
-      const data = await response.json();
-      const sale = data.data;
-
-      // AC 2.5 & AC 3.4: Immediate visual confirmation with payment method
-      const totalEtb = (sale.totalAmountCents / 100).toFixed(2);
-      const totalCount = payload.items.reduce((sum, item) => sum + item.quantity, 0);
-
-      const feedback = formatSaleReceiptFeedback({
-        totalEtb,
-        count: totalCount,
-        paymentMethod: sale.paymentMethod || paymentMethod,
-      });
-
-      setSaleSuccess(feedback);
-      setFeedbackModal({
-        isOpen: true,
-        type: 'success',
-        feedback,
-        errorMessage: null,
-      });
-
-      // Update in-memory stock for responsive inventory display
-      setProducts((prev) =>
-        prev.map((p) => {
-          const bought = cart[p.id] || 0;
-          if (bought === 0) return p;
-          const nextStock = Math.max(0, p.stock - bought);
-          return {
-            ...p,
-            stock: nextStock,
-            isLowStock: nextStock <= p.lowStockThreshold,
-          };
-        })
-      );
-
-      // Reset cart and default back to CASH immediately (< 500ms) (AC 3.2)
-      setCart({});
-      setPaymentMethod('CASH');
-      setIsCheckingOut(false);
-    } catch (err) {
-      console.error('Checkout network error:', err);
-      const networkMsg = 'Network connection error. Please retry.';
-      setErrorMessage(networkMsg);
-      setFeedbackModal({
-        isOpen: true,
-        type: 'error',
-        feedback: null,
-        errorMessage: networkMsg,
-      });
-      setIsCheckingOut(false);
-    }
+      },
+    });
   };
 
   const totalCents = Object.entries(cart).reduce((sum, [id, qty]) => {

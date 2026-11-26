@@ -10,8 +10,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from 'lucide-react';
-import type { ProductVelocityMetrics } from '@/server/analytics/types';
-import type { ProductQuadrant } from './chart-utils';
+import type { ProductQuadrant, ProductVelocityMetrics } from '@/types/analytics';
 import { groupProductsByQuadrant } from './chart-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

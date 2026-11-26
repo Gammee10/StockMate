@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Package } from 'lucide-react';
-import type { ProductVelocityMetrics } from '@/server/analytics/types';
+import type { ProductVelocityMetrics } from '@/types/analytics';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 

@@ -1,7 +1,6 @@
 // src/components/navigation-shell.tsx
 'use client';
 
-import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -16,12 +15,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useLogout } from '@/hooks/use-auth';
+import type { NavItem, NavigationShellProps } from '@/types/navigation';
 
-export interface NavItem {
-  label: string;
-  href: string;
-  icon: 'shopping-cart' | 'calculator' | 'package' | 'trending-up';
-}
+export type { NavItem };
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Counter', href: '/counter', icon: 'shopping-cart' },
@@ -41,24 +38,12 @@ export function isNavActive(currentPath: string, targetHref: string): boolean {
   return currentPath === targetHref || currentPath.startsWith(`${targetHref}/`);
 }
 
-interface NavigationShellProps {
-  children?: ReactNode;
-  storeName?: string;
-}
-
 export function NavigationShell({
   children,
   storeName = 'Your store',
 }: NavigationShellProps) {
   const pathname = usePathname() || '/counter';
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } finally {
-      window.location.href = '/login';
-    }
-  };
+  const handleLogout = useLogout();
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">

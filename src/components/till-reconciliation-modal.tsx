@@ -1,12 +1,13 @@
 // src/components/till-reconciliation-modal.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Loader2, RotateCcw, AlertTriangle, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TodaySalesSummary, RecentSaleRecord } from '@/modules/sales/types';
+import { useTodayLedger } from '@/hooks/use-today-ledger';
+import type { RecentSaleRecord } from '@/types/sales';
 
 interface TillReconciliationModalProps {
   isOpen: boolean;
@@ -19,31 +20,18 @@ export function TillReconciliationModal({
   onClose,
   onVoidSuccess,
 }: TillReconciliationModalProps) {
-  const [summary, setSummary] = useState<TodaySalesSummary | null>(null);
-  const [recentSales, setRecentSales] = useState<RecentSaleRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    summary,
+    recentSales,
+    loading,
+    error,
+    isVoiding,
+    voidError,
+    setVoidError,
+    fetchLedger,
+    voidSale,
+  } = useTodayLedger({ autoLoad: false, onVoidSuccess });
   const [saleToVoid, setSaleToVoid] = useState<RecentSaleRecord | null>(null);
-  const [isVoiding, setIsVoiding] = useState(false);
-  const [voidError, setVoidError] = useState<string | null>(null);
-
-  const fetchLedger = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/sales/today');
-      if (!res.ok) {
-        throw new Error('Failed to load ledger');
-      }
-      const json = await res.json();
-      setSummary(json.data.summary);
-      setRecentSales(json.data.recentSales);
-    } catch {
-      setError('Failed to load daily ledger. Please retry.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,34 +39,15 @@ export function TillReconciliationModal({
       setSaleToVoid(null);
       setVoidError(null);
     }
-  }, [isOpen, fetchLedger]);
+  }, [isOpen, fetchLedger, setVoidError]);
 
   if (!isOpen) return null;
 
   const handleConfirmVoid = async () => {
     if (!saleToVoid) return;
-    setIsVoiding(true);
-    setVoidError(null);
-
-    try {
-      const res = await fetch(`/api/sales/${saleToVoid.id}/void`, {
-        method: 'POST',
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || 'Failed to void sale');
-      }
-
+    const success = await voidSale(saleToVoid.id);
+    if (success) {
       setSaleToVoid(null);
-      await fetchLedger();
-      if (onVoidSuccess) {
-        onVoidSuccess();
-      }
-    } catch (err) {
-      setVoidError(err instanceof Error ? err.message : 'Error voiding transaction');
-    } finally {
-      setIsVoiding(false);
     }
   };
 

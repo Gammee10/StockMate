@@ -1,7 +1,7 @@
 // src/app/analytics/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   RotateCcw,
   TrendingUp,
@@ -36,23 +36,20 @@ import {
   sortProducts,
   paginateProducts,
   classifyProductQuadrant,
-  type ProductSortOption,
-  type ProductQuadrant,
 } from '@/components/analytics/chart-utils';
+import { useStockVelocity } from '@/hooks/use-stock-velocity';
 import type {
-  StockVelocityReport,
-  StockVelocityRange,
+  AnalyticsFilterTab,
+  ProductQuadrant,
+  ProductSortOption,
   ProductVelocityMetrics,
   StockVelocityStatus,
-} from '@/server/analytics/types';
+} from '@/types/analytics';
 import { formatMoney } from '@/lib/money';
 
 export default function AnalyticsPage() {
-  const [range, setRange] = useState<StockVelocityRange>('7d');
-  const [report, setReport] = useState<StockVelocityReport | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filterTab, setFilterTab] = useState<'all' | 'restock' | 'fast' | 'dead'>('all');
+  const { range, setRange, report, loading, error, fetchReport } = useStockVelocity('7d');
+  const [filterTab, setFilterTab] = useState<AnalyticsFilterTab>('all');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -63,27 +60,6 @@ export default function AnalyticsPage() {
   const [selectedQuadrant, setSelectedQuadrant] = useState<ProductQuadrant | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
-
-  const fetchReport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/analytics/stock-velocity?range=${range}`);
-      if (!res.ok) {
-        throw new Error('Failed to load stock velocity report');
-      }
-      const json = await res.json();
-      setReport(json.data);
-    } catch {
-      setError('Failed to load velocity report. Please retry.');
-    } finally {
-      setLoading(false);
-    }
-  }, [range]);
-
-  useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
 
   // Reset pagination to page 1 whenever any filter or search changes
   useEffect(() => {

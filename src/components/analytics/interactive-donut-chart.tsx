@@ -2,8 +2,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { StockVelocityStatus } from '@/server/analytics/types';
-import type { InventoryDistribution, DonutSegment } from './chart-utils';
+import type {
+  DonutSegment,
+  InventoryDistribution,
+  StockVelocityStatus,
+} from '@/types/analytics';
 import { calculateDonutSegments } from './chart-utils';
 import { Button } from '@/components/ui/button';
 

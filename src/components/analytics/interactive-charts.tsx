@@ -23,10 +23,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type {
+  ChartViewTab,
+  ProductQuadrant,
   ProductVelocityMetrics,
   StockVelocityStatus,
-} from '@/server/analytics/types';
-import type { ProductQuadrant } from './chart-utils';
+} from '@/types/analytics';
 import {
   calculateVelocityBarWidth,
   calculateInventoryDistribution,
@@ -40,8 +41,7 @@ import { VelocityMatrix } from './velocity-matrix';
 import { DemandSupplyChart } from './demand-supply-chart';
 import { formatMoney } from '@/lib/money';
 
-export type ChartViewTab =
-  'donut' | 'matrix' | 'demand_supply' | 'velocity' | 'runway' | 'distribution';
+export type { ChartViewTab };
 
 interface InteractiveChartsProps {
   products: ProductVelocityMetrics[];

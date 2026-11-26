@@ -1,7 +1,7 @@
 // src/app/inventory/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   RotateCcw,
   Package,
@@ -27,24 +27,22 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { toCents } from '@/lib/money';
-import { fetchAllProducts } from '@/lib/fetch-all-products';
+import { useCatalog } from '@/hooks/use-catalog';
+import type { ProductItem } from '@/types/catalog';
 
-export interface ProductItem {
-  id: string;
-  name: string;
-  priceCents: number;
-  priceEtb: string;
-  costCents?: number | null;
-  stock: number;
-  lowStockThreshold: number;
-  isLowStock: boolean;
-}
+export type { ProductItem };
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<ProductItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    products,
+    loading,
+    error,
+    actionProductId,
+    fetchCatalog,
+    createProduct,
+    quickRestock,
+    archiveProduct,
+  } = useCatalog();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLowStockOnly, setFilterLowStockOnly] = useState(false);
@@ -59,83 +57,27 @@ export default function InventoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Action States
-  const [actionProductId, setActionProductId] = useState<string | null>(null);
+  // Archive Dialog State
   const [productToArchive, setProductToArchive] = useState<ProductItem | null>(null);
-
-  const fetchCatalog = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const items = await fetchAllProducts();
-      setProducts(items);
-    } catch {
-      setError('Failed to load inventory. Please retry.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCatalog();
-  }, [fetchCatalog]);
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setSuccessMessage(null);
-
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setFormError('Product name is required');
-      return;
-    }
-
-    const priceCents = toCents(priceEtb);
-    if (priceCents === null || priceCents <= 0) {
-      setFormError('Enter a valid positive price in ETB (e.g. 250.00)');
-      return;
-    }
-
-    let costCents: number | null = null;
-    if (costPriceEtb.trim()) {
-      const parsedCost = toCents(costPriceEtb);
-      if (parsedCost === null || parsedCost < 0) {
-        setFormError('Enter a valid non-negative cost price in ETB or leave blank');
-        return;
-      }
-      costCents = parsedCost;
-    }
-
-    const stockNum = parseInt(stock, 10);
-    if (isNaN(stockNum) || stockNum < 0) {
-      setFormError('Stock must be a non-negative whole number');
-      return;
-    }
-
-    const thresholdNum = parseInt(lowStockThreshold, 10);
-    if (isNaN(thresholdNum) || thresholdNum < 0) {
-      setFormError('Threshold must be a non-negative whole number');
-      return;
-    }
-
     setIsSubmitting(true);
+
     try {
-      const res = await fetch('/api/catalog/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: trimmedName,
-          priceCents,
-          costCents,
-          stock: stockNum,
-          lowStockThreshold: thresholdNum,
-        }),
+      const result = await createProduct({
+        name,
+        priceEtb,
+        costPriceEtb,
+        stock,
+        lowStockThreshold,
       });
 
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error?.message || 'Failed to create product');
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
       }
 
       setName('');
@@ -144,67 +86,27 @@ export default function InventoryPage() {
       setStock('10');
       setLowStockThreshold('5');
       setShowAddForm(false);
-      setSuccessMessage(`Added "${trimmedName}" to inventory`);
-      await fetchCatalog();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Error creating product');
+      setSuccessMessage(`Added "${result.name}" to inventory`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleQuickRestock = async (product: ProductItem, amount: number) => {
-    setActionProductId(product.id);
-    setError(null);
     setSuccessMessage(null);
-
-    try {
-      const res = await fetch(`/api/catalog/products/${product.id}/restock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: amount }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error?.message || 'Restock failed');
-      }
-
-      const json = await res.json();
-      setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, ...json.data } : p))
-      );
+    const result = await quickRestock(product, amount);
+    if (result.ok) {
       setSuccessMessage(`Restocked +${amount} units for ${product.name}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restock item');
-    } finally {
-      setActionProductId(null);
     }
   };
 
   const handleArchiveConfirm = async () => {
     if (!productToArchive) return;
-    setActionProductId(productToArchive.id);
-    setError(null);
     setSuccessMessage(null);
-
-    try {
-      const res = await fetch(`/api/catalog/products/${productToArchive.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error?.message || 'Archival failed');
-      }
-
-      setProducts((prev) => prev.filter((p) => p.id !== productToArchive.id));
+    const result = await archiveProduct(productToArchive);
+    if (result.ok) {
       setSuccessMessage(`Archived "${productToArchive.name}" from catalog`);
       setProductToArchive(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to archive product');
-    } finally {
-      setActionProductId(null);
     }
   };
 

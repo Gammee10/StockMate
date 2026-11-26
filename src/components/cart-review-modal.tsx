@@ -3,14 +3,9 @@
 
 import { X, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { CartProduct } from '@/types/catalog';
 
-export interface CartProduct {
-  id: string;
-  name: string;
-  priceCents: number;
-  priceEtb: string;
-  stock: number;
-}
+export type { CartProduct };
 
 interface CartReviewModalProps {
   isOpen: boolean;

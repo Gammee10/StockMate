@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { X, Receipt, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { SaleReceiptFeedback } from '@/modules/sales/counter';
+import type { SaleReceiptFeedback } from '@/types/sales';
 
 interface CheckoutFeedbackModalProps {
   isOpen: boolean;

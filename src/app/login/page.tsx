@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { Delete, ShieldAlert, Store } from 'lucide-react';
 import {
   Card,
@@ -14,89 +13,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { usePinLogin } from '@/hooks/use-auth';
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState('0911000000');
-  const [pin, setPin] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submitLogin = useCallback(
-    async (pinToSubmit: string) => {
-      if (loading || pinToSubmit.length !== 4) return;
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, pin: pinToSubmit }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setPin('');
-          setError(data.error?.message || 'Invalid credentials');
-          setLoading(false);
-          return;
-        }
-
-        // Redirect to counter page with fresh cookie session
-        window.location.href = '/';
-      } catch {
-        setPin('');
-        setError('Network error. Check connection.');
-        setLoading(false);
-      }
-    },
-    [phone, loading]
-  );
-
-  const handleDigit = useCallback(
-    (digit: string) => {
-      if (loading) return;
-      setError(null);
-
-      setPin((prev) => {
-        if (prev.length >= 4) return prev;
-        const next = prev + digit;
-        if (next.length === 4) {
-          submitLogin(next);
-        }
-        return next;
-      });
-    },
-    [loading, submitLogin]
-  );
-
-  const handleBackspace = useCallback(() => {
-    if (loading) return;
-    setError(null);
-    setPin((prev) => prev.slice(0, -1));
-  }, [loading]);
-
-  const handleClear = useCallback(() => {
-    if (loading) return;
-    setError(null);
-    setPin('');
-  }, [loading]);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key >= '0' && e.key <= '9') {
-        handleDigit(e.key);
-      } else if (e.key === 'Backspace') {
-        handleBackspace();
-      } else if (e.key === 'Escape') {
-        handleClear();
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleDigit, handleBackspace, handleClear]);
+  const {
+    phone,
+    setPhone,
+    pin,
+    loading,
+    error,
+    handleDigit,
+    handleBackspace,
+    handleClear,
+  } = usePinLogin('0911000000');
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-4 py-8">
