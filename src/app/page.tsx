@@ -1,107 +1,62 @@
-'use client';
+import type { Metadata } from 'next';
+import { CounterWorkspace } from '@/components/counter/counter-workspace';
+import { requirePageUser } from '@/server/auth';
+import { getStoreDetails } from '@/server/auth/service';
+import { listStoreProducts } from '@/server/catalog/service';
+import type { Product } from '@/types/catalog';
+import { getTodayLedgerUseCase } from '@/use-cases/get-today-ledger';
 
-import Link from 'next/link';
-import { Receipt, ShoppingCart } from 'lucide-react';
-import { NavigationShell } from '@/components/navigation-shell';
-import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
+export const dynamic = 'force-dynamic';
 
-export default function CounterPage() {
+export const metadata: Metadata = {
+  title: 'Counter',
+};
+
+async function loadAllActiveProducts(storeId: string): Promise<Product[]> {
+  const collected: Product[] = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 10; page++) {
+    const result = await listStoreProducts(storeId, { limit: 100, cursor });
+    collected.push(...result.items);
+    if (!result.nextCursor) break;
+    cursor = result.nextCursor;
+  }
+
+  return collected;
+}
+
+export default async function CounterPage() {
+  const user = await requirePageUser();
+
+  let storeName = 'Your store';
+  let products: Product[] = [];
+  let salesCount = 0;
+  let initialError: string | null = null;
+
+  try {
+    const [store, loadedProducts, ledger] = await Promise.all([
+      getStoreDetails(user.storeId),
+      loadAllActiveProducts(user.storeId),
+      getTodayLedgerUseCase({ storeId: user.storeId }),
+    ]);
+
+    if (store?.name) {
+      storeName = store.name;
+    }
+    products = loadedProducts;
+    salesCount = ledger.summary.completedCount;
+  } catch (err) {
+    void err;
+    initialError = 'Failed to load store catalog. Check connection and retry.';
+  }
+
   return (
-    <NavigationShell>
-      <div className="flex flex-col lg:h-full lg:flex-row">
-        {/* Catalog Stage */}
-        <section className="min-w-0 flex-1 space-y-6 px-4 py-6 sm:px-6">
-          <PageHeader
-            title="Counter"
-            description="Tap catalog products to build the active customer sale."
-            badge={<Badge variant="outline">Shell ready</Badge>}
-            actions={
-              <Link href="/till">
-                <Button variant="outline" size="sm">
-                  View daily till
-                </Button>
-              </Link>
-            }
-          />
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <Card key={index} className="p-4">
-                <div className="space-y-3">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <div className="flex items-center justify-between pt-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-10" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <EmptyState
-            icon={ShoppingCart}
-            title="Counter workspace shell is wired"
-            description="Live catalog grid, inline steppers, and checkout flow will mount here next."
-            action={
-              <Link href="/inventory">
-                <Button variant="outline" size="sm">
-                  Inspect inventory route
-                </Button>
-              </Link>
-            }
-          />
-        </section>
-
-        {/* Docked Checkout Rail Placeholder */}
-        <aside
-          aria-label="Current sale rail"
-          className="w-full shrink-0 border-t border-border bg-card lg:w-96 lg:border-l lg:border-t-0"
-        >
-          <div className="flex h-full flex-col justify-between">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle>Current sale</CardTitle>
-                <Badge variant="secondary">0 items</Badge>
-              </div>
-              <CardDescription>
-                Select items from the counter to calculate totals.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-1 flex-col justify-center py-8">
-              <EmptyState
-                icon={Receipt}
-                title="No active ticket"
-                description="Cart items, payment method toggle, and cash change helper appear here."
-              />
-            </CardContent>
-
-            <div className="space-y-3 border-t border-dashed border-border-strong p-5">
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-muted-foreground">Total due</span>
-                <span className="font-mono text-2xl font-semibold tabular-nums text-foreground">
-                  0.00 ETB
-                </span>
-              </div>
-              <Button size="counter" disabled className="w-full">
-                Select items to charge
-              </Button>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </NavigationShell>
+    <CounterWorkspace
+      initialProducts={products}
+      initialStoreName={storeName}
+      initialSalesCount={salesCount}
+      initialError={initialError}
+    />
   );
 }

@@ -203,6 +203,10 @@
   scrollbar-width: none;
 }
 
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
 .pressable {
   touch-action: manipulation;
   transition:

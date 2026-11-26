@@ -29,7 +29,7 @@ export function EmptyState({
     <div
       role={isError ? 'alert' : undefined}
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-xl border px-6 py-12 text-center',
+        'flex w-full min-w-0 flex-col items-center justify-center gap-3 rounded-xl border px-6 py-12 text-center',
         isError
           ? 'border-destructive-border bg-destructive-soft/50'
           : 'border-dashed border-border-strong bg-card',
@@ -38,7 +38,7 @@ export function EmptyState({
     >
       <div
         className={cn(
-          'flex size-10 items-center justify-center rounded-lg border',
+          'flex size-10 shrink-0 items-center justify-center rounded-lg border',
           isError
             ? 'border-destructive-border bg-card text-destructive'
             : 'border-border bg-muted text-muted-foreground'
@@ -46,10 +46,10 @@ export function EmptyState({
       >
         <IconComponent className="size-5" aria-hidden="true" />
       </div>
-      <div className="max-w-sm space-y-1">
-        <p className="text-sm font-medium text-foreground">{title}</p>
+      <div className="w-full min-w-0 max-w-sm space-y-1">
+        <p className="break-anywhere text-sm font-medium text-foreground">{title}</p>
         {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="break-anywhere text-xs text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {action ? <div className="pt-1">{action}</div> : null}
