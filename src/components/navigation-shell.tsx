@@ -154,7 +154,7 @@ export function NavigationShell({
             <Menu className="size-5" aria-hidden="true" />
           </Button>
           <div className="flex min-w-0 items-center gap-2">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-primary-border bg-primary-soft text-xs font-semibold text-primary">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-xs font-semibold text-primary">
               {initials}
             </span>
             <span className="truncate text-sm font-semibold text-foreground">
@@ -198,7 +198,7 @@ export function NavigationShell({
           {/* Store Header */}
           <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-4">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary-border bg-primary-soft text-xs font-semibold text-primary">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-xs font-semibold text-primary">
                 {initials}
               </span>
               <div className="min-w-0">
