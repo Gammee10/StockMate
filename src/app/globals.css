@@ -1,3 +1,349 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   StockMate Design System Tokens (DESIGN_SYSTEM.md)
+   Warm-neutral daylight retail register palette
+   ========================================================================== */
+
+:root {
+  /* Surfaces */
+  --background: 244 243 238; /* #F4F3EE warm linen canvas */
+  --foreground: 20 20 19; /* #141413 charcoal ink */
+  --card: 255 255 255; /* #FFFFFF elevated surface */
+  --card-foreground: 20 20 19;
+  --popover: 255 255 255;
+  --popover-foreground: 20 20 19;
+
+  --secondary: 236 234 227; /* #ECEAE3 warm stone */
+  --secondary-foreground: 20 20 19;
+  --muted: 236 234 227; /* #ECEAE3 */
+  --muted-foreground: 89 87 80; /* #595750 */
+  --subtle-foreground: 134 131 122; /* #86837A */
+  --accent: 236 234 227;
+  --accent-foreground: 20 20 19;
+
+  /* Primary Accent — Botanical Forest Emerald */
+  --primary: 14 90 66; /* #0E5A42 */
+  --primary-hover: 10 70 51; /* #0A4633 */
+  --primary-foreground: 255 255 255;
+  --primary-soft: 237 247 243; /* #EDF7F3 */
+  --primary-border: 179 219 203; /* #B3DBCB */
+  --ring: 14 90 66;
+
+  /* Borders & Inputs */
+  --border: 225 223 215; /* #E1DFD7 */
+  --border-strong: 201 198 188; /* #C9C6BC */
+  --input: 225 223 215;
+
+  /* Semantic Statuses */
+  --success-rgb: 21 115 71; /* #157347 */
+  --success: #157347;
+  --color-success: var(--success);
+  --success-soft: 236 247 240; /* #ECF7F0 */
+  --success-border: 187 229 203; /* #BBE5CB */
+
+  --warning-rgb: 161 92 7; /* #A15C07 */
+  --warning: #a15c07;
+  --color-warning: var(--warning);
+  --warning-soft: 254 246 231; /* #FEF6E7 */
+  --warning-border: 244 215 153; /* #F4D799 */
+
+  --destructive-rgb: 185 28 28; /* #B91C1C */
+  --destructive: #b91c1c;
+  --color-destructive: var(--destructive);
+  --destructive-hover: 153 27 27; /* #991B1B */
+  --destructive-soft: 254 240 240; /* #FEF0F0 */
+  --destructive-border: 245 194 194; /* #F5C2C2 */
+  --destructive-foreground: 255 255 255;
+
+  --info-rgb: 14 90 66;
+  --info: #0e5a42;
+  --color-info: var(--info);
+
+  /* Sidebar */
+  --sidebar: 255 255 255;
+  --sidebar-foreground: 20 20 19;
+  --sidebar-border: 225 223 215;
+  --sidebar-accent: 236 234 227;
+  --sidebar-accent-foreground: 20 20 19;
+
+  /* Analytics Chart Palette */
+  --chart-1: 14 90 66; /* #0E5A42 healthy / digital */
+  --chart-2: 89 87 80; /* #595750 cash / neutral */
+  --chart-3: 161 92 7; /* #A15C07 low stock */
+  --chart-4: 185 28 28; /* #B91C1C out of stock */
+  --chart-5: 134 131 122; /* #86837A dead stock */
+
+  /* Radii */
+  --radius-sm: 0.375rem; /* 6px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 0.75rem; /* 12px max container corner */
+
+  /* Shadows */
+  --shadow-modal: 0 14px 36px rgba(20, 20, 19, 0.14);
+}
+
+.dark {
+  --background: 24 24 22;
+  --foreground: 244 243 238;
+  --card: 32 32 29;
+  --card-foreground: 244 243 238;
+  --popover: 32 32 29;
+  --popover-foreground: 244 243 238;
+
+  --secondary: 46 45 41;
+  --secondary-foreground: 244 243 238;
+  --muted: 46 45 41;
+  --muted-foreground: 180 177 168;
+  --subtle-foreground: 138 135 126;
+  --accent: 46 45 41;
+  --accent-foreground: 244 243 238;
+
+  --primary: 34 148 110;
+  --primary-hover: 26 125 92;
+  --primary-foreground: 255 255 255;
+  --primary-soft: 21 56 44;
+  --primary-border: 34 95 74;
+  --ring: 34 148 110;
+
+  --border: 56 55 50;
+  --border-strong: 78 76 69;
+  --input: 56 55 50;
+
+  --success-rgb: 52 178 113;
+  --success: #34b271;
+  --success-soft: 22 54 38;
+  --success-border: 36 96 66;
+
+  --warning-rgb: 217 152 54;
+  --warning: #d99836;
+  --warning-soft: 62 46 18;
+  --warning-border: 108 78 28;
+
+  --destructive-rgb: 235 87 87;
+  --destructive: #eb5757;
+  --destructive-hover: 212 64 64;
+  --destructive-soft: 66 24 24;
+  --destructive-border: 112 40 40;
+  --destructive-foreground: 255 255 255;
+
+  --sidebar: 28 28 25;
+  --sidebar-foreground: 244 243 238;
+  --sidebar-border: 56 55 50;
+  --sidebar-accent: 46 45 41;
+  --sidebar-accent-foreground: 244 243 238;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    height: 100%;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: rgb(var(--primary) / 0.16);
+    color: rgb(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* ==========================================================================
+   Clean Scrollbars & Utility Classes
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border-strong) / 0.85);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--subtle-foreground));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pressable {
+  touch-action: manipulation;
+  transition:
+    transform 80ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* ==========================================================================
+   Checkout Feedback Modal Self-Drawing SVG & Entrance Animations
+   ========================================================================== */
+
+@keyframes modalCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-card-enter {
+  animation: modalCardEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes emblemPop {
+  0% {
+    transform: scale(0.92);
+  }
+  65% {
+    transform: scale(1.045);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.emblem-stage {
+  width: 118px;
+  height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: emblemPop 520ms cubic-bezier(0.22, 1, 0.36, 1) 420ms both;
+}
+
+.emblem-svg {
+  width: 118px;
+  height: 118px;
+  overflow: visible;
+}
+
+@keyframes emblemFillIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.emblem-fill {
+  opacity: 0;
+  animation: emblemFillIn 360ms ease 180ms forwards;
+}
+
+@keyframes strokeDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.emblem-ring {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transform: rotate(-90deg);
+  transform-origin: 48px 48px;
+  animation: strokeDraw 480ms cubic-bezier(0.65, 0, 0.35, 1) 40ms forwards;
+}
+
+.emblem-check {
+  fill: none;
+  stroke-width: 5.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: strokeDraw 520ms cubic-bezier(0.22, 1, 0.36, 1) 340ms forwards;
+}
+
+.emblem-cross-1 {
+  fill: none;
+  stroke-width: 5.2;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: strokeDraw 320ms cubic-bezier(0.22, 1, 0.36, 1) 300ms forwards;
+}
+
+.emblem-cross-2 {
+  fill: none;
+  stroke-width: 5.2;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: strokeDraw 320ms cubic-bezier(0.22, 1, 0.36, 1) 560ms forwards;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade {
+  animation: fadeSlideUp 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-card-enter,
+  .emblem-stage,
+  .emblem-fill,
+  .emblem-ring,
+  .emblem-check,
+  .emblem-cross-1,
+  .emblem-cross-2,
+  .animate-fade {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+    opacity: 1 !important;
+  }
+}
