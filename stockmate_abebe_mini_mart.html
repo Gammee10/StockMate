@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>StockMate — Abebe Mini Mart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            canvas: '#F4F3EE',
+            surface: '#FFFFFF',
+            muted: '#ECEAE3',
+            line: '#E1DFD7',
+            linestrong: '#C9C6BC',
+            ink: '#141413',
+            inkmuted: '#595750',
+            inksubtle: '#86837A',
+            forest: {
+              50: '#EDF7F3',
+              100: '#D3ECE2',
+              200: '#B3DBCB',
+              600: '#157347',
+              700: '#0E5A42',
+              800: '#0A4633',
+            },
+            amberwarm: {
+              50: '#FEF6E7',
+              100: '#F4D799',
+              700: '#A15C07',
+            },
+            crimson: {
+              50: '#FEF0F0',
+              100: '#F5C2C2',
+              600: '#B91C1C',
+              700: '#991B1B',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background-color: #F4F3EE;
+      color: #141413;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular { font-variant-numeric: tabular-nums; }
+    .pressable { transition: transform 80ms ease, background-color 140ms ease, border-color 140ms ease, color 140ms ease; }
+    .pressable:active { transform: scale(0.985); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D4D0C4; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #B8B3A4; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ========================================================================
+       Large, unmistakable SVG stroke-draw animations for ✔ and ✕
+       ======================================================================== */
+    @keyframes modalCardEnter {
+      from { opacity: 0; transform: translateY(10px) scale(0.975); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-card-enter { animation: modalCardEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+    @keyframes emblemPop {
+      0% { transform: scale(0.92); }
+      65% { transform: scale(1.045); }
+      100% { transform: scale(1); }
+    }
+    .emblem-stage {
+      width: 118px;
+      height: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: emblemPop 520ms cubic-bezier(0.22, 1, 0.36, 1) 420ms both;
+    }
+    .emblem-svg {
+      width: 118px;
+      height: 118px;
+      overflow: visible;
+    }
+    .emblem-fill {
+      opacity: 0;
+      animation: emblemFillIn 360ms ease 180ms forwards;
+    }
+    .emblem-ring {
+      fill: none;
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      transform: rotate(-90deg);
+      transform-origin: 48px 48px;
+      animation: strokeDraw 480ms cubic-bezier(0.65, 0, 0.35, 1) 40ms forwards;
+    }
+    .emblem-check {
+      fill: none;
+      stroke-width: 5.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: strokeDraw 520ms cubic-bezier(0.22, 1, 0.36, 1) 340ms forwards;
+    }
+    .emblem-cross-1 {
+      fill: none;
+      stroke-width: 5.2;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: strokeDraw 320ms cubic-bezier(0.22, 1, 0.36, 1) 300ms forwards;
+    }
+    .emblem-cross-2 {
+      fill: none;
+      stroke-width: 5.2;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: strokeDraw 320ms cubic-bezier(0.22, 1, 0.36, 1) 560ms forwards;
+    }
+
+    @keyframes strokeDraw {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes emblemFillIn {
+      to { opacity: 1; }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade { animation: fadeSlideUp 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .modal-card-enter, .emblem-stage, .emblem-fill, .emblem-ring, .emblem-check, .emblem-cross-1, .emblem-cross-2 {
+        animation: none !important;
+        stroke-dashoffset: 0 !important;
+        opacity: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans text-[14px] leading-snug overflow-x-hidden">
+
+  <!-- ========================================================================
+       LOGIN SCREEN (Minimalistic Retail POS Shift Sign-In)
+       ======================================================================== -->
+  <div id="login-screen" class="hidden fixed inset-0 z-50 bg-canvas flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-[390px] animate-fade">
+      <!-- Minimal Store Brand -->
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-11 h-11 rounded-xl bg-forest-50 border border-forest-200 text-forest-700 font-semibold text-sm flex items-center justify-center tracking-tight mb-3">
+          AM
+        </div>
+        <h1 class="text-xl font-semibold tracking-tight text-ink">StockMate</h1>
+        <p class="text-xs text-inkmuted mt-1">Abebe Mini Mart · Cashier sign in</p>
+      </div>
+
+      <!-- Login Card -->
+      <form id="login-form" class="bg-surface rounded-2xl border border-line p-6 shadow-sm space-y-4">
+        <div>
+          <label for="login-phone" class="block text-xs font-medium text-inkmuted mb-1.5">Cashier phone</label>
+          <input
+            id="login-phone"
+            type="tel"
+            value="0911 00 00 00"
+            required
+            class="w-full h-11 px-3.5 rounded-xl bg-canvas/60 border border-line font-mono text-sm text-ink focus:outline-none focus:border-forest-700 focus:bg-surface transition-colors"
+          />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="login-pin" class="text-xs font-medium text-inkmuted">4-digit shift PIN</label>
+            <span class="text-[11px] text-inksubtle">Any 4 digits to preview</span>
+          </div>
+          <!-- PIN Visual Dots + Hidden/Direct Input -->
+          <input
+            id="login-pin"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            value="1234"
+            placeholder="••••"
+            class="w-full h-11 px-3.5 rounded-xl bg-canvas/60 border border-line font-mono text-base tracking-[0.45em] text-center text-ink focus:outline-none focus:border-forest-700 focus:bg-surface transition-colors"
+          />
+          <!-- Compact Tactile Numpad for Counter Touchscreens -->
+          <div class="grid grid-cols-3 gap-1.5 mt-2.5" id="login-numpad">
+            <button type="button" data-pad="1" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">1</button>
+            <button type="button" data-pad="2" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">2</button>
+            <button type="button" data-pad="3" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">3</button>
+            <button type="button" data-pad="4" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">4</button>
+            <button type="button" data-pad="5" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">5</button>
+            <button type="button" data-pad="6" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">6</button>
+            <button type="button" data-pad="7" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">7</button>
+            <button type="button" data-pad="8" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">8</button>
+            <button type="button" data-pad="9" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">9</button>
+            <button type="button" data-pad="clear" class="pad-btn pressable h-10 rounded-lg bg-surface hover:bg-muted border border-line text-xs font-medium text-inkmuted">Clear</button>
+            <button type="button" data-pad="0" class="pad-btn pressable h-10 rounded-lg bg-canvas hover:bg-muted border border-line font-mono text-sm font-medium text-ink">0</button>
+            <button type="button" data-pad="back" class="pad-btn pressable h-10 rounded-lg bg-surface hover:bg-muted border border-line text-inkmuted flex items-center justify-center" aria-label="Backspace">
+              <i data-lucide="delete" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-0.5">
+          <div>
+            <label for="login-register" class="block text-[11px] font-medium text-inkmuted mb-1">Register</label>
+            <select id="login-register" class="w-full h-9 px-2.5 rounded-lg bg-surface border border-line text-xs font-medium text-ink focus:outline-none focus:border-forest-700">
+              <option value="Register #1">Register #1</option>
+              <option value="Register #2">Register #2</option>
+            </select>
+          </div>
+          <div>
+            <label for="login-float" class="block text-[11px] font-medium text-inkmuted mb-1">Opening float (ETB)</label>
+            <input id="login-float" type="number" value="5000" min="0" step="100" class="w-full h-9 px-2.5 rounded-lg bg-surface border border-line font-mono text-xs font-medium text-ink focus:outline-none focus:border-forest-700 tabular" />
+          </div>
+        </div>
+
+        <p id="login-error" class="hidden text-xs text-crimson-600 text-center font-medium"></p>
+
+        <button type="submit" class="pressable w-full h-11 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold flex items-center justify-center gap-2">
+          <span>Open shift &amp; sign in</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <div class="mt-4 text-center text-[11px] text-inksubtle font-mono">
+        EAT · Offline-ready register
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MAIN WORKSPACE SHELL
+       ======================================================================== -->
+  <div id="app-shell" class="flex h-screen w-full overflow-hidden bg-canvas">
+    <!-- Mobile Header -->
+    <div class="lg:hidden fixed top-0 inset-x-0 z-30 h-14 bg-surface border-b border-line px-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <button id="mobile-menu-btn" type="button" class="p-2 rounded-lg text-inkmuted hover:bg-muted" aria-label="Open menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="w-7 h-7 rounded-lg bg-forest-50 border border-forest-200 text-forest-700 font-semibold text-xs flex items-center justify-center">AM</div>
+        <div class="text-sm font-semibold text-ink">Abebe Mini Mart</div>
+      </div>
+      <button id="mobile-cart-btn" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-forest-700 text-white text-xs font-semibold tabular">
+        <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+        <span id="mobile-cart-count">3</span>
+        <span>·</span>
+        <span id="mobile-cart-total">760 ETB</span>
+      </button>
+    </div>
+
+    <div id="sidebar-backdrop" class="hidden fixed inset-0 z-30 bg-ink/35 lg:hidden"></div>
+
+    <!-- Minimalistic Left Navigation Rail (No shortcuts clutter) -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-[216px] shrink-0 bg-surface border-r border-line flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
+      <div>
+        <div class="px-4 py-4 border-b border-line flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-forest-50 border border-forest-200 text-forest-700 font-semibold text-xs flex items-center justify-center shrink-0">AM</div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-ink truncate">Abebe Mini Mart</div>
+            <div class="flex items-center gap-1.5 text-[11px] text-inkmuted mt-0.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-forest-600 shrink-0"></span>
+              <span>Shift open · <span id="live-clock" class="font-mono">19:08</span></span>
+            </div>
+          </div>
+        </div>
+
+        <nav class="p-3 space-y-1" aria-label="Main navigation">
+          <button type="button" data-nav="counter" class="nav-btn relative w-full flex items-center justify-between h-10 px-3 rounded-lg text-[13px] font-medium transition-colors">
+            <span class="flex items-center gap-2.5">
+              <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+              Counter
+            </span>
+            <span id="nav-badge-parked" class="hidden px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded bg-amberwarm-50 text-amberwarm-700 border border-amberwarm-100">0</span>
+          </button>
+          <button type="button" data-nav="till" class="nav-btn relative w-full flex items-center justify-between h-10 px-3 rounded-lg text-[13px] font-medium transition-colors">
+            <span class="flex items-center gap-2.5">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+              Daily till
+            </span>
+            <span id="nav-badge-sales" class="text-[11px] font-mono text-inksubtle">18</span>
+          </button>
+          <button type="button" data-nav="inventory" class="nav-btn relative w-full flex items-center justify-between h-10 px-3 rounded-lg text-[13px] font-medium transition-colors">
+            <span class="flex items-center gap-2.5">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              Inventory
+            </span>
+            <span id="nav-badge-low" class="text-[11px] font-mono text-amberwarm-700 font-semibold">4</span>
+          </button>
+          <button type="button" data-nav="analytics" class="nav-btn relative w-full flex items-center justify-between h-10 px-3 rounded-lg text-[13px] font-medium transition-colors">
+            <span class="flex items-center gap-2.5">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+              Analytics
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Minimal Cashier Footer -->
+      <div class="p-3.5 border-t border-line space-y-2.5">
+        <div class="flex items-center justify-between text-xs text-inkmuted px-0.5">
+          <span>Cashier</span>
+          <span id="sidebar-cashier-phone" class="font-mono text-ink text-[11px] tabular">0911 00 00 00</span>
+        </div>
+        <button id="signout-btn" type="button" class="pressable w-full h-9 px-3 rounded-lg bg-surface border border-line hover:bg-muted text-xs font-medium text-inkmuted hover:text-ink flex items-center gap-2">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span>Sign out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Content -->
+    <main class="flex-1 flex min-w-0 pt-14 lg:pt-0 overflow-hidden">
+      <!-- VIEW 1: COUNTER -->
+      <section id="view-counter" class="view-section flex-1 flex min-w-0 h-full overflow-hidden">
+        <!-- Catalog Stage -->
+        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+          <header class="px-4 sm:px-6 pt-5 pb-3 shrink-0 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-baseline gap-2.5">
+                <h1 class="text-[22px] font-semibold tracking-tight text-ink">Counter</h1>
+                <span id="header-register-label" class="text-xs text-inksubtle font-mono">Register #1</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="parked-drawer-btn" type="button" class="hidden pressable items-center gap-1.5 h-8 px-3 rounded-full bg-amberwarm-50 border border-amberwarm-100 text-amberwarm-700 text-xs font-medium">
+                  <i data-lucide="pause-circle" class="w-3.5 h-3.5"></i>
+                  <span id="parked-count-label">1 held</span>
+                </button>
+                <div class="h-8 px-3 rounded-full bg-surface border border-line text-xs text-inkmuted flex items-center gap-2 tabular">
+                  <span>Today: <strong id="header-sales-count" class="text-ink font-semibold">18</strong> sales</span>
+                </div>
+                <button id="preview-decline-btn" type="button" title="Preview declined checkout animation" class="pressable h-8 px-3 rounded-full bg-crimson-50 border border-crimson-100 hover:bg-crimson-100/60 text-crimson-600 text-xs font-medium flex items-center gap-1.5">
+                  <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                  <span>Test decline</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Search + Filter Bar -->
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 text-inksubtle absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input
+                  id="product-search"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="Search products..."
+                  class="w-full h-10 pl-9 pr-14 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-inksubtle focus:outline-none focus:border-forest-700"
+                />
+                <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button id="clear-search-btn" type="button" class="hidden p-1 text-inksubtle hover:text-ink" aria-label="Clear search">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <kbd class="px-1.5 py-0.5 rounded bg-muted border border-line font-mono text-[10px] text-inkmuted">/</kbd>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" data-quick-filter="all" class="quick-filter-btn h-10 px-3 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5">
+                  All <span id="qf-all-count" class="font-mono opacity-75">12</span>
+                </button>
+                <button type="button" data-quick-filter="incart" class="quick-filter-btn h-10 px-3 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5">
+                  In cart <span id="qf-cart-count" class="font-mono opacity-75">2</span>
+                </button>
+                <button type="button" data-quick-filter="low" class="quick-filter-btn h-10 px-3 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5">
+                  Low stock <span id="qf-low-count" class="font-mono opacity-75">4</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Minimal Category Strip -->
+            <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+          </header>
+
+          <!-- Compact Product Grid (Smaller boxes, zero layout shift) -->
+          <div class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 pt-1">
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5"></div>
+            <div id="product-empty" class="hidden py-14 text-center bg-surface rounded-xl border border-dashed border-linestrong">
+              <p class="text-sm text-inkmuted">No matching products.</p>
+              <button id="reset-filters-btn" type="button" class="mt-3 px-3.5 py-1.5 rounded-lg bg-surface border border-line text-xs font-medium text-ink hover:bg-muted">Reset filters</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Checkout Ticket Rail -->
+        <aside id="cart-panel" class="fixed lg:static inset-y-0 right-0 z-40 w-full max-w-sm lg:w-[360px] xl:w-[380px] shrink-0 bg-surface border-l border-line flex flex-col h-full transform translate-x-full lg:translate-x-0 transition-transform duration-200 shadow-2xl lg:shadow-none">
+          <div class="px-5 py-4 border-b border-line flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2">
+              <button id="close-mobile-cart-btn" type="button" class="lg:hidden p-1.5 -ml-1.5 rounded-lg text-inkmuted hover:bg-muted" aria-label="Close cart">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              </button>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-[15px] font-semibold text-ink">Current sale</h2>
+                  <span id="cart-item-badge" class="px-2 py-0.5 rounded-full bg-muted text-inkmuted font-mono text-[11px] font-medium">3 items</span>
+                </div>
+                <div class="text-[11px] font-mono text-inksubtle mt-0.5">
+                  <span id="ticket-number-label">TICKET #019</span> · EAT
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="park-sale-btn" type="button" class="pressable h-8 px-2.5 rounded-lg border border-line text-xs font-medium text-inkmuted hover:bg-muted hover:text-ink disabled:opacity-40 disabled:pointer-events-none">
+                Hold
+              </button>
+              <button id="clear-cart-btn" type="button" class="pressable h-8 px-2.5 rounded-lg border border-line text-xs font-medium text-inkmuted hover:bg-crimson-50 hover:text-crimson-600 hover:border-crimson-100 disabled:opacity-40 disabled:pointer-events-none">
+                Drop all
+              </button>
+            </div>
+          </div>
+
+          <!-- Compact Cart Rows -->
+          <div id="cart-items-list" class="flex-1 overflow-y-auto divide-y divide-line/70 px-5"></div>
+
+          <!-- Minimal Checkout Footer -->
+          <div class="border-t border-dashed border-linestrong bg-surface px-5 pt-3.5 pb-4 shrink-0 space-y-3">
+            <!-- Payment Method -->
+            <div class="grid grid-cols-2 gap-1 p-1 rounded-lg bg-muted border border-line">
+              <button type="button" id="pay-cash-btn" class="pressable flex items-center justify-center gap-2 py-2 px-2.5 rounded-md text-xs font-semibold transition-all">
+                <i data-lucide="banknote" class="w-4 h-4"></i>
+                <span>Cash</span>
+              </button>
+              <button type="button" id="pay-digital-btn" class="pressable flex items-center justify-center gap-2 py-2 px-2.5 rounded-md text-xs font-semibold transition-all">
+                <i data-lucide="smartphone" class="w-4 h-4"></i>
+                <span>Telebirr · Bank</span>
+              </button>
+            </div>
+
+            <!-- Compact Pre-Charge Cash Quick Tender -->
+            <div id="cash-tender-box" class="rounded-lg bg-canvas border border-line p-2.5 space-y-2">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-medium text-inkmuted">Cash received</span>
+                <div class="flex items-center gap-1">
+                  <input id="custom-tender-input" type="number" min="0" step="1" placeholder="Exact" class="w-20 text-right font-mono text-xs font-medium px-2 py-0.5 rounded bg-surface border border-line focus:outline-none focus:border-forest-700 tabular" />
+                  <span class="font-mono text-[10px] text-inksubtle">ETB</span>
+                </div>
+              </div>
+              <div id="quick-tender-pills" class="grid grid-cols-4 gap-1"></div>
+              <div class="flex items-center justify-between pt-1.5 border-t border-line text-xs">
+                <span class="text-inkmuted">Change due</span>
+                <span id="live-change-due" class="font-mono font-semibold text-forest-700 tabular">0.00 ETB</span>
+              </div>
+            </div>
+
+            <!-- Compact Digital Channel -->
+            <div id="digital-ref-box" class="hidden rounded-lg bg-canvas border border-line p-2.5 space-y-2">
+              <div class="flex items-center justify-between gap-1">
+                <button type="button" data-digital-channel="Telebirr" class="digital-ch-btn flex-1 py-1 rounded text-[11px] font-medium border">Telebirr</button>
+                <button type="button" data-digital-channel="CBE Birr" class="digital-ch-btn flex-1 py-1 rounded text-[11px] font-medium border">CBE Birr</button>
+                <button type="button" data-digital-channel="Bank" class="digital-ch-btn flex-1 py-1 rounded text-[11px] font-medium border">Bank</button>
+              </div>
+              <input id="digital-ref-input" type="text" maxlength="20" placeholder="Optional reference / last 4 digits" class="w-full px-2.5 py-1.5 rounded bg-surface border border-line text-xs font-mono text-ink placeholder:text-inksubtle focus:outline-none focus:border-forest-700" />
+            </div>
+
+            <!-- Total + Charge Button -->
+            <div class="space-y-2.5">
+              <div class="flex items-baseline justify-between">
+                <span class="text-xs font-medium text-inkmuted">Total due</span>
+                <span id="cart-total-display" class="text-2xl font-semibold tracking-tight text-ink tabular">760.00 ETB</span>
+              </div>
+              <button id="charge-btn" type="button" class="pressable w-full h-12 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm flex items-center justify-center disabled:opacity-45 disabled:cursor-not-allowed">
+                <span id="charge-btn-label" class="tabular">Charge 760.00 ETB</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- VIEW 2: DAILY TILL -->
+      <section id="view-till" class="view-section hidden flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+        <div class="max-w-5xl mx-auto space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-[22px] font-semibold tracking-tight text-ink">Daily till</h1>
+              <p class="text-xs text-inkmuted mt-0.5">Live shift drawer reconciliation · Updates on every sale</p>
+            </div>
+            <button id="payout-modal-btn" type="button" class="pressable h-9 px-3.5 rounded-lg bg-surface border border-line text-xs font-medium text-ink hover:bg-muted flex items-center gap-1.5">
+              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+              Record cash payout
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <div class="text-xs text-inkmuted">Gross sales</div>
+              <div id="till-gross" class="text-lg font-semibold font-mono text-ink mt-1 tabular">12,480.00 ETB</div>
+              <div id="till-count" class="text-[11px] text-forest-700 mt-1">18 tickets</div>
+            </div>
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <div class="text-xs text-inkmuted">Cash sales</div>
+              <div id="till-cash" class="text-lg font-semibold font-mono text-ink mt-1 tabular">8,120.00 ETB</div>
+              <div id="till-float-note" class="text-[11px] text-inksubtle mt-1">Float: 5,000.00 ETB</div>
+            </div>
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <div class="text-xs text-inkmuted">Digital</div>
+              <div id="till-digital" class="text-lg font-semibold font-mono text-ink mt-1 tabular">4,360.00 ETB</div>
+              <div class="text-[11px] text-inksubtle mt-1">Telebirr · Bank</div>
+            </div>
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <div class="text-xs text-inkmuted">Expected in drawer</div>
+              <div id="till-expected" class="text-lg font-semibold font-mono text-forest-700 mt-1 tabular">13,120.00 ETB</div>
+              <div id="till-payouts-note" class="text-[11px] text-inksubtle mt-1">0.00 ETB payouts</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-surface rounded-xl border border-line p-4 space-y-3 h-fit">
+              <h2 class="text-sm font-semibold text-ink">Drawer count check</h2>
+              <div>
+                <label for="drawer-actual-input" class="block text-[11px] font-medium text-inkmuted mb-1">Counted cash (ETB)</label>
+                <input id="drawer-actual-input" type="number" step="1" placeholder="e.g. 13120" class="w-full h-10 px-3 rounded-lg border border-line font-mono text-sm focus:outline-none focus:border-forest-700 tabular" />
+              </div>
+              <div class="p-3 rounded-lg bg-canvas border border-line flex items-center justify-between text-xs">
+                <span class="text-inkmuted">Variance</span>
+                <span id="drawer-variance-val" class="font-mono font-semibold text-inkmuted tabular">Enter count</span>
+              </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-surface rounded-xl border border-line overflow-hidden">
+              <div class="px-4 py-3 border-b border-line flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-ink">Recent tickets</h2>
+                <span class="text-[11px] text-inksubtle">Void restores stock &amp; till</span>
+              </div>
+              <div id="till-tickets-list" class="divide-y divide-line/70 max-h-[400px] overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: INVENTORY -->
+      <section id="view-inventory" class="view-section hidden flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+        <div class="max-w-5xl mx-auto space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-[22px] font-semibold tracking-tight text-ink">Inventory</h1>
+              <p class="text-xs text-inkmuted mt-0.5">Live stock levels synced with Counter</p>
+            </div>
+            <button id="add-product-btn" type="button" class="pressable h-9 px-3.5 rounded-lg bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Add product
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative flex-1 min-w-[220px]">
+              <i data-lucide="search" class="w-4 h-4 text-inksubtle absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="inv-search" type="text" placeholder="Filter inventory..." class="w-full h-10 pl-9 pr-4 rounded-lg bg-surface border border-line text-sm focus:outline-none focus:border-forest-700" />
+            </div>
+            <button id="inv-low-toggle" type="button" class="h-10 px-3.5 rounded-lg bg-surface border border-line text-xs font-medium text-inkmuted hover:bg-muted">
+              Low / out of stock
+            </button>
+          </div>
+
+          <div class="bg-surface rounded-xl border border-line overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-line bg-canvas/50 text-[11px] font-medium text-inkmuted">
+                  <th class="py-2.5 px-4">Product</th>
+                  <th class="py-2.5 px-3">Category</th>
+                  <th class="py-2.5 px-3 text-right">Price</th>
+                  <th class="py-2.5 px-3 text-right">Stock</th>
+                  <th class="py-2.5 px-4 text-right">Quick restock</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-body" class="divide-y divide-line/70 text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: ANALYTICS -->
+      <section id="view-analytics" class="view-section hidden flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+        <div class="max-w-5xl mx-auto space-y-5">
+          <div>
+            <h1 class="text-[22px] font-semibold tracking-tight text-ink">Analytics</h1>
+            <p class="text-xs text-inkmuted mt-0.5">Today's pace, payment mix, and reorder alerts (EAT)</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 bg-surface rounded-xl border border-line p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold text-ink">Hourly sales (ETB)</h2>
+                <span class="text-[11px] font-mono text-inksubtle">08:00 – 19:00 EAT</span>
+              </div>
+              <div class="relative h-60">
+                <canvas id="hourly-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-surface rounded-xl border border-line p-4 flex flex-col">
+              <h2 class="text-sm font-semibold text-ink mb-3">Payment mix</h2>
+              <div class="relative h-44 flex-1">
+                <canvas id="payment-chart"></canvas>
+              </div>
+              <div id="payment-split-summary" class="mt-3 pt-3 border-t border-line grid grid-cols-2 gap-2 text-xs"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <h2 class="text-sm font-semibold text-ink mb-3">Top movers</h2>
+              <div id="analytics-top-movers" class="space-y-2.5"></div>
+            </div>
+            <div class="bg-surface rounded-xl border border-line p-4">
+              <h2 class="text-sm font-semibold text-ink mb-3">Reorder watchlist</h2>
+              <div id="analytics-reorder-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       CHECKOUT FEEDBACK MODAL (Big drawn ✔ / ✕ animation + preview switcher)
+       ======================================================================== -->
+  <div id="feedback-modal" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-[1.5px] flex flex-col items-center justify-center gap-3 p-4">
+    <!-- Preview State Switcher (from design-preview.html) -->
+    <div class="inline-flex items-center gap-1 p-1 rounded-full bg-surface border border-line shadow-lg">
+      <button type="button" id="switch-success-btn" class="h-7 px-3 rounded-full text-xs font-medium transition-colors">Recorded (✔)</button>
+      <button type="button" id="switch-declined-btn" class="h-7 px-3 rounded-full text-xs font-medium transition-colors">Declined (✕)</button>
+      <button type="button" id="replay-draw-btn" class="h-7 px-3 rounded-full text-xs font-medium text-inkmuted hover:bg-muted hover:text-ink flex items-center gap-1">
+        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+        <span>Replay</span>
+      </button>
+    </div>
+
+    <!-- Compact Zero-Scroll Feedback Card -->
+    <div id="feedback-card" class="modal-card-enter w-full max-w-[410px] bg-surface rounded-2xl border border-line shadow-2xl p-6 space-y-4">
+      <!-- Hero Emblem + Title -->
+      <div class="flex flex-col items-center text-center">
+        <div id="feedback-emblem-wrap" class="emblem-stage" aria-hidden="true"></div>
+        <span id="feedback-status-pill" class="mt-2 inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium border">Receipt confirmed</span>
+        <h3 id="feedback-title" class="text-xl font-semibold tracking-tight text-ink mt-2">Sale recorded</h3>
+        <p id="feedback-subtitle" class="text-xs text-inkmuted mt-0.5">3 items sold and store stock updated</p>
+        <div id="feedback-amount" class="text-[30px] leading-tight font-semibold tracking-tight text-ink mt-2 tabular">760.00 ETB</div>
+      </div>
+
+      <!-- Success Body -->
+      <div id="feedback-success-body" class="space-y-2.5">
+        <div class="px-3.5 py-2.5 rounded-lg bg-canvas border border-line flex items-center justify-between text-xs text-inkmuted">
+          <span id="fb-ticket-ref" class="font-mono text-ink font-medium">TICKET #019</span>
+          <span id="fb-pay-label">Paid via Cash</span>
+          <span id="fb-time" class="font-mono tabular">19:08 EAT</span>
+        </div>
+
+        <div id="fb-change-strip" class="px-3.5 py-2 rounded-lg bg-forest-50 border border-forest-200 flex items-center justify-between text-xs">
+          <span id="fb-tender-summary" class="text-forest-800">Tendered 1,000.00 ETB</span>
+          <span id="fb-change-summary" class="font-mono font-semibold text-forest-700 tabular">Change: 240.00 ETB</span>
+        </div>
+
+        <button type="button" id="toggle-receipt-items-btn" aria-expanded="false" class="w-full h-9 px-3 rounded-lg bg-surface border border-line hover:bg-muted flex items-center justify-between text-xs font-medium text-ink">
+          <span id="receipt-items-toggle-label">View itemized receipt (3 items)</span>
+          <i data-lucide="chevron-down" id="receipt-chevron" class="w-4 h-4 text-inkmuted transition-transform"></i>
+        </button>
+        <div id="receipt-items-panel" class="hidden px-3 py-2.5 rounded-lg bg-canvas border border-line space-y-1.5 max-h-28 overflow-y-auto text-xs"></div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button type="button" id="copy-receipt-btn" class="pressable h-11 rounded-xl border border-line bg-surface hover:bg-muted text-xs font-medium text-ink flex items-center justify-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="copy-receipt-label">Copy receipt</span>
+          </button>
+          <button type="button" id="close-feedback-btn" class="pressable h-11 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold flex items-center justify-center">
+            Done · Next sale
+          </button>
+        </div>
+      </div>
+
+      <!-- Declined Body -->
+      <div id="feedback-declined-body" class="hidden space-y-3">
+        <div class="p-3.5 rounded-lg bg-crimson-50 border border-crimson-100 space-y-1">
+          <div class="font-mono text-[11px] font-medium text-crimson-600">HTTP 409 · INSUFFICIENT_STOCK</div>
+          <div class="text-xs font-medium text-ink">
+            Insufficient stock for White Teff (5kg). Requested 6 units, only 4 remaining in store inventory.
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="decline-edit-btn" class="pressable h-11 rounded-xl border border-line bg-surface hover:bg-muted text-xs font-medium text-ink">Edit cart</button>
+          <button type="button" id="decline-retry-btn" class="pressable h-11 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-white text-xs font-semibold">Retry charge</button>
+        </div>
+      </div>
+
+      <!-- Auto-Close Timer Bar -->
+      <div class="pt-1 space-y-1.5">
+        <div class="flex items-center justify-between text-[11px] text-inksubtle">
+          <span id="timer-status-text">Auto-closing in 3s · tap card to keep open</span>
+          <button type="button" id="toggle-pin-btn" class="px-2 py-0.5 rounded-full border border-line bg-canvas text-inkmuted hover:text-ink font-medium">Keep open</button>
+        </div>
+        <div class="w-full h-[3px] rounded-full bg-muted overflow-hidden">
+          <div id="timer-fill" class="h-full w-full origin-left bg-forest-600"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARKED SALES MODAL -->
+  <div id="parked-modal" class="hidden fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
+    <div class="animate-fade bg-surface rounded-2xl border border-line shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold text-ink">Held baskets</h3>
+          <p class="text-[11px] text-inkmuted">Resume a customer sale back onto the counter</p>
+        </div>
+        <button id="close-parked-modal" type="button" class="p-1.5 rounded-lg text-inksubtle hover:bg-muted">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div id="parked-list" class="p-4 space-y-2 max-h-80 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT MODAL -->
+  <div id="add-product-modal" class="hidden fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
+    <form id="add-product-form" class="animate-fade bg-surface rounded-2xl border border-line shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-ink">Add product</h3>
+        <button id="close-add-product" type="button" class="p-1.5 rounded-lg text-inksubtle hover:bg-muted">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-inkmuted mb-1">Product name</label>
+          <input id="np-name" required type="text" placeholder="e.g. Red Lentils Misir (1kg)" class="w-full h-9 px-3 rounded-lg border border-line focus:outline-none focus:border-forest-700" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-inkmuted mb-1">Category</label>
+            <select id="np-category" class="w-full h-9 px-2.5 rounded-lg border border-line bg-surface focus:outline-none focus:border-forest-700">
+              <option>Coffee &amp; Tea</option>
+              <option>Cooking Oil</option>
+              <option>Grains</option>
+              <option>Beverages</option>
+              <option>Spices</option>
+              <option>Pantry</option>
+              <option>Dairy</option>
+              <option>Household</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-inkmuted mb-1">Price (ETB)</label>
+            <input id="np-price" required type="number" min="1" step="0.5" placeholder="180" class="w-full h-9 px-3 rounded-lg border border-line font-mono focus:outline-none focus:border-forest-700" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-inkmuted mb-1">Initial stock</label>
+            <input id="np-stock" required type="number" min="0" step="1" placeholder="15" class="w-full h-9 px-3 rounded-lg border border-line font-mono focus:outline-none focus:border-forest-700" />
+          </div>
+          <div>
+            <label class="block font-medium text-inkmuted mb-1">Low stock alert at</label>
+            <input id="np-threshold" required type="number" min="1" step="1" value="5" class="w-full h-9 px-3 rounded-lg border border-line font-mono focus:outline-none focus:border-forest-700" />
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-canvas/60 border-t border-line flex justify-end gap-2">
+        <button id="cancel-add-product" type="button" class="px-3.5 py-2 rounded-lg border border-line bg-surface text-xs font-medium text-inkmuted">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold">Save product</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- PAYOUT MODAL -->
+  <div id="payout-modal" class="hidden fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
+    <form id="payout-form" class="animate-fade bg-surface rounded-2xl border border-line shadow-2xl w-full max-w-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-ink">Record cash payout</h3>
+        <button id="close-payout" type="button" class="p-1.5 rounded-lg text-inksubtle hover:bg-muted">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-inkmuted mb-1">Amount (ETB)</label>
+          <input id="po-amount" required type="number" min="1" step="1" placeholder="500" class="w-full h-9 px-3 rounded-lg border border-line font-mono focus:outline-none focus:border-forest-700" />
+        </div>
+        <div>
+          <label class="block font-medium text-inkmuted mb-1">Reason</label>
+          <input id="po-reason" required type="text" placeholder="e.g. Milk supplier delivery" class="w-full h-9 px-3 rounded-lg border border-line focus:outline-none focus:border-forest-700" />
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-canvas/60 border-t border-line flex justify-end gap-2">
+        <button id="cancel-payout" type="button" class="px-3.5 py-2 rounded-lg border border-line bg-surface text-xs font-medium text-inkmuted">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold">Record</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast-container" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
+
+  <script>
+    // =========================================================================
+    // STATE (Seeded with exact catalog & thresholds from design-preview.html)
+    // =========================================================================
+    const state = {
+      signedIn: true,
+      cashierPhone: '0911 00 00 00',
+      registerName: 'Register #1',
+      activeNav: 'counter',
+      searchQuery: '',
+      quickFilter: 'all',
+      categoryFilter: 'All',
+      invSearch: '',
+      invLowOnly: false,
+      paymentMethod: 'cash',
+      digitalChannel: 'Telebirr',
+      tenderAmount: null,
+      ticketCounter: 19,
+      openingFloat: 5000,
+      cashPayouts: 0,
+      products: [
+        { id: 'prod_01', category: 'Coffee & Tea', name: 'Buna Yirgacheffe (250g)', price: 220, stock: 18, lowStockThreshold: 5, soldToday: 9 },
+        { id: 'prod_02', category: 'Cooking Oil', name: 'Sunflower Oil (1L)', price: 320, stock: 12, lowStockThreshold: 5, soldToday: 7 },
+        { id: 'prod_03', category: 'Grains', name: 'White Teff (5kg)', price: 685, stock: 4, lowStockThreshold: 5, soldToday: 5 },
+        { id: 'prod_04', category: 'Beverages', name: 'Ambo Sparkling Water (500ml)', price: 35, stock: 42, lowStockThreshold: 10, soldToday: 24 },
+        { id: 'prod_05', category: 'Spices', name: 'Berbere Spice Blend (200g)', price: 145, stock: 3, lowStockThreshold: 5, soldToday: 6 },
+        { id: 'prod_06', category: 'Pantry', name: 'Shiro Powder (500g)', price: 160, stock: 15, lowStockThreshold: 5, soldToday: 8 },
+        { id: 'prod_07', category: 'Dairy', name: 'Fresh Pasteurized Milk (1L)', price: 95, stock: 9, lowStockThreshold: 6, soldToday: 11 },
+        { id: 'prod_08', category: 'Pantry', name: 'Spaghetti Pasta (500g)', price: 75, stock: 26, lowStockThreshold: 8, soldToday: 10 },
+        { id: 'prod_09', category: 'Household', name: 'Laundry Soap Bar (200g)', price: 55, stock: 2, lowStockThreshold: 6, soldToday: 9 },
+        { id: 'prod_10', category: 'Beverages', name: 'Bottled Spring Water (1L)', price: 28, stock: 31, lowStockThreshold: 10, soldToday: 18 },
+        { id: 'prod_11', category: 'Pantry', name: 'Wheat Flour (2kg)', price: 185, stock: 11, lowStockThreshold: 5, soldToday: 6 },
+        { id: 'prod_12', category: 'Pantry', name: 'Refined Sugar (1kg)', price: 130, stock: 0, lowStockThreshold: 5, soldToday: 7 }
+      ],
+      cart: [
+        { productId: 'prod_01', qty: 2 },
+        { productId: 'prod_02', qty: 1 }
+      ],
+      parkedSales: [],
+      baselineSalesCount: 15,
+      baselineCash: 6435,
+      baselineDigital: 3670,
+      tickets: [
+        { id: 18, time: '18:28', method: 'cash', channel: 'Cash', ref: '', total: 685, tendered: 1000, change: 315, voided: false, items: [{ productId: 'prod_03', name: 'White Teff (5kg)', qty: 1, price: 685 }] },
+        { id: 17, time: '18:14', method: 'digital', channel: 'Telebirr', ref: 'TB-8841', total: 690, tendered: 690, change: 0, voided: false, items: [{ productId: 'prod_01', name: 'Buna Yirgacheffe (250g)', qty: 2, price: 220 }, { productId: 'prod_06', name: 'Shiro Powder (500g)', qty: 1, price: 160 }, { productId: 'prod_07', name: 'Fresh Pasteurized Milk (1L)', qty: 1, price: 95 }] },
+        { id: 16, time: '17:52', method: 'cash', channel: 'Cash', ref: '', total: 1000, tendered: 1000, change: 0, voided: false, items: [{ productId: 'prod_02', name: 'Sunflower Oil (1L)', qty: 2, price: 320 }, { productId: 'prod_05', name: 'Berbere Spice Blend (200g)', qty: 2, price: 145 }, { productId: 'prod_04', name: 'Ambo Sparkling Water (500ml)', qty: 2, price: 35 }] }
+      ],
+      hourlyRevenue: [620, 940, 1380, 1120, 890, 1460, 1050, 1210, 1590, 1340, 880],
+      lastSaleSnapshot: {
+        id: 19,
+        time: '19:08',
+        method: 'cash',
+        channel: 'Cash',
+        ref: '',
+        total: 760,
+        tendered: 1000,
+        change: 240,
+        items: [
+          { productId: 'prod_01', name: 'Buna Yirgacheffe (250g)', qty: 2, price: 220 },
+          { productId: 'prod_02', name: 'Sunflower Oil (1L)', qty: 1, price: 320 }
+        ]
+      }
+    };
+
+    let hourlyChartInstance = null;
+    let paymentChartInstance = null;
+    let currentFeedbackMode = 'success';
+    let isModalPinned = false;
+    let timerRemainingMs = 3000;
+    let timerLastTick = null;
+    let timerRafId = null;
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+    function fmtETB(num) {
+      return Number(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtShort(num) {
+      return Number(num || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+    function getProduct(id) {
+      return state.products.find(p => p.id === id);
+    }
+    function getCartQty(productId) {
+      const entry = state.cart.find(c => c.productId === productId);
+      return entry ? entry.qty : 0;
+    }
+    function getCartTotal() {
+      return state.cart.reduce((sum, item) => {
+        const p = getProduct(item.productId);
+        return sum + (p ? p.price * item.qty : 0);
+      }, 0);
+    }
+    function getCartItemCount() {
+      return state.cart.reduce((sum, item) => sum + item.qty, 0);
+    }
+    function getNowEAT() {
+      try {
+        return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Addis_Ababa' });
+      } catch {
+        return '19:08';
+      }
+    }
+    function isLowStock(p) {
+      return p.stock > 0 && p.stock <= p.lowStockThreshold;
+    }
+    function getShiftStats() {
+      let cash = state.baselineCash;
+      let digital = state.baselineDigital;
+      let count = state.baselineSalesCount;
+      state.tickets.forEach(t => {
+        if (!t.voided) {
+          count += 1;
+          if (t.method === 'cash') cash += t.total;
+          else digital += t.total;
+        }
+      });
+      return {
+        count,
+        cash,
+        digital,
+        gross: cash + digital,
+        expectedDrawer: state.openingFloat + cash - state.cashPayouts
+      };
+    }
+    function getSmartBills(total) {
+      if (total <= 0) return [500, 1000, 2000];
+      const candidates = [50, 100, 200, 500, 1000, 2000, 5000];
+      const rounded100 = Math.ceil(total / 100) * 100;
+      const set = new Set();
+      if (rounded100 > total) set.add(rounded100);
+      candidates.forEach(b => { if (b > total) set.add(b); });
+      const list = Array.from(set).sort((a, b) => a - b).slice(0, 3);
+      while (list.length < 3) list.push((list[list.length - 1] || 1000) + 1000);
+      return list;
+    }
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'warn' ? 'bg-amberwarm-700 text-white' : type === 'error' ? 'bg-crimson-700 text-white' : 'bg-ink text-white';
+      el.className = `animate-fade px-4 py-2 rounded-full text-xs font-medium shadow-lg ${colors}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 180ms ease';
+        setTimeout(() => el.remove(), 200);
+      }, 2100);
+    }
+
+    // =========================================================================
+    // AUTH / LOGIN
+    // =========================================================================
+    function showLoginScreen() {
+      state.signedIn = false;
+      closeMobileDrawers();
+      document.getElementById('login-phone').value = state.cashierPhone;
+      document.getElementById('login-pin').value = '';
+      document.getElementById('login-error').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function completeLogin(phone, registerName, floatVal) {
+      state.signedIn = true;
+      state.cashierPhone = phone || '0911 00 00 00';
+      state.registerName = registerName || 'Register #1';
+      if (!Number.isNaN(floatVal) && floatVal >= 0) {
+        state.openingFloat = floatVal;
+      }
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('sidebar-cashier-phone').textContent = state.cashierPhone;
+      document.getElementById('header-register-label').textContent = state.registerName;
+      renderAll();
+      showToast(`Signed in · ${state.registerName}`);
+    }
+
+    // =========================================================================
+    // MUTATIONS
+    // =========================================================================
+    function addToCart(productId, delta = 1) {
+      const p = getProduct(productId);
+      if (!p || p.stock === 0) return;
+      const existing = state.cart.find(c => c.productId === productId);
+      const currentQty = existing ? existing.qty : 0;
+      const nextQty = currentQty + delta;
+
+      if (nextQty > p.stock) {
+        showToast(`Only ${p.stock} left for ${p.name}`, 'warn');
+        return;
+      }
+      if (nextQty <= 0) {
+        state.cart = state.cart.filter(c => c.productId !== productId);
+      } else if (existing) {
+        existing.qty = nextQty;
+      } else {
+        state.cart.push({ productId, qty: nextQty });
+      }
+      state.tenderAmount = null;
+      document.getElementById('custom-tender-input').value = '';
+      renderAll();
+    }
+
+    function dropFromCart(productId) {
+      state.cart = state.cart.filter(c => c.productId !== productId);
+      state.tenderAmount = null;
+      document.getElementById('custom-tender-input').value = '';
+      renderAll();
+    }
+
+    function clearCart() {
+      state.cart = [];
+      state.tenderAmount = null;
+      document.getElementById('custom-tender-input').value = '';
+      renderAll();
+    }
+
+    function parkCurrentSale() {
+      if (state.cart.length === 0) return;
+      state.parkedSales.unshift({
+        id: Date.now(),
+        time: getNowEAT(),
+        total: getCartTotal(),
+        items: state.cart.map(c => ({ ...c }))
+      });
+      state.cart = [];
+      state.tenderAmount = null;
+      renderAll();
+      showToast('Basket held for later');
+    }
+
+    function resumeParkedSale(parkedId) {
+      const idx = state.parkedSales.findIndex(s => s.id === parkedId);
+      if (idx === -1) return;
+      const [sale] = state.parkedSales.splice(idx, 1);
+      if (state.cart.length > 0) {
+        state.parkedSales.push({
+          id: Date.now(),
+          time: getNowEAT(),
+          total: getCartTotal(),
+          items: state.cart.map(c => ({ ...c }))
+        });
+      }
+      state.cart = sale.items;
+      state.tenderAmount = null;
+      document.getElementById('parked-modal').classList.add('hidden');
+      renderAll();
+      showToast('Held basket restored');
+    }
+
+    function completeSale() {
+      if (state.cart.length === 0) return;
+      const total = getCartTotal();
+      const tendered = state.paymentMethod === 'cash'
+        ? (state.tenderAmount !== null ? state.tenderAmount : total)
+        : total;
+
+      if (state.paymentMethod === 'cash' && tendered < total) {
+        showToast(`Cash received is short by ${fmtETB(total - tendered)} ETB`, 'error');
+        return;
+      }
+
+      const change = state.paymentMethod === 'cash' ? Math.max(0, tendered - total) : 0;
+      const refVal = document.getElementById('digital-ref-input').value.trim();
+
+      const lineItems = state.cart.map(c => {
+        const p = getProduct(c.productId);
+        p.stock = Math.max(0, p.stock - c.qty);
+        p.soldToday += c.qty;
+        return { productId: p.id, name: p.name, qty: c.qty, price: p.price };
+      });
+
+      const ticket = {
+        id: state.ticketCounter,
+        time: getNowEAT(),
+        method: state.paymentMethod,
+        channel: state.paymentMethod === 'cash' ? 'Cash' : state.digitalChannel,
+        ref: state.paymentMethod === 'digital' ? refVal : '',
+        total,
+        tendered,
+        change,
+        voided: false,
+        items: lineItems
+      };
+
+      state.tickets.unshift(ticket);
+      state.lastSaleSnapshot = ticket;
+      state.hourlyRevenue[state.hourlyRevenue.length - 1] += total;
+      state.ticketCounter += 1;
+      state.cart = [];
+      state.tenderAmount = null;
+      document.getElementById('digital-ref-input').value = '';
+      document.getElementById('custom-tender-input').value = '';
+
+      renderAll();
+      openFeedbackModal('success');
+    }
+
+    function voidTicket(ticketId) {
+      const t = state.tickets.find(x => x.id === ticketId);
+      if (!t || t.voided) return;
+      t.voided = true;
+      t.items.forEach(item => {
+        const p = getProduct(item.productId);
+        if (p) {
+          p.stock += item.qty;
+          p.soldToday = Math.max(0, p.soldToday - item.qty);
+        }
+      });
+      renderAll();
+      showToast(`Ticket #${String(t.id).padStart(3, '0')} voided & stock restored`, 'warn');
+    }
+
+    function restockProduct(productId, amount) {
+      const p = getProduct(productId);
+      if (!p) return;
+      p.stock += amount;
+      renderAll();
+      showToast(`Restocked +${amount} ${p.name}`);
+    }
+
+    // =========================================================================
+    // CHECKOUT FEEDBACK MODAL (BIG DRAWN ✔ AND ✕ ANIMATIONS)
+    // =========================================================================
+    function renderAnimatedEmblem(mode) {
+      const wrap = document.getElementById('feedback-emblem-wrap');
+      // Re-trigger container pop animation cleanly
+      wrap.style.animation = 'none';
+      void wrap.offsetWidth;
+      wrap.style.animation = '';
+
+      if (mode === 'success') {
+        wrap.innerHTML = `
+          <svg class="emblem-svg" viewBox="0 0 96 96" fill="none">
+            <circle class="emblem-fill" cx="48" cy="48" r="42" fill="#ECF7F0" />
+            <circle class="emblem-ring" cx="48" cy="48" r="42" stroke="#157347" pathLength="100" />
+            <path class="emblem-check" d="M27 50.5 L42 65 L69 33" stroke="#157347" pathLength="100" />
+          </svg>
+        `;
+      } else {
+        wrap.innerHTML = `
+          <svg class="emblem-svg" viewBox="0 0 96 96" fill="none">
+            <circle class="emblem-fill" cx="48" cy="48" r="42" fill="#FEF0F0" />
+            <circle class="emblem-ring" cx="48" cy="48" r="42" stroke="#B91C1C" pathLength="100" />
+            <path class="emblem-cross-1" d="M31 31 L65 65" stroke="#B91C1C" pathLength="100" />
+            <path class="emblem-cross-2" d="M65 31 L31 65" stroke="#B91C1C" pathLength="100" />
+          </svg>
+        `;
+      }
+    }
+
+    function stopFeedbackTimer() {
+      if (timerRafId !== null) {
+        cancelAnimationFrame(timerRafId);
+        timerRafId = null;
+      }
+    }
+
+    function closeFeedbackModal() {
+      stopFeedbackTimer();
+      document.getElementById('feedback-modal').classList.add('hidden');
+    }
+
+    function updateTimerUi(durationMs) {
+      const fill = document.getElementById('timer-fill');
+      const statusText = document.getElementById('timer-status-text');
+      const pinBtn = document.getElementById('toggle-pin-btn');
+      const ratio = Math.max(0, Math.min(1, timerRemainingMs / durationMs));
+      fill.style.transform = `scaleX(${ratio})`;
+
+      if (isModalPinned) {
+        statusText.textContent = 'Pinned open · Press Escape to close';
+        pinBtn.textContent = 'Resume';
+      } else {
+        const secs = Math.max(1, Math.ceil(timerRemainingMs / 1000));
+        statusText.textContent = `Auto-closing in ${secs}s · tap card to keep open`;
+        pinBtn.textContent = 'Keep open';
+      }
+    }
+
+    function startFeedbackTimer(durationMs) {
+      stopFeedbackTimer();
+      timerRemainingMs = durationMs;
+      timerLastTick = performance.now();
+      updateTimerUi(durationMs);
+
+      function tick(now) {
+        const dt = now - timerLastTick;
+        timerLastTick = now;
+        if (!isModalPinned) {
+          timerRemainingMs -= dt;
+          if (timerRemainingMs <= 0) {
+            closeFeedbackModal();
+            return;
+          }
+        }
+        updateTimerUi(durationMs);
+        timerRafId = requestAnimationFrame(tick);
+      }
+      timerRafId = requestAnimationFrame(tick);
+    }
+
+    function pinFeedbackModal() {
+      if (isModalPinned) return;
+      isModalPinned = true;
+      updateTimerUi(currentFeedbackMode === 'success' ? 2800 : 3500);
+    }
+
+    function openFeedbackModal(mode) {
+      currentFeedbackMode = mode;
+      isModalPinned = false;
+      const isSuccess = mode === 'success';
+      const durationMs = isSuccess ? 2800 : 3500;
+
+      const card = document.getElementById('feedback-card');
+      card.style.animation = 'none';
+      void card.offsetWidth;
+      card.style.animation = '';
+
+      renderAnimatedEmblem(mode);
+
+      // Update preview switcher pills
+      document.getElementById('switch-success-btn').className = `h-7 px-3 rounded-full text-xs font-medium transition-colors ${
+        isSuccess ? 'bg-forest-50 text-forest-600' : 'text-inkmuted hover:bg-muted'
+      }`;
+      document.getElementById('switch-declined-btn').className = `h-7 px-3 rounded-full text-xs font-medium transition-colors ${
+        !isSuccess ? 'bg-crimson-50 text-crimson-600' : 'text-inkmuted hover:bg-muted'
+      }`;
+
+      const pill = document.getElementById('feedback-status-pill');
+      pill.className = `mt-2 inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-medium border ${
+        isSuccess
+          ? 'bg-forest-50 border-forest-200 text-forest-600'
+          : 'bg-crimson-50 border-crimson-100 text-crimson-600'
+      }`;
+      pill.textContent = isSuccess ? 'Receipt confirmed' : 'Checkout declined';
+
+      const timerFill = document.getElementById('timer-fill');
+      timerFill.className = `h-full w-full origin-left ${isSuccess ? 'bg-forest-600' : 'bg-crimson-600'}`;
+
+      if (isSuccess) {
+        const snap = state.lastSaleSnapshot;
+        const count = snap.items.reduce((a, b) => a + b.qty, 0);
+        const itemLabel = `${count} ${count === 1 ? 'item' : 'items'}`;
+        document.getElementById('feedback-title').textContent = 'Sale recorded';
+        document.getElementById('feedback-subtitle').textContent = `${itemLabel} sold and store stock updated`;
+        document.getElementById('feedback-amount').textContent = `${fmtETB(snap.total)} ETB`;
+        document.getElementById('fb-ticket-ref').textContent = `TICKET #${String(snap.id).padStart(3, '0')}`;
+        document.getElementById('fb-pay-label').textContent = `Paid via ${snap.channel}`;
+        document.getElementById('fb-time').textContent = `${snap.time} EAT`;
+
+        const changeStrip = document.getElementById('fb-change-strip');
+        if (snap.method === 'cash') {
+          changeStrip.classList.remove('hidden');
+          document.getElementById('fb-tender-summary').textContent =
+            snap.tendered === snap.total ? 'Exact cash' : `Tendered ${fmtETB(snap.tendered)} ETB`;
+          document.getElementById('fb-change-summary').textContent = `Change: ${fmtETB(snap.change)} ETB`;
+        } else {
+          changeStrip.classList.add('hidden');
+        }
+
+        document.getElementById('receipt-items-toggle-label').textContent = `View itemized receipt (${itemLabel})`;
+        const panel = document.getElementById('receipt-items-panel');
+        panel.classList.add('hidden');
+        document.getElementById('toggle-receipt-items-btn').setAttribute('aria-expanded', 'false');
+        document.getElementById('receipt-chevron').style.transform = '';
+        panel.innerHTML = snap.items.map(i => `
+          <div class="flex items-center justify-between">
+            <span class="text-ink font-medium truncate pr-2">${i.qty}× ${i.name}</span>
+            <span class="font-mono text-inkmuted shrink-0 tabular">${fmtETB(i.qty * i.price)} ETB</span>
+          </div>
+        `).join('');
+
+        document.getElementById('copy-receipt-label').textContent = 'Copy receipt';
+        document.getElementById('feedback-success-body').classList.remove('hidden');
+        document.getElementById('feedback-declined-body').classList.add('hidden');
+      } else {
+        const activeTotal = getCartTotal() || state.lastSaleSnapshot.total;
+        document.getElementById('feedback-title').textContent = 'Sale declined';
+        document.getElementById('feedback-subtitle').textContent = 'No charge was recorded and inventory was not modified';
+        document.getElementById('feedback-amount').textContent = `${fmtETB(activeTotal)} ETB`;
+
+        document.getElementById('feedback-success-body').classList.add('hidden');
+        document.getElementById('feedback-declined-body').classList.remove('hidden');
+      }
+
+      document.getElementById('feedback-modal').classList.remove('hidden');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      startFeedbackTimer(durationMs);
+    }
+
+    // =========================================================================
+    // RENDERING
+    // =========================================================================
+    function getFilteredProducts() {
+      const q = state.searchQuery.trim().toLowerCase();
+      return state.products.filter(p => {
+        if (state.quickFilter === 'incart' && getCartQty(p.id) === 0) return false;
+        if (state.quickFilter === 'low' && p.stock > p.lowStockThreshold) return false;
+        if (state.categoryFilter !== 'All' && p.category !== state.categoryFilter) return false;
+        if (q) return p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+        return true;
+      });
+    }
+
+    function renderNavigation() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const active = btn.dataset.nav === state.activeNav;
+        btn.className = `nav-btn relative w-full flex items-center justify-between h-10 px-3 rounded-lg text-[13px] font-medium transition-colors ${
+          active
+            ? 'bg-muted text-ink font-semibold border border-line'
+            : 'text-inkmuted hover:bg-muted/70 hover:text-ink border border-transparent'
+        }`;
+      });
+
+      document.querySelectorAll('.view-section').forEach(sec => {
+        sec.classList.toggle('hidden', sec.id !== `view-${state.activeNav}`);
+      });
+
+      const stats = getShiftStats();
+      const lowCount = state.products.filter(p => p.stock <= p.lowStockThreshold).length;
+      document.getElementById('nav-badge-sales').textContent = stats.count;
+      document.getElementById('nav-badge-low').textContent = lowCount;
+      document.getElementById('header-sales-count').textContent = stats.count;
+
+      const parkedBadge = document.getElementById('nav-badge-parked');
+      const parkedBtn = document.getElementById('parked-drawer-btn');
+      if (state.parkedSales.length > 0) {
+        parkedBadge.classList.remove('hidden');
+        parkedBadge.textContent = state.parkedSales.length;
+        parkedBtn.classList.remove('hidden');
+        parkedBtn.classList.add('flex');
+        document.getElementById('parked-count-label').textContent = `${state.parkedSales.length} held`;
+      } else {
+        parkedBadge.classList.add('hidden');
+        parkedBtn.classList.add('hidden');
+        parkedBtn.classList.remove('flex');
+      }
+    }
+
+    function renderQuickFilters() {
+      const lowCount = state.products.filter(p => p.stock <= p.lowStockThreshold).length;
+      document.getElementById('qf-all-count').textContent = state.products.length;
+      document.getElementById('qf-cart-count').textContent = state.cart.length;
+      document.getElementById('qf-low-count').textContent = lowCount;
+
+      document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        const active = btn.dataset.quickFilter === state.quickFilter;
+        btn.className = `quick-filter-btn h-10 px-3 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
+          active
+            ? 'bg-ink text-white border-ink'
+            : 'bg-surface text-inkmuted border-line hover:border-linestrong hover:text-ink'
+        }`;
+      });
+    }
+
+    function renderCategoryPills() {
+      const categories = ['All', ...new Set(state.products.map(p => p.category))];
+      document.getElementById('category-pills').innerHTML = categories.map(cat => {
+        const active = state.categoryFilter === cat;
+        return `
+          <button type="button" data-cat="${cat}" class="cat-pill pressable shrink-0 h-7 px-2.5 rounded-full text-[11px] font-medium border transition-colors ${
+            active
+              ? 'bg-ink text-white border-ink'
+              : 'bg-surface text-inkmuted border-line hover:border-linestrong hover:text-ink'
+          }">${cat}</button>
+        `;
+      }).join('');
+    }
+
+    // Compact, minimalistic product cards (reduced height: 112px, zero layout jump)
+    function renderProductGrid() {
+      const filtered = getFilteredProducts();
+      const grid = document.getElementById('product-grid');
+      const empty = document.getElementById('product-empty');
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      grid.innerHTML = filtered.map(p => {
+        const qty = getCartQty(p.id);
+        const inCart = qty > 0;
+        const outOfStock = p.stock === 0;
+        const low = isLowStock(p);
+
+        const stockLabel = outOfStock
+          ? `<span class="text-[10px] font-medium text-crimson-600 bg-crimson-50 px-1.5 py-0.5 rounded">Out</span>`
+          : low
+            ? `<span class="text-[10px] font-medium text-amberwarm-700 bg-amberwarm-50 px-1.5 py-0.5 rounded tabular">${p.stock} left</span>`
+            : `<span class="text-[10px] text-inksubtle tabular">${p.stock}</span>`;
+
+        const bottomRow = inCart
+          ? `
+            <div class="flex items-center justify-between pt-1.5 mt-auto border-t border-forest-200/80">
+              <div class="flex items-center gap-1">
+                <button type="button" data-action="dec" data-id="${p.id}" class="card-ctrl pressable w-6 h-6 rounded bg-surface border border-forest-200 text-forest-800 hover:bg-forest-100 flex items-center justify-center font-semibold text-xs" aria-label="Remove one">−</button>
+                <span class="w-5 text-center font-mono text-[11px] font-semibold text-forest-800 tabular">${qty}</span>
+                <button type="button" data-action="inc" data-id="${p.id}" class="card-ctrl pressable w-6 h-6 rounded bg-forest-700 text-white hover:bg-forest-800 flex items-center justify-center font-semibold text-xs" aria-label="Add one">+</button>
+              </div>
+              <button type="button" data-action="drop" data-id="${p.id}" class="card-ctrl text-[10px] font-medium text-inkmuted hover:text-crimson-600 px-1.5 py-0.5 rounded">Drop</button>
+            </div>
+          `
+          : `
+            <div class="flex items-baseline justify-between pt-1 mt-auto">
+              <span class="text-[13px] font-semibold font-mono text-ink tabular">${fmtETB(p.price)} <span class="text-[10px] font-normal text-inksubtle">ETB</span></span>
+              ${stockLabel}
+            </div>
+          `;
+
+        return `
+          <div
+            data-card-id="${p.id}"
+            class="product-card pressable flex flex-col h-[112px] p-2.5 rounded-xl border text-left select-none transition-colors ${
+              outOfStock
+                ? 'bg-muted/70 border-line opacity-55 cursor-not-allowed'
+                : inCart
+                  ? 'bg-forest-50 border-forest-700 cursor-pointer'
+                  : 'bg-surface border-line hover:border-linestrong cursor-pointer'
+            }"
+          >
+            <div class="flex items-center justify-between gap-1.5">
+              <span class="text-[10px] font-medium text-inksubtle truncate">${p.category}</span>
+              ${inCart
+                ? `<span class="text-[10px] font-mono font-semibold text-forest-700 shrink-0 tabular">${fmtShort(p.price)} ETB</span>`
+                : ''}
+            </div>
+            <div class="mt-1 text-[13px] font-medium text-ink leading-tight line-clamp-2">${p.name}</div>
+            ${bottomRow}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cart-items-list');
+      const total = getCartTotal();
+      const itemCount = getCartItemCount();
+
+      document.getElementById('ticket-number-label').textContent = `TICKET #${String(state.ticketCounter).padStart(3, '0')}`;
+      document.getElementById('cart-item-badge').textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+      document.getElementById('cart-total-display').textContent = `${fmtETB(total)} ETB`;
+      document.getElementById('mobile-cart-count').textContent = itemCount;
+      document.getElementById('mobile-cart-total').textContent = `${fmtShort(total)} ETB`;
+
+      const hasItems = state.cart.length > 0;
+      document.getElementById('park-sale-btn').disabled = !hasItems;
+      document.getElementById('clear-cart-btn').disabled = !hasItems;
+      document.getElementById('charge-btn').disabled = !hasItems;
+      document.getElementById('charge-btn-label').textContent = hasItems
+        ? `Charge ${fmtETB(total)} ETB`
+        : 'Select items to charge';
+
+      if (!hasItems) {
+        list.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center py-12 px-4">
+            <div class="w-10 h-10 rounded-xl bg-muted border border-line text-inksubtle flex items-center justify-center mb-2.5">
+              <i data-lucide="receipt" class="w-4 h-4"></i>
+            </div>
+            <p class="text-xs text-inkmuted max-w-[190px]">Tap a product on the counter to start a sale.</p>
+          </div>
+        `;
+      } else {
+        list.innerHTML = state.cart.map(item => {
+          const p = getProduct(item.productId);
+          if (!p) return '';
+          return `
+            <div class="py-2.5 flex items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-medium text-ink truncate">${p.name}</div>
+                <div class="text-[11px] font-mono text-inksubtle tabular">${fmtETB(p.price)} × ${item.qty}</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" data-cart-action="dec" data-id="${p.id}" class="cart-btn pressable w-6 h-6 rounded border border-line bg-canvas hover:bg-muted text-ink font-semibold text-xs flex items-center justify-center">−</button>
+                <span class="w-5 text-center font-mono text-xs font-semibold text-ink tabular">${item.qty}</span>
+                <button type="button" data-cart-action="inc" data-id="${p.id}" class="cart-btn pressable w-6 h-6 rounded border border-line bg-canvas hover:bg-muted text-ink font-semibold text-xs flex items-center justify-center">+</button>
+              </div>
+              <div class="text-right shrink-0 w-18">
+                <div class="text-xs font-semibold font-mono text-ink tabular">${fmtETB(p.price * item.qty)}</div>
+                <button type="button" data-cart-action="drop" data-id="${p.id}" class="cart-btn text-[10px] text-inksubtle hover:text-crimson-600">Drop</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderPaymentControls(total);
+    }
+
+    function renderPaymentControls(total) {
+      const cashBtn = document.getElementById('pay-cash-btn');
+      const digBtn = document.getElementById('pay-digital-btn');
+      const isCash = state.paymentMethod === 'cash';
+
+      cashBtn.className = `pressable flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-md text-xs font-semibold transition-all ${
+        isCash ? 'bg-surface text-ink shadow-sm border border-line' : 'text-inkmuted hover:text-ink border border-transparent'
+      }`;
+      digBtn.className = `pressable flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-md text-xs font-semibold transition-all ${
+        !isCash ? 'bg-surface text-ink shadow-sm border border-line' : 'text-inkmuted hover:text-ink border border-transparent'
+      }`;
+
+      document.getElementById('cash-tender-box').classList.toggle('hidden', !isCash);
+      document.getElementById('digital-ref-box').classList.toggle('hidden', isCash);
+
+      document.querySelectorAll('.digital-ch-btn').forEach(btn => {
+        const active = btn.dataset.digitalChannel === state.digitalChannel;
+        btn.className = `digital-ch-btn flex-1 py-1 rounded text-[11px] font-medium border transition-colors ${
+          active ? 'bg-forest-700 text-white border-forest-700' : 'bg-surface text-inkmuted border-line hover:bg-muted'
+        }`;
+      });
+
+      const bills = getSmartBills(total);
+      const isExact = state.tenderAmount === null;
+      document.getElementById('quick-tender-pills').innerHTML = [
+        `<button type="button" data-tender="exact" class="tender-pill pressable py-1 rounded text-[11px] font-medium border ${
+          isExact ? 'bg-forest-50 border-forest-700 text-forest-700' : 'bg-surface border-line text-inkmuted hover:bg-muted'
+        }">Exact</button>`,
+        ...bills.map(b => `
+          <button type="button" data-tender="${b}" class="tender-pill pressable py-1 rounded text-[11px] font-mono font-medium border tabular ${
+            state.tenderAmount === b ? 'bg-forest-50 border-forest-700 text-forest-700' : 'bg-surface border-line text-inkmuted hover:bg-muted'
+          }">${fmtShort(b)}</button>
+        `)
+      ].join('');
+
+      const effectiveTender = state.tenderAmount !== null ? state.tenderAmount : total;
+      const diff = effectiveTender - total;
+      const changeEl = document.getElementById('live-change-due');
+      if (total === 0) {
+        changeEl.textContent = '0.00 ETB';
+        changeEl.className = 'font-mono font-semibold text-inksubtle tabular';
+      } else if (diff < 0) {
+        changeEl.textContent = `Short ${fmtETB(Math.abs(diff))} ETB`;
+        changeEl.className = 'font-mono font-semibold text-crimson-600 tabular';
+      } else {
+        changeEl.textContent = `${fmtETB(diff)} ETB`;
+        changeEl.className = 'font-mono font-semibold text-forest-700 tabular';
+      }
+    }
+
+    function renderTill() {
+      const stats = getShiftStats();
+      document.getElementById('till-gross').textContent = `${fmtETB(stats.gross)} ETB`;
+      document.getElementById('till-count').textContent = `${stats.count} tickets`;
+      document.getElementById('till-cash').textContent = `${fmtETB(stats.cash)} ETB`;
+      document.getElementById('till-float-note').textContent = `Float: ${fmtETB(state.openingFloat)} ETB`;
+      document.getElementById('till-digital').textContent = `${fmtETB(stats.digital)} ETB`;
+      document.getElementById('till-expected').textContent = `${fmtETB(stats.expectedDrawer)} ETB`;
+      document.getElementById('till-payouts-note').textContent = `${fmtETB(state.cashPayouts)} ETB payouts`;
+      updateDrawerVariance();
+
+      document.getElementById('till-tickets-list').innerHTML = state.tickets.map(t => {
+        const itemSummary = t.items.map(i => `${i.qty}× ${i.name}`).join(', ');
+        return `
+          <div class="px-4 py-3 flex items-center justify-between gap-3 ${t.voided ? 'opacity-50 bg-canvas/50' : ''}">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-semibold text-ink">TICKET #${String(t.id).padStart(3, '0')}</span>
+                <span class="text-[11px] font-mono text-inksubtle">${t.time} EAT</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${t.method === 'cash' ? 'bg-muted text-inkmuted' : 'bg-forest-50 text-forest-700'}">${t.channel}${t.ref ? ` · ${t.ref}` : ''}</span>
+                ${t.voided ? '<span class="px-1.5 py-0.5 rounded bg-crimson-50 text-crimson-600 text-[10px] font-semibold">VOID</span>' : ''}
+              </div>
+              <div class="text-xs text-inkmuted truncate mt-0.5">${itemSummary}</div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="font-mono text-xs font-semibold text-ink tabular ${t.voided ? 'line-through' : ''}">${fmtETB(t.total)} ETB</span>
+              ${t.voided ? '' : `<button type="button" data-void-id="${t.id}" class="void-btn px-2 py-1 rounded border border-line text-[11px] font-medium text-inkmuted hover:bg-crimson-50 hover:text-crimson-600 hover:border-crimson-100">Void</button>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateDrawerVariance() {
+      const val = document.getElementById('drawer-actual-input').value;
+      const outEl = document.getElementById('drawer-variance-val');
+      if (val === '') {
+        outEl.textContent = 'Enter count';
+        outEl.className = 'font-mono font-semibold text-inksubtle tabular';
+        return;
+      }
+      const diff = Number(val) - getShiftStats().expectedDrawer;
+      if (Math.abs(diff) < 0.01) {
+        outEl.textContent = 'Balanced (0.00 ETB)';
+        outEl.className = 'font-mono font-semibold text-forest-700 tabular';
+      } else if (diff > 0) {
+        outEl.textContent = `+${fmtETB(diff)} ETB over`;
+        outEl.className = 'font-mono font-semibold text-amberwarm-700 tabular';
+      } else {
+        outEl.textContent = `${fmtETB(diff)} ETB short`;
+        outEl.className = 'font-mono font-semibold text-crimson-600 tabular';
+      }
+    }
+
+    function renderInventory() {
+      const q = state.invSearch.trim().toLowerCase();
+      const rows = state.products.filter(p => {
+        if (state.invLowOnly && p.stock > p.lowStockThreshold) return false;
+        if (q) return p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+        return true;
+      });
+
+      const lowBtn = document.getElementById('inv-low-toggle');
+      lowBtn.className = `h-10 px-3.5 rounded-lg border text-xs font-medium transition-colors ${
+        state.invLowOnly ? 'bg-amberwarm-50 border-amberwarm-700 text-amberwarm-700' : 'bg-surface border-line text-inkmuted hover:bg-muted'
+      }`;
+
+      document.getElementById('inventory-table-body').innerHTML = rows.map(p => {
+        const badge = p.stock === 0
+          ? 'bg-crimson-50 text-crimson-600'
+          : p.stock <= p.lowStockThreshold
+            ? 'bg-amberwarm-50 text-amberwarm-700'
+            : 'bg-forest-50 text-forest-700';
+        return `
+          <tr class="hover:bg-canvas/40">
+            <td class="py-2.5 px-4 font-medium text-ink text-xs sm:text-sm">${p.name}</td>
+            <td class="py-2.5 px-3 text-xs text-inkmuted">${p.category}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-xs font-medium text-ink tabular">${fmtETB(p.price)} ETB</td>
+            <td class="py-2.5 px-3 text-right">
+              <span class="inline-block px-2 py-0.5 rounded font-mono text-xs font-semibold tabular ${badge}">${p.stock}</span>
+            </td>
+            <td class="py-2.5 px-4 text-right">
+              <div class="inline-flex items-center gap-1">
+                <button type="button" data-restock-id="${p.id}" data-restock-amt="5" class="restock-btn pressable px-2 py-1 rounded bg-muted hover:bg-forest-700 hover:text-white text-ink font-mono text-[11px] font-medium">+5</button>
+                <button type="button" data-restock-id="${p.id}" data-restock-amt="20" class="restock-btn pressable px-2 py-1 rounded bg-muted hover:bg-forest-700 hover:text-white text-ink font-mono text-[11px] font-medium">+20</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderAnalytics() {
+      const stats = getShiftStats();
+      const topMovers = [...state.products].sort((a, b) => (b.soldToday * b.price) - (a.soldToday * a.price)).slice(0, 5);
+      const maxRev = Math.max(1, ...topMovers.map(p => p.soldToday * p.price));
+
+      document.getElementById('analytics-top-movers').innerHTML = topMovers.map(p => {
+        const rev = p.soldToday * p.price;
+        const pct = Math.round((rev / maxRev) * 100);
+        return `
+          <div>
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-ink truncate pr-2">${p.name}</span>
+              <span class="font-mono font-medium text-ink shrink-0 tabular">${fmtShort(rev)} ETB</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div class="h-full rounded-full bg-forest-700" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const lowItems = state.products.filter(p => p.stock <= p.lowStockThreshold).sort((a, b) => a.stock - b.stock);
+      document.getElementById('analytics-reorder-list').innerHTML = lowItems.length === 0
+        ? `<p class="text-xs text-inkmuted py-4">All items are above reorder thresholds.</p>`
+        : lowItems.map(p => `
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-canvas border border-line">
+            <div>
+              <div class="text-xs font-medium text-ink">${p.name}</div>
+              <div class="text-[11px] font-mono ${p.stock === 0 ? 'text-crimson-600' : 'text-amberwarm-700'}">${p.stock === 0 ? 'Out of stock' : `${p.stock} left`}</div>
+            </div>
+            <button type="button" data-restock-id="${p.id}" data-restock-amt="15" class="restock-btn pressable px-2.5 py-1 rounded bg-surface border border-line text-[11px] font-medium text-ink hover:bg-muted">+15</button>
+          </div>
+        `).join('');
+
+      const cashPct = stats.gross > 0 ? Math.round((stats.cash / stats.gross) * 100) : 0;
+      document.getElementById('payment-split-summary').innerHTML = `
+        <div class="p-2 rounded-lg bg-canvas">
+          <div class="text-[10px] text-inkmuted">Cash (${cashPct}%)</div>
+          <div class="font-mono font-semibold text-ink tabular">${fmtShort(stats.cash)} ETB</div>
+        </div>
+        <div class="p-2 rounded-lg bg-forest-50">
+          <div class="text-[10px] text-forest-700">Digital (${100 - cashPct}%)</div>
+          <div class="font-mono font-semibold text-forest-800 tabular">${fmtShort(stats.digital)} ETB</div>
+        </div>
+      `;
+
+      if (state.activeNav === 'analytics' && typeof Chart !== 'undefined') {
+        const hCtx = document.getElementById('hourly-chart').getContext('2d');
+        if (hourlyChartInstance) hourlyChartInstance.destroy();
+        hourlyChartInstance = new Chart(hCtx, {
+          type: 'bar',
+          data: {
+            labels: ['08h', '09h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h', '18h'],
+            datasets: [{ data: state.hourlyRevenue, backgroundColor: '#0E5A42', borderRadius: 5, maxBarThickness: 24 }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'JetBrains Mono', size: 11 }, color: '#86837A' } },
+              y: { grid: { color: '#ECEAE3' }, ticks: { font: { family: 'JetBrains Mono', size: 11 }, color: '#86837A' } }
+            }
+          }
+        });
+
+        const pCtx = document.getElementById('payment-chart').getContext('2d');
+        if (paymentChartInstance) paymentChartInstance.destroy();
+        paymentChartInstance = new Chart(pCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Cash', 'Digital'],
+            datasets: [{ data: [stats.cash, stats.digital], backgroundColor: ['#595750', '#0E5A42'], borderWidth: 0 }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Plus Jakarta Sans', size: 11 } } } }
+          }
+        });
+      }
+    }
+
+    function renderParkedModal() {
+      const list = document.getElementById('parked-list');
+      list.innerHTML = state.parkedSales.length === 0
+        ? `<p class="text-xs text-inkmuted text-center py-6">No held baskets.</p>`
+        : state.parkedSales.map(s => {
+          const count = s.items.reduce((a, b) => a + b.qty, 0);
+          const names = s.items.map(i => `${i.qty}× ${getProduct(i.productId)?.name || ''}`).join(', ');
+          return `
+            <div class="p-3 rounded-xl border border-line bg-canvas/50 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="font-semibold text-ink">${count} items</span>
+                  <span class="font-mono text-inksubtle">${s.time} EAT</span>
+                </div>
+                <div class="text-[11px] text-inkmuted truncate mt-0.5">${names}</div>
+                <div class="font-mono text-xs font-semibold text-forest-700 mt-1 tabular">${fmtETB(s.total)} ETB</div>
+              </div>
+              <button type="button" data-resume-id="${s.id}" class="resume-parked-btn pressable px-3 py-1.5 rounded-lg bg-forest-700 text-white text-xs font-medium shrink-0">Resume</button>
+            </div>
+          `;
+        }).join('');
+    }
+
+    function renderAll() {
+      renderNavigation();
+      renderQuickFilters();
+      renderCategoryPills();
+      renderProductGrid();
+      renderCart();
+      renderTill();
+      renderInventory();
+      renderAnalytics();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closeMobileDrawers() {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('cart-panel').classList.add('translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // EVENTS
+    // =========================================================================
+    function bindEvents() {
+      // Login numpad & form
+      document.getElementById('login-numpad').addEventListener('click', e => {
+        const btn = e.target.closest('.pad-btn');
+        if (!btn) return;
+        const pinInput = document.getElementById('login-pin');
+        const val = btn.dataset.pad;
+        if (val === 'clear') pinInput.value = '';
+        else if (val === 'back') pinInput.value = pinInput.value.slice(0, -1);
+        else if (pinInput.value.length < 4) pinInput.value += val;
+        document.getElementById('login-error').classList.add('hidden');
+      });
+
+      document.getElementById('login-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const phone = document.getElementById('login-phone').value.trim();
+        const pin = document.getElementById('login-pin').value.trim();
+        const reg = document.getElementById('login-register').value;
+        const floatVal = Number(document.getElementById('login-float').value);
+        if (pin.length < 4) {
+          const err = document.getElementById('login-error');
+          err.textContent = 'Enter a 4-digit PIN to open shift.';
+          err.classList.remove('hidden');
+          return;
+        }
+        completeLogin(phone, reg, floatVal);
+      });
+
+      // Sign out -> opens Login page
+      document.getElementById('signout-btn').addEventListener('click', showLoginScreen);
+
+      // Navigation
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeNav = btn.dataset.nav;
+          closeMobileDrawers();
+          renderAll();
+        });
+      });
+
+      // Mobile drawers
+      document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('-translate-x-full');
+        document.getElementById('sidebar-backdrop').classList.remove('hidden');
+      });
+      document.getElementById('mobile-cart-btn').addEventListener('click', () => {
+        document.getElementById('cart-panel').classList.remove('translate-x-full');
+        document.getElementById('sidebar-backdrop').classList.remove('hidden');
+      });
+      document.getElementById('close-mobile-cart-btn').addEventListener('click', closeMobileDrawers);
+      document.getElementById('sidebar-backdrop').addEventListener('click', closeMobileDrawers);
+
+      // Search & filters
+      const searchInput = document.getElementById('product-search');
+      searchInput.addEventListener('input', e => {
+        state.searchQuery = e.target.value;
+        document.getElementById('clear-search-btn').classList.toggle('hidden', !state.searchQuery);
+        renderProductGrid();
+      });
+      searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const matches = getFilteredProducts();
+          if (matches.length > 0 && matches[0].stock > 0) {
+            addToCart(matches[0].id, 1);
+            showToast(`Added ${matches[0].name}`);
+          }
+        } else if (e.key === 'Escape') {
+          searchInput.value = '';
+          state.searchQuery = '';
+          document.getElementById('clear-search-btn').classList.add('hidden');
+          searchInput.blur();
+          renderProductGrid();
+        }
+      });
+      document.getElementById('clear-search-btn').addEventListener('click', () => {
+        searchInput.value = '';
+        state.searchQuery = '';
+        document.getElementById('clear-search-btn').classList.add('hidden');
+        renderProductGrid();
+      });
+      document.getElementById('reset-filters-btn').addEventListener('click', () => {
+        state.searchQuery = '';
+        state.quickFilter = 'all';
+        state.categoryFilter = 'All';
+        searchInput.value = '';
+        document.getElementById('clear-search-btn').classList.add('hidden');
+        renderAll();
+      });
+
+      document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.quickFilter = btn.dataset.quickFilter;
+          renderQuickFilters();
+          renderProductGrid();
+        });
+      });
+
+      document.getElementById('category-pills').addEventListener('click', e => {
+        const pill = e.target.closest('.cat-pill');
+        if (!pill) return;
+        state.categoryFilter = pill.dataset.cat;
+        renderCategoryPills();
+        renderProductGrid();
+      });
+
+      // Product cards
+      document.getElementById('product-grid').addEventListener('click', e => {
+        const ctrl = e.target.closest('.card-ctrl');
+        if (ctrl) {
+          e.stopPropagation();
+          const id = ctrl.dataset.id;
+          if (ctrl.dataset.action === 'inc') addToCart(id, 1);
+          else if (ctrl.dataset.action === 'dec') addToCart(id, -1);
+          else if (ctrl.dataset.action === 'drop') dropFromCart(id);
+          return;
+        }
+        const card = e.target.closest('.product-card');
+        if (card) addToCart(card.dataset.cardId, 1);
+      });
+
+      // Cart rows
+      document.getElementById('cart-items-list').addEventListener('click', e => {
+        const btn = e.target.closest('.cart-btn');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (btn.dataset.cartAction === 'inc') addToCart(id, 1);
+        else if (btn.dataset.cartAction === 'dec') addToCart(id, -1);
+        else if (btn.dataset.cartAction === 'drop') dropFromCart(id);
+      });
+
+      document.getElementById('clear-cart-btn').addEventListener('click', clearCart);
+      document.getElementById('park-sale-btn').addEventListener('click', parkCurrentSale);
+      document.getElementById('parked-drawer-btn').addEventListener('click', () => {
+        renderParkedModal();
+        document.getElementById('parked-modal').classList.remove('hidden');
+      });
+      document.getElementById('close-parked-modal').addEventListener('click', () => {
+        document.getElementById('parked-modal').classList.add('hidden');
+      });
+      document.getElementById('parked-list').addEventListener('click', e => {
+        const btn = e.target.closest('.resume-parked-btn');
+        if (btn) resumeParkedSale(Number(btn.dataset.resumeId));
+      });
+
+      // Payment & tender
+      document.getElementById('pay-cash-btn').addEventListener('click', () => {
+        state.paymentMethod = 'cash';
+        renderPaymentControls(getCartTotal());
+      });
+      document.getElementById('pay-digital-btn').addEventListener('click', () => {
+        state.paymentMethod = 'digital';
+        renderPaymentControls(getCartTotal());
+      });
+      document.querySelectorAll('.digital-ch-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.digitalChannel = btn.dataset.digitalChannel;
+          renderPaymentControls(getCartTotal());
+        });
+      });
+      document.getElementById('quick-tender-pills').addEventListener('click', e => {
+        const pill = e.target.closest('.tender-pill');
+        if (!pill) return;
+        const input = document.getElementById('custom-tender-input');
+        if (pill.dataset.tender === 'exact') {
+          state.tenderAmount = null;
+          input.value = '';
+        } else {
+          state.tenderAmount = Number(pill.dataset.tender);
+          input.value = pill.dataset.tender;
+        }
+        renderPaymentControls(getCartTotal());
+      });
+      document.getElementById('custom-tender-input').addEventListener('input', e => {
+        const v = e.target.value.trim();
+        state.tenderAmount = v === '' ? null : Number(v);
+        renderPaymentControls(getCartTotal());
+      });
+
+      // Charge & Feedback Modal controls
+      document.getElementById('charge-btn').addEventListener('click', completeSale);
+      document.getElementById('preview-decline-btn').addEventListener('click', () => openFeedbackModal('error'));
+      document.getElementById('switch-success-btn').addEventListener('click', () => openFeedbackModal('success'));
+      document.getElementById('switch-declined-btn').addEventListener('click', () => openFeedbackModal('error'));
+      document.getElementById('replay-draw-btn').addEventListener('click', () => openFeedbackModal(currentFeedbackMode));
+      document.getElementById('close-feedback-btn').addEventListener('click', closeFeedbackModal);
+      document.getElementById('decline-edit-btn').addEventListener('click', closeFeedbackModal);
+      document.getElementById('decline-retry-btn').addEventListener('click', () => openFeedbackModal('success'));
+
+      document.getElementById('toggle-receipt-items-btn').addEventListener('click', e => {
+        pinFeedbackModal();
+        const btn = e.currentTarget;
+        const panel = document.getElementById('receipt-items-panel');
+        const open = panel.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!open));
+        document.getElementById('receipt-chevron').style.transform = !open ? 'rotate(180deg)' : '';
+      });
+
+      document.getElementById('copy-receipt-btn').addEventListener('click', () => {
+        pinFeedbackModal();
+        const snap = state.lastSaleSnapshot;
+        const text = [
+          `Abebe Mini Mart · TICKET #${String(snap.id).padStart(3, '0')}`,
+          ...snap.items.map(i => `${i.qty}x ${i.name} - ${fmtETB(i.qty * i.price)} ETB`),
+          `Total: ${fmtETB(snap.total)} ETB (${snap.channel})`
+        ].join('\n');
+        const done = () => {
+          document.getElementById('copy-receipt-label').textContent = 'Copied';
+          showToast('Receipt copied to clipboard');
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            done();
+          });
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          done();
+        }
+      });
+
+      document.getElementById('toggle-pin-btn').addEventListener('click', () => {
+        const dur = currentFeedbackMode === 'success' ? 2800 : 3500;
+        if (isModalPinned) {
+          isModalPinned = false;
+          timerRemainingMs = dur;
+          timerLastTick = performance.now();
+        } else {
+          isModalPinned = true;
+        }
+        updateTimerUi(dur);
+      });
+
+      document.getElementById('feedback-card').addEventListener('pointerdown', e => {
+        if (e.target.closest('#toggle-pin-btn') || e.target.closest('#close-feedback-btn') || e.target.closest('#decline-edit-btn')) return;
+        pinFeedbackModal();
+      });
+
+      document.getElementById('feedback-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeFeedbackModal();
+      });
+
+      // Till & Inventory
+      document.getElementById('drawer-actual-input').addEventListener('input', updateDrawerVariance);
+      document.getElementById('till-tickets-list').addEventListener('click', e => {
+        const btn = e.target.closest('.void-btn');
+        if (btn) voidTicket(Number(btn.dataset.voidId));
+      });
+      document.getElementById('payout-modal-btn').addEventListener('click', () => document.getElementById('payout-modal').classList.remove('hidden'));
+      const closePayout = () => document.getElementById('payout-modal').classList.add('hidden');
+      document.getElementById('close-payout').addEventListener('click', closePayout);
+      document.getElementById('cancel-payout').addEventListener('click', closePayout);
+      document.getElementById('payout-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const amt = Number(document.getElementById('po-amount').value);
+        if (amt > 0) {
+          state.cashPayouts += amt;
+          e.target.reset();
+          closePayout();
+          renderTill();
+          showToast(`Recorded ${fmtETB(amt)} ETB payout`);
+        }
+      });
+
+      document.getElementById('inv-search').addEventListener('input', e => {
+        state.invSearch = e.target.value;
+        renderInventory();
+      });
+      document.getElementById('inv-low-toggle').addEventListener('click', () => {
+        state.invLowOnly = !state.invLowOnly;
+        renderInventory();
+      });
+      document.getElementById('inventory-table-body').addEventListener('click', e => {
+        const btn = e.target.closest('.restock-btn');
+        if (btn) restockProduct(btn.dataset.restockId, Number(btn.dataset.restockAmt));
+      });
+      document.getElementById('analytics-reorder-list').addEventListener('click', e => {
+        const btn = e.target.closest('.restock-btn');
+        if (btn) restockProduct(btn.dataset.restockId, Number(btn.dataset.restockAmt));
+      });
+
+      document.getElementById('add-product-btn').addEventListener('click', () => document.getElementById('add-product-modal').classList.remove('hidden'));
+      const closeAddProd = () => document.getElementById('add-product-modal').classList.add('hidden');
+      document.getElementById('close-add-product').addEventListener('click', closeAddProd);
+      document.getElementById('cancel-add-product').addEventListener('click', closeAddProd);
+      document.getElementById('add-product-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const name = document.getElementById('np-name').value.trim();
+        const category = document.getElementById('np-category').value;
+        const price = Number(document.getElementById('np-price').value);
+        const stock = Number(document.getElementById('np-stock').value);
+        const threshold = Number(document.getElementById('np-threshold').value) || 5;
+        if (!name || price <= 0) return;
+        state.products.unshift({ id: 'prod_' + Date.now(), name, category, price, stock, lowStockThreshold: threshold, soldToday: 0 });
+        e.target.reset();
+        closeAddProd();
+        renderAll();
+        showToast(`Added ${name}`);
+      });
+
+      // Global shortcuts (kept active under the hood even without sidebar cheat box)
+      document.addEventListener('keydown', e => {
+        if (!state.signedIn) return;
+        const tag = (e.target.tagName || '').toLowerCase();
+        const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select';
+        const fbOpen = !document.getElementById('feedback-modal').classList.contains('hidden');
+
+        if (fbOpen && e.key === 'Escape') {
+          e.preventDefault();
+          closeFeedbackModal();
+          return;
+        }
+        if (isTyping) return;
+        if (e.key === '/' && state.activeNav === 'counter') {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+    }
+
+    function startClock() {
+      const tick = () => { document.getElementById('live-clock').textContent = getNowEAT(); };
+      tick();
+      setInterval(tick, 30000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      bindEvents();
+      startClock();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
