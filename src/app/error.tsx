@@ -1,10 +1,10 @@
 'use client';
 
-import { NavigationShell } from '@/components/navigation-shell';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
-export default function CounterError({
+export default function HomeError({
   error,
   reset,
 }: {
@@ -12,17 +12,24 @@ export default function CounterError({
   reset: () => void;
 }) {
   return (
-    <NavigationShell>
-      <div className="mx-auto flex max-w-lg items-center justify-center px-4 py-16">
+    <main className="flex min-h-svh items-center justify-center bg-background p-4">
+      <div className="w-full max-w-lg">
         <EmptyState
           variant="error"
-          title="Counter failed to load"
+          title="Unable to load page"
           description={
-            error.message || 'An unexpected error occurred while loading the counter.'
+            error.message || 'An unexpected error occurred while loading this view.'
           }
-          action={<Button onClick={reset}>Retry</Button>}
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={reset}>Retry</Button>
+              <Link href="/login" className={buttonVariants({ variant: 'outline' })}>
+                Go to sign in
+              </Link>
+            </div>
+          }
         />
       </div>
-    </NavigationShell>
+    </main>
   );
 }

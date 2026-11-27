@@ -17,9 +17,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isPublicPath = PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  const isPublicPath =
+    pathname === '/' ||
+    PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = sessionCookie ? await verifySessionToken(sessionCookie) : null;
 
@@ -28,8 +28,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // 3. Allow public paths without authentication
-  if (isPublicPath) {
+  // 3. Allow unauthenticated access on public paths (landing page, login, auth/health endpoints)
+  if (!session && isPublicPath) {
     return NextResponse.next();
   }
 
