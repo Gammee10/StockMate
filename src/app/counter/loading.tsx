@@ -14,14 +14,17 @@ export default function CounterLoading() {
             <Skeleton className="h-10 flex-1" />
             <Skeleton className="h-10 w-36" />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className="flex h-32 flex-col justify-between rounded-xl border border-border bg-card p-3.5"
+                className="flex h-32 flex-col justify-between overflow-hidden rounded-xl border border-border bg-card"
               >
-                <Skeleton className="h-4 w-3/4" />
-                <div className="flex items-center justify-between">
+                <div className="space-y-2 p-3">
+                  <Skeleton className="h-3.5 w-20" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <div className="flex h-11 items-center justify-between border-t border-border bg-muted/40 px-3">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-4 w-10" />
                 </div>

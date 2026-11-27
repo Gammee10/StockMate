@@ -461,16 +461,19 @@ export function CounterWorkspace({
           {/* Product Grid Area */}
           <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
             {loading && products.length === 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, idx) => (
                   <div
                     key={idx}
-                    className="flex h-32 flex-col justify-between rounded-xl border border-border bg-card p-3.5"
+                    className="flex h-32 flex-col justify-between overflow-hidden rounded-xl border border-border bg-card"
                   >
-                    <Skeleton className="h-4 w-3/4" />
-                    <div className="flex items-center justify-between pt-4">
+                    <div className="space-y-2 p-3">
+                      <Skeleton className="h-3.5 w-20" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                    <div className="flex h-11 items-center justify-between border-t border-border bg-muted/40 px-3">
                       <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-10" />
                     </div>
                   </div>
                 ))}
@@ -515,114 +518,155 @@ export function CounterWorkspace({
                 }
               />
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {displayedProducts.map((product) => {
                   const qty = cart[product.id] ?? 0;
                   const inCart = qty > 0;
                   const outOfStock = product.stock === 0;
                   const low = product.stock > 0 && product.isLowStock;
 
+                  const stockMeta = outOfStock ? (
+                    <Badge variant="destructive" className="shrink-0 whitespace-nowrap">
+                      Out of stock
+                    </Badge>
+                  ) : low ? (
+                    <Badge
+                      variant="warning"
+                      className="shrink-0 whitespace-nowrap font-mono tabular-nums"
+                    >
+                      {product.stock} left
+                    </Badge>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span
+                        className="size-1.5 shrink-0 rounded-full bg-success"
+                        aria-hidden="true"
+                      />
+                      <span className="font-mono tabular-nums">
+                        {product.stock} in stock
+                      </span>
+                    </span>
+                  );
+
                   return (
                     <div
                       key={product.id}
                       className={cn(
-                        'flex h-full min-h-36 flex-col justify-between overflow-hidden rounded-xl border transition-colors',
+                        'flex h-full min-h-32 flex-col justify-between overflow-hidden rounded-xl border transition-colors',
                         outOfStock
-                          ? 'border-border bg-muted/70 opacity-60'
+                          ? 'border-border bg-muted/70 opacity-65'
                           : inCart
                             ? 'border-primary bg-primary-soft'
                             : 'border-border bg-card hover:border-border-strong'
                       )}
                     >
-                      <Button
-                        variant="ghost"
-                        disabled={outOfStock || isCheckingOut}
-                        onClick={() => handleIncrement(product.id)}
-                        aria-label={`Add ${product.name}, ${product.priceEtb} ETB, ${
-                          outOfStock ? 'out of stock' : `${product.stock} in stock`
-                        }`}
-                        className="h-auto min-h-20 w-full flex-1 flex-col items-stretch justify-between whitespace-normal rounded-none p-3 text-left hover:bg-transparent"
-                      >
-                        <div className="flex w-full items-start justify-between gap-2">
-                          <span className="line-clamp-2 min-w-0 flex-1 break-words text-sm font-medium leading-snug text-foreground">
-                            {product.name}
-                          </span>
-                          {inCart ? (
-                            <Badge
-                              variant="default"
-                              className="shrink-0 font-mono tabular-nums"
-                            >
-                              {qty}
-                            </Badge>
-                          ) : null}
-                        </div>
-
-                        <div className="flex w-full items-center justify-between gap-1.5 pt-2">
-                          <span className="whitespace-nowrap font-mono text-xs font-semibold tabular-nums text-foreground sm:text-sm">
-                            {product.priceEtb}{' '}
-                            <span className="font-normal text-muted-foreground">ETB</span>
-                          </span>
-                          {outOfStock ? (
-                            <Badge
-                              variant="destructive"
-                              className="shrink-0 whitespace-nowrap"
-                            >
-                              Out
-                            </Badge>
-                          ) : low ? (
-                            <Badge
-                              variant="warning"
-                              className="shrink-0 whitespace-nowrap font-mono tabular-nums"
-                            >
-                              {product.stock} left
-                            </Badge>
-                          ) : (
-                            <span className="shrink-0 whitespace-nowrap font-mono text-xs tabular-nums text-subtle-foreground">
-                              {product.stock}
-                            </span>
-                          )}
-                        </div>
-                      </Button>
-
                       {inCart ? (
-                        <div className="flex items-center justify-between gap-1 border-t border-primary-border bg-card/85 px-2 py-1.5">
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              disabled={isCheckingOut}
-                              onClick={() => handleDecrement(product.id)}
-                              aria-label={`Remove one ${product.name}`}
-                              className="size-8"
-                            >
-                              <Minus className="size-3.5" aria-hidden="true" />
-                            </Button>
-                            <span className="w-5 text-center font-mono text-xs font-semibold tabular-nums text-foreground">
-                              {qty}
-                            </span>
-                            <Button
-                              variant="default"
-                              size="icon"
-                              disabled={isCheckingOut || qty >= product.stock}
-                              onClick={() => handleIncrement(product.id)}
-                              aria-label={`Add one ${product.name}`}
-                              className="size-8"
-                            >
-                              <Plus className="size-3.5" aria-hidden="true" />
-                            </Button>
-                          </div>
+                        <>
                           <Button
                             variant="ghost"
-                            size="sm"
                             disabled={isCheckingOut}
-                            onClick={() => handleRemove(product.id)}
-                            aria-label={`Drop ${product.name} from sale`}
-                            className="h-8 px-2 text-xs text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+                            onClick={() => handleIncrement(product.id)}
+                            aria-label={`Add one more ${product.name}, ${product.priceEtb} ETB, ${qty} in cart`}
+                            className="h-auto w-full flex-1 flex-col items-stretch justify-start gap-0 whitespace-normal rounded-none p-2.5 text-left hover:bg-transparent sm:p-3"
                           >
-                            Drop
+                            <span className="flex w-full items-center justify-between gap-2">
+                              {stockMeta}
+                              <Badge
+                                variant="default"
+                                className="shrink-0 font-mono tabular-nums"
+                              >
+                                {qty}×
+                              </Badge>
+                            </span>
+
+                            <span className="mt-2 line-clamp-2 w-full break-words text-sm font-semibold leading-snug text-foreground">
+                              {product.name}
+                            </span>
+
+                            <span className="mt-1 block font-mono text-xs font-medium tabular-nums text-primary">
+                              {product.priceEtb} ETB each
+                            </span>
                           </Button>
-                        </div>
-                      ) : null}
+
+                          <div className="flex h-11 shrink-0 items-center justify-between gap-1 border-t border-primary-border bg-card/90 px-2">
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                disabled={isCheckingOut}
+                                onClick={() => handleDecrement(product.id)}
+                                aria-label={`Remove one ${product.name}`}
+                                className="size-8"
+                              >
+                                <Minus className="size-3.5" aria-hidden="true" />
+                              </Button>
+                              <span className="w-5 text-center font-mono text-xs font-semibold tabular-nums text-foreground">
+                                {qty}
+                              </span>
+                              <Button
+                                variant="default"
+                                size="icon"
+                                disabled={isCheckingOut || qty >= product.stock}
+                                onClick={() => handleIncrement(product.id)}
+                                aria-label={`Add one ${product.name}`}
+                                className="size-8"
+                              >
+                                <Plus className="size-3.5" aria-hidden="true" />
+                              </Button>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={isCheckingOut}
+                              onClick={() => handleRemove(product.id)}
+                              aria-label={`Drop ${product.name} from sale`}
+                              className="h-8 px-2 text-xs text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+                            >
+                              Drop
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          disabled={outOfStock || isCheckingOut}
+                          onClick={() => handleIncrement(product.id)}
+                          aria-label={`Add ${product.name}, ${product.priceEtb} ETB, ${
+                            outOfStock ? 'out of stock' : `${product.stock} in stock`
+                          }`}
+                          className="h-full w-full flex-1 flex-col items-stretch justify-between gap-0 whitespace-normal rounded-none p-0 text-left hover:bg-muted/20"
+                        >
+                          <span className="flex w-full flex-1 flex-col items-stretch justify-start p-2.5 sm:p-3">
+                            <span className="flex w-full items-center justify-between gap-2">
+                              {stockMeta}
+                            </span>
+
+                            <span className="mt-2 line-clamp-2 w-full break-words text-sm font-semibold leading-snug text-foreground">
+                              {product.name}
+                            </span>
+                          </span>
+
+                          <span className="flex h-11 w-full shrink-0 items-center justify-between gap-2 border-t border-border/80 bg-muted/45 px-2.5 sm:px-3">
+                            <span className="whitespace-nowrap font-mono text-xs font-semibold tabular-nums text-foreground sm:text-sm">
+                              {product.priceEtb}{' '}
+                              <span className="font-normal text-muted-foreground">
+                                ETB
+                              </span>
+                            </span>
+
+                            {outOfStock ? (
+                              <span className="shrink-0 text-xs text-muted-foreground">
+                                Unavailable
+                              </span>
+                            ) : (
+                              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+                                <Plus className="size-3.5" aria-hidden="true" />
+                                <span>Add</span>
+                              </span>
+                            )}
+                          </span>
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
