@@ -27,12 +27,22 @@ describe('Route Protection Middleware', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('redirects unauthenticated browser requests from / to /login', async () => {
+  it('allows public landing page / without authentication', async () => {
     const req = new NextRequest('http://localhost:3000/');
     const res = await middleware(req);
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('http://localhost:3000/login');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('redirects unauthenticated browser requests from protected routes to /login', async () => {
+    for (const protectedPath of ['/counter', '/till', '/inventory', '/analytics']) {
+      const req = new NextRequest(`http://localhost:3000${protectedPath}`);
+      const res = await middleware(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get('location')).toBe('http://localhost:3000/login');
+    }
   });
 
   it('returns 401 JSON for unauthenticated protected API routes', async () => {
